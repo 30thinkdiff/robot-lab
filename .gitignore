@@ -1,0 +1,21 @@
+# Python 临时文件
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# 虚拟环境
+.venv/
+
+# 密钥及本地环境配置
+.env
+.env.*
+
+# 实验产生的大型文件
+outputs/
+*.safetensors
+*.pt
+*.pth
+*.mp4
+
+# Notebook 临时文件
+.ipynb_checkpoints/
