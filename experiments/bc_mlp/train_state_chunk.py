@@ -21,6 +21,7 @@
 
 from collections import defaultdict
 from pathlib import Path
+import os
 
 import torch
 from torch import nn
@@ -36,12 +37,15 @@ ACTION_DIM = 6
 
 TRAIN_EPISODES = [0, 1, 2]
 VAL_EPISODES = [3]
+TEST_EPISODES = [4, 5, 6, 7, 8]
 
 EPOCHS = 50
 BATCH_SIZE = 64
 LEARNING_RATE = 0.001
 
-torch.manual_seed(42)
+HIDDEN_DIM = int(os.environ.get("HIDDEN_DIM", 128))
+SEED = int(os.environ.get("SEED", 42))
+torch.manual_seed(SEED)
 
 # 轻薄本上限制 CPU 并行线程数量
 torch.set_num_threads(2)
@@ -53,7 +57,7 @@ print("正在加载数据集...")
 
 dataset = LeRobotDataset(
     REPO_ID,
-    episodes=TRAIN_EPISODES + VAL_EPISODES,
+    episodes=TRAIN_EPISODES + VAL_EPISODES + TEST_EPISODES,
     download_videos=False,
 )
 
@@ -167,13 +171,13 @@ class ChunkPolicy(nn.Module):
         # 最终输出 16 * 6 = 96 个数
 
         self.net = nn.Sequential(
-            nn.Linear(6, 128),
+            nn.Linear(6, HIDDEN_DIM),
             nn.ReLU(),
 
-            nn.Linear(128, 128),
+            nn.Linear(HIDDEN_DIM, HIDDEN_DIM),
             nn.ReLU(),
 
-            nn.Linear(128, CHUNK_SIZE * ACTION_DIM),
+            nn.Linear(HIDDEN_DIM, CHUNK_SIZE * ACTION_DIM),
         )
 
     def forward(self, state):
@@ -199,6 +203,7 @@ train_loader = DataLoader(
     TensorDataset(x_train_norm, y_train_norm),
     batch_size=BATCH_SIZE,
     shuffle=True,
+    generator=torch.Generator().manual_seed(SEED),
 )
 
 # MSE：均方误差
@@ -360,6 +365,39 @@ print("预测第 1 步动作:", predicted[0, 0])
 print("真实第 16 步动作:", y_val[0, -1])
 print("预测第 16 步动作:", predicted[0, -1])
 
+# ===== 独立 Episode 测试 =====
+
+model.eval()
+
+test_errors = []
+
+for ep in TEST_EPISODES:
+    x_test, y_test = make_samples([ep])
+
+    x_test_norm = (x_test - x_mean) / x_std
+
+    with torch.no_grad():
+        pred_norm = model(x_test_norm)
+        pred = pred_norm * y_std + y_mean
+
+    model_mae = normalized_mae(pred, y_test)
+
+    # 保持当前关节位置不动的基线
+    hold_pred = x_test.unsqueeze(1).expand_as(y_test)
+    hold_mae = normalized_mae(hold_pred, y_test)
+
+    test_errors.append(model_mae)
+
+    print(
+        f"Episode {ep} | "
+        f"Model MAE: {model_mae:.4f} | "
+        f"Hold MAE: {hold_mae:.4f}"
+    )
+
+print(
+    "Test Mean MAE:",
+    sum(test_errors) / len(test_errors)
+)
 
 # ------------------ 9. 保存模型 ------------------
 
@@ -375,8 +413,8 @@ torch.save(
         "y_std": y_std,
         "chunk_size": CHUNK_SIZE,
     },
-    output / "state_chunk_mlp.pt",
+    output / f"state_chunk_mlp_h{HIDDEN_DIM}_s{SEED}.pt",
 )
 
-print("\n模型已保存到 outputs/state_chunk_mlp.pt")
+print(f"\n模型已保存到 outputs/state_chunk_mlp_h{HIDDEN_DIM}_s{SEED}.pt")
 print("注意：离线动作误差不等于机器人实际任务成功率。")
