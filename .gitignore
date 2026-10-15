@@ -23,3 +23,5 @@ outputs/
 # 插件
 .vscode/
 .marscode/
+
+/scripts/eval_libero.sh.bak
