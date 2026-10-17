@@ -12,6 +12,7 @@ set -euo pipefail
 RUN_NAME="${RUN_NAME:-baseline_001}"
 N_EPISODES="${N_EPISODES:-1}"
 DRY_RUN="${DRY_RUN:-0}"
+EVAL_DRIVER="${EVAL_DRIVER:-native}"
 
 # 本地默认写入当前项目；远程可指定 /content/outputs
 OUTPUT_ROOT="${OUTPUT_ROOT:-${PWD}/outputs}"
@@ -42,8 +43,21 @@ OUTPUT_DIR="${OUTPUT_ROOT%/}/${RUN_NAME}"
 # Bash 数组能正确保存每一个独立参数，
 # 避免空格和引号造成参数拆分错误。
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+if [[ "$EVAL_DRIVER" == "brightness" ]]; then
+    EVAL_CMD=(
+        python
+        "${SCRIPT_DIR}/../studies/policy_generalization/eval_with_brightness.py"
+    )
+elif [[ "$EVAL_DRIVER" == "native" ]]; then
+    EVAL_CMD=(lerobot-eval)
+else
+    echo "Unknown EVAL_DRIVER: $EVAL_DRIVER"
+    exit 1
+fi
 CMD=(
-    lerobot-eval
+    "${EVAL_CMD[@]}"
     "--policy.path=${POLICY_PATH}"
     "--policy.device=cuda"
     "--env.type=libero"
