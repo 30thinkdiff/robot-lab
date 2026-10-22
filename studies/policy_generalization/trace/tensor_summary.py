@@ -49,6 +49,15 @@ def summarize_tensor(name: str, tensor: torch.Tensor, *, verbose: bool = True):
         "min": min_val,
         "max": max_val,
     }
+    true_num = int(detached.sum().item()) if tensor.dtype == torch.bool else None
+    false_num = tensor.numel() - true_num if true_num is not None else None
+    true_fraction = true_num / tensor.numel() if true_num is not None and tensor.numel() > 0 else None
+    if tensor.dtype == torch.bool:
+        summary.update({
+            "true_count": true_num,
+            "false_count": false_num,
+            "true_fraction": true_fraction,
+        })
     if verbose:
         print(json.dumps(summary, ensure_ascii=False, allow_nan=False))
     return summary
