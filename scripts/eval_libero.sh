@@ -52,6 +52,12 @@ if [[ "$EVAL_DRIVER" == "brightness" ]]; then
     )
 elif [[ "$EVAL_DRIVER" == "native" ]]; then
     EVAL_CMD=(lerobot-eval)
+elif [[ "$EVAL_DRIVER" == "trace" ]]; then
+    EVAL_CMD=(
+        python
+        "${SCRIPT_DIR}/../studies/policy_generalization/trace/eval_with_trace.py"
+        "--trace-dir=${TRACE_DIR:-${OUTPUT_DIR}/trace}"
+    )
 else
     echo "Unknown EVAL_DRIVER: $EVAL_DRIVER"
     exit 1
