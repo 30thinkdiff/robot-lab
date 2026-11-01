@@ -24,4 +24,7 @@ outputs/
 .vscode/
 .marscode/
 
+# 本地应用状态、私有临时数据，不纳入公开仓库
+/tmp/
+
 /scripts/eval_libero.sh.bak

@@ -11,9 +11,14 @@ from types import SimpleNamespace
 
 import torch
 
-from eval_with_trace import run_with_trace
-from policy_trace import PolicyTrace
-from tensor_summary import summarize_tensor
+if __package__:
+    from .eval_with_trace import run_with_trace
+    from .policy_trace import PolicyTrace
+    from .tensor_summary import summarize_tensor
+else:
+    from eval_with_trace import run_with_trace
+    from policy_trace import PolicyTrace
+    from tensor_summary import summarize_tensor
 
 
 class SummaryTests(unittest.TestCase):
