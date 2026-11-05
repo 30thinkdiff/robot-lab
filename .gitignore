@@ -17,6 +17,9 @@ outputs/
 *.pth
 *.mp4
 
+# 本地论文阅读副本；公开仓库保留来源链接，不重复分发PDF
+/reference/*.pdf
+
 # Notebook 临时文件
 .ipynb_checkpoints/
 
