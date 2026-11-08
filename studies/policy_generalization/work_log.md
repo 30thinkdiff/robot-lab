@@ -5,12 +5,12 @@
 
 ## 当前状态
 
-| 主线 | 已完成 | 当前阻塞或下一步 |
-| --- | --- | --- |
-| 数据 | 3条示范/472帧原始归档与T4视觉提取，Drive SHA复查完整 | 把真实features取回本机，或下次远程复用；尚未扩大到44条 |
-| 算法理解 | 用户完成配对、模型、损失和单步更新练习，审查通过 | 练习用于理解；正式训练调用上游数学实现 |
-| 训练工程 | 上游算法接入、日志、独立验证、保存重载、epoch边界续训的对照路径已检验 | 4个student_*训练步骤留给用户；真实472帧训练未运行 |
-| 闭环评测 | 原始LIBERO/H50新入口完成2回合，2/2成功 | 50回合计划、在线Corrector尚未执行 |
+| 主线     | 已完成                                                                | 当前阻塞或下一步                                       |
+| -------- | --------------------------------------------------------------------- | ------------------------------------------------------ |
+| 数据     | 3条示范/472帧原始归档与T4视觉提取，Drive SHA复查完整                  | 真实features已取回本机并校验；尚未扩大到44条 |
+| 算法理解 | 用户完成配对、模型、损失和单步更新练习，审查通过                      | 练习用于理解；正式训练调用上游数学实现                 |
+| 训练工程 | 上游算法接入、日志、独立验证、保存重载、epoch边界续训的对照路径已检验 | A～D及38M结构一轮已验证；LVM/OGG核心待用户实现      |
+| 闭环评测 | 原始LIBERO/H50新入口完成2回合，2/2成功                                | 50回合计划、在线Corrector尚未执行                      |
 
 ## 任务1：数据下载、特征提取与训练样本
 
@@ -18,12 +18,12 @@
 
 这里是3条episode（示范轨迹），不是3个epoch；epoch是完整遍历一轮训练集。
 
-| episode | 帧数 | 划分 | k=1样本对 | k=10样本对 |
-| --- | ---: | --- | ---: | ---: |
-| 813 | 155 | train | 154 | 145 |
-| 818 | 164 | train | 163 | 154 |
-| 825 | 153 | validation | 152 | 143 |
-| 合计 | 472 | 训练319帧/验证153帧 | 469 | 442 |
+| episode | 帧数 | 划分                | k=1样本对 | k=10样本对 |
+| ------- | ---: | ------------------- | --------: | ---------: |
+| 813     |  155 | train               |       154 |        145 |
+| 818     |  164 | train               |       163 |        154 |
+| 825     |  153 | validation          |       152 |        143 |
+| 合计    |  472 | 训练319帧/验证153帧 |       469 |        442 |
 
 每帧两相机256×256 RGB，共944张图像观测；原图字节、8维state、7维action、episode/frame/timestamp等保存在Parquet。原始三轨迹归档约61MiB；视觉缓存数组载荷约55.46MiB。它们不是整个LIBERO的数据。
 数据Hub为HuggingFaceVLA/libero@8695891，三份物理分片file-213/214/215包含筛选所需轨迹；元信息下载不等于原始帧全量下载。
@@ -64,12 +64,12 @@ corrector_train.py
 
 在[scripts/corrector_train.py](../../scripts/corrector_train.py)文件开头填写：
 
-| 顺序 | 用户方法 | 输出与核心操作 |
-| --- | --- | --- |
-| A | student_components | 创建上游模型并放到device；AdamW；CosineAnnealingLR；返回三者 |
-| B | student_loaders | 用已分好的groups创建训练/验证DataLoader；训练shuffle，验证不shuffle |
-| C | student_forward | model(z_t,a_t)；调用原上游loss_fn；返回pred及三个标量Tensor |
-| D | student_update | backward；到累积边界才裁剪、step、zero_grad；返回grad_norm或None |
+| 顺序 | 用户方法           | 输出与核心操作                                                      |
+| ---- | ------------------ | ------------------------------------------------------------------- |
+| A    | student_components | 创建上游模型并放到device；AdamW；CosineAnnealingLR；返回三者        |
+| B    | student_loaders    | 用已分好的groups创建训练/验证DataLoader；训练shuffle，验证不shuffle |
+| C    | student_forward    | model(z_t,a_t)；调用原上游loss_fn；返回pred及三个标量Tensor         |
+| D    | student_update     | backward；到累积边界才裁剪、step、zero_grad；返回grad_norm或None    |
 
 每个方法已列出输入、返回、可用接口和限制。先写A，不要求从零写整个平台，也不要求一次补齐4处。写完一处请审查，再进入下一处。
 上游MLP/Dataset/损失仍是正式数学实现；这次学习的是把它们组装成实际训练流程，不是再次重写算法。
@@ -98,7 +98,153 @@ pilot约82.5万参数；paper-width在当前D=960/A=7下为38,052,800参数，�
 现有3条→完整单任务44条/6867帧→预算内约200–400条多任务是工程阶段目标，后两阶段未下载完成，不是论文已验证数据量。
 全量特征估算约31.38GiB，超过15GB Drive，需分组或扩容。详细原论文核对和既有命令保留在下方11-07历史。
 
+### 2026-11-08补充：真实特征取回、本地训练和划分口径
+
+已通过Google Drive插件下载原27个文件，合计58,159,190字节，三条COMPLETE逐文件SHA全部通过。位置`outputs/corrector_local/features/episode_{813,818,825}`。不重新提取视觉，不下载模型权重；数据留在Git忽略的outputs。
+
+用户已正确完成student_components；实际接收上游SiglipResidualMLP类和SiglipMLPConfig dataclass对象。已核对模型参数与优化器参数对应，学习率数值检查通过。随后用户也完成student_loaders；真实batch验证z_t=[2,128,960]、a_t=[2,7]、delta_z=[2,128,960]，训练/验证DataLoader可用。C/D仍在实现，不替用户补全。
+
+划分现支持两个显式选项，不再强制只有episode模式：
+
+| 参数 | 方式 | 本次k=10样本数 | 结论边界 |
+| --- | --- | --- | --- |
+| --split-mode upstream-random（默认） | 汇总442对，再按seed42、val_ratio=0.1调用random_split | train398 / validation44 | 三条episode在两集合均出现；对齐基础源码口径，不是独立轨迹泛化 |
+| --split-mode episode | 沿用metadata中的813/818训练、825验证 | train299 / validation143 | 独立episode验证，作为后续对照 |
+
+不是“论文只随机打乱、我们才按轨迹”。固定上游基础train.py按样本random_split；论文v2附录C.1的数据规模研究另说明按episode先固定训练/验证/测试。两者应分别标注，不能笼统声称同一协议。
+模式、实际样本数、共享episode、索引哈希写入protocol，split_indices.npz保存索引。原缓存metadata不改；random模式会将825的部分样本用于训练，之后不能再把该模型在825上的结果称为未见轨迹测试。
+
+已经显式用reference路径在真实缓存上完成CPU pilot：825,024参数、3epoch、batch2、k10、cosine目标、lr3e-4、weight_decay1e-4，共597次更新。三个epoch约3.88/3.60/3.46秒（具体以history.json为准，不含全部启动/校验/保存时间）。
+初始验证cosine loss=0.999588，最佳=0.479206；MSE由11.461806到10.025979，零变化MSE=11.063226。最佳权重严格重载和指标复算通过。
+**这是样本随机划分下的真实训练链路验证，不是未见轨迹泛化、论文完整复现或机器人成功率提升；也不是用户尚未实现的B/C/D已完成。**
+
+结果：`outputs/corrector_local/reference_upstream_cpu_001/`，含日志、配置、划分索引、CSV、history、latest、best_model、result和learning_curves.png；保存了与protocol哈希一致的training_entry_used.py供审计。该快照不是独立部署包。
+
+新的本地参考运行（用002避免覆盖已完成001）：
+
+```bash
+"$HOME/ws_lerobot/.venv/bin/python" scripts/corrector_train.py fit \
+  --features outputs/corrector_local/features \
+  --source-root outputs/source_audit/vla-corrector \
+  --output outputs/corrector_local/reference_upstream_cpu_002 \
+  --device cpu --profile pilot --implementation reference \
+  --split-mode upstream-random --val-ratio 0.1 \
+  --k-step 10 --epochs 3 --batch-size 2 --cpu-threads 2
+```
+
+检查输入可把fit换成inspect。B/C/D完成后改成implementation student并换新output，才会真实调用用户四步；不会自动替换或补全。
+调用顺序为main解析参数→上游接口与缓存校验→select_split→模型/优化器/调度器→DataLoader→训练前向/反向→验证→scheduler.step→保存/最佳重载。原算法结构和损失直接复用，外围并非逐行原训练器：有不同的缓存布局、可恢复随机数、SHA与日志等工程适配；不声称数值训练轨迹与上游完全逐位一致。
+
+概念补充：model_cls是类对象，不是已创建模型；cfg为SiglipMLPConfig对象（如token_dim=960、action_dim=7、action_embed_dim=256、scale=CUSTOM、custom_widths=(256,256)），用cfg.token_dim访问。model_cls(cfg)调用构造函数得到模型。
+AdamW的weight_decay单独按1-lr*weight_decay缩小参与更新的参数，不把该项加入动量；当前并未对bias/LayerNorm免衰减。scheduler只调整优化器lr，当前每epoch结束调用一次，所以T_max=epochs；eta_min=.01*lr=3e-6。
+3epoch时实际使用lr依次为3e-4、2.2575e-4、7.725e-5；最后一次step得到3e-6，若训练结束则该值尚未用于下一轮更新。
+
+### 2026-11-08补充：四步审查完成、上游差异与CPU预算
+
+用户完成A～D。审查修复student_forward中视觉/动作输入颠倒，保留其更新顺序；DataLoader显式num_workers=0。注释中的疑惑已补说明：
+
+- groups为已分好的Dataset字典，generator只控制采样随机状态；DataLoader负责取样并组成batch。
+- backward向已有.grad相加，不覆盖；should_step=False故意保留本累积组梯度。
+- 外围只在epoch开始清一次，更新后zero_grad负责隔开累积组，不是每次调用前都会清。
+- clip_grad_norm_按全部参数梯度的总L2范数做上限裁剪，返回裁剪前范数；1.是1.0，1也可，末尾下划线代表原地修改梯度。
+
+等权微批次两次反向各取一半loss，则累积得到(g1+g2)/2；组内不清，step后清。多次反向得到“新梯度”不等于旧梯度自动消失。
+小构造检查覆盖未更新时梯度保留、更新时裁剪/step/清空，以及同配置student/reference最终权重一致。
+
+已执行用户student路径真实训练，目录`outputs/corrector_local/student_upstream_cpu_001`，3epoch/597更新/825024参数，最终权重与之前reference_upstream_cpu_001逐位相同；best重载验证通过。不是拿测试替身冒充用户函数，运行协议明确implementation=student。
+
+| 测量项 | 实际结果 |
+| --- | ---: |
+| 之前reference三轮训练+验证 | 10.94秒 |
+| 本次student三轮训练+验证 | 10.07秒 |
+| 本次student完整命令（含启动/校验/保存/重载） | 12.68秒 |
+| 本次进程峰值RSS | 408244KiB，约398.68MiB |
+| 线程/批次 | 2线程，batch2 |
+
+resource_usage.txt为GNU time原记录，review_evidence.json记录解释；RSS是进程峰值，非整机新增占用或大模型容量保证。当前本机可用内存约3.5GiB是瞬时观察。训练不加载完整VLA。
+
+对照的是固定上游927a06d的`src/siglip_dynamics/train.py`，核对其build_arg_parser→_build_config→train，而非仅看TrainConfig dataclass默认值：
+
+| 项目 | 上游基础CLI | 本项目当前CPU运行 | 影响 |
+| --- | --- | --- | --- |
+| 模型、反量化/时序配对、损失公式 | SiglipResidualMLP/Dataset/_combined_loss | 直接加载相同上游代码 | 计算定义相同 |
+| AdamW / LR / decay /裁剪/调度 | 3e-4 / 1e-4 / 1.0 /cosine到1% | 相同 | 规则相同 |
+| 默认结构 | scale=20m，四块2048 | pilot，两块256 | 模型容量有实质差异，不能称论文规模 |
+| epoch / batch / loss | 150 / 8 / both | 3 / 2 / cosine | 更新预算与目标有实质差异；是管线实践配置 |
+| 数据划分 | 样本random_split，val_ratio=.1 | upstream-random复用相同索引规则；episode可选 | 同一数据顺序/seed时划分一致；不同模式须分开报告 |
+| shuffle随机数 | DataLoader用默认全局随机状态 | 独立Generator并保存恢复 | 不保证与上游全脚本每个batch/权重逐位一致 |
+| 梯度更新 | 每batch更新 | accumulate=1时相同；大于1可累积 | 开启累积会改变有效batch和更新次数 |
+| checkpoint | 按目标选best，额外best_mse/best_cosine | 按所选目标导出best，加optimizer/scheduler/RNG完整续训 | 额外选模文件与恢复功能不同；当前cosine目标的best规则对齐 |
+| 记录/并行 | W&B，支持DDP/DP | 本地JSON/CSV/日志，单设备 | 工程适配；不能说完整上游训练器已执行 |
+
+结论：同一输入、模型和超参数下，核心MLP监督训练没有另设算法；当前运行与上游默认/论文规模并不相同，不能说没有任何差异。原始图像提取与动作归一化的版本适配也保留在metadata，未声称完整论文数据协议已复现。
+
+本地适合继续pilot、超参数/损失小对照和样本扩大后的少量epoch。扩大数据先保留小模型、num_workers=0，以1epoch实测时间和RSS；内存映射不会预先把全量特征反量化进RAM，但页缓存和batch Tensor仍占内存。约38M模型、长训练、视觉重提取与仿真评测优先Colab/T4；不把当前399MiB外推过去。
+
+下一次自己启动student运行，使用新输出编号避免覆盖已完成001：
+
+```bash
+"$HOME/ws_lerobot/.venv/bin/python" scripts/corrector_train.py fit \
+  --features outputs/corrector_local/features \
+  --source-root outputs/source_audit/vla-corrector \
+  --output outputs/corrector_local/student_upstream_cpu_002 \
+  --device cpu --profile pilot --implementation student \
+  --split-mode upstream-random --val-ratio 0.1 \
+  --k-step 10 --epochs 3 --batch-size 2 --cpu-threads 2
+```
+
+### 2026-11-08补充：论文宽度训练、真实梯度与预测功能评估
+
+已用上游四块2048宽模型（38,052,800参数）完成一个完整CPU epoch。配置总30epoch，本次--stop-after-epoch 1；保存可续训latest。不是把一个epoch称为完成论文训练预算。
+运行：`outputs/corrector_local/paper_width_episode_cpu_001`，student路径，episode划分（813/818训练299对、825验证143对），batch1/2线程、k10、cosine目标。
+训练+验证140.75秒，完整命令164.91秒（2分44.91秒），进程峰值RSS约1272.32MiB（1.24GiB），最佳权重重载通过。产物约0.73GiB，当前工作盘余量约3.9GB；不自动并行启动第二个大模型或跑完整30epoch。
+
+单独梯度探测位于`paper_width_probe_20261108/gradient_trace.json`，用新初始化相同38M结构、真实episode813帧0→10、BOTH目标，未保存为训练模型：
+- 32个Parameter Tensor合计38,052,800个标量参数。action_proj.weight和其grad均为[256,7]，bias均为[256]，out_proj.weight及其grad均为[960,2048]。
+- 全局梯度范数/函数返回值均5.4603858，所有梯度统一乘约0.1831372，之后全局范数约0.9999974。浮点误差下接近上限1，并非每层各自归一化到1。
+- grad_norm是0维标量Tensor，不是梯度矩阵副本；函数完成原地缩放后返回已算好的裁剪前范数。单个数学权重的梯度在矩阵相应坐标；只有一个scalar Parameter时也可裁剪，其L2范数为梯度绝对值。
+
+预测报告入口`scripts/corrector_prediction_report.py`读取原冻结验证索引，校验数据/源码与checkpoint，只从训练样本计算均值残差基线。第一幅例子固定取首个验证样本，不挑最优。
+报告目录为运行下的`prediction_report/`：summary.json、per_pair.csv、first_pair.npz、latent_prediction.png和real_observations.png。后者是记录的真实前后图像，不是解码生成的未来图。
+
+| 指标 | 143对独立episode验证样本均值 |
+| --- | ---: |
+| 模型残差余弦相似度 | 0.522144 |
+| 训练集均值残差基线余弦 | 0.119931 |
+| 模型MSE | 8.283773 |
+| 零变化基线MSE | 10.634333 |
+| 训练集均值基线MSE | 10.468400 |
+| 模型预测范数 / 目标范数的各自均值 | 332.15 / 1124.88 |
+
+图中有一定方向一致性，但预测幅度偏小；cosine目标不直接约束幅度，不由这些回归指标推断任务成功率或LVM检出率。仅一条验证轨迹，仍是同任务开发验证，不是正式盲测或相机偏移泛化结论。
+
+参数追踪：命令行--source-root被argparse转换为args.source_root，run→reference_api→ensure_source及src/siglip_dynamics各模块。--val-ratio转换为args.val_ratio，run→select_split→int(n*val_ratio)；只有episode模式沿用metadata并忽略其比例。默认upstream-random/.1时442对变398/44，不能从原meta的三轨迹标签推断实际划分。
+--profile paper-width将隐藏块改为[2048]*4，输入视觉D仍960、输出D仍960、动作7维；只对齐结构，不自动改变数据、batch、loss或训练预算。
+
+继续CPU完整训练需保留同协议、加--resume并去掉--stop-after-epoch 1（或设0）；重新选择预算/协议则换目录。当前71项CPU基础/回归检查通过，新增报告检查验证索引与训练集均值基线，不把在线练习占位计为算法已通过。
+
 ## 任务3：闭环基线、失败诊断与后续在线Corrector
+
+### 2026-11-08：LVM与OGG开始学习和准备接入
+
+不等待全量训练数据才开始在线机制学习。先用已保存的38M预测器学习误差计算与输入梯度，同时逐步扩展训练数据/预算。
+三个核心空位在`corrector/online_practice.py`，不由助手代写答案：
+1. visual_mismatch：当前到期真实变化与期望变化的逐样本1-cos；需在t+k观测到达才比较。
+2. robust_limits：median/MAD高低阈值。只是阈值公式练习；正式状态机还要对齐上游EWMA、bootstrap、持续超限、冷却与重触发逻辑，不冒充整个LVM。
+3. guided_velocity：使用冻结Torch预测器，候选动作从x_tau-tau*v得到，以目标纠偏变化为条件计算速度梯度。冻结参数仍允许输入动作梯度；不能用返回NumPy/no_grad的predict_delta_z路径替代。
+
+调用检查：`python scripts/check_corrector_practice.py --stage mismatch`，或threshold/guidance；--stage online依次检查三个。未完成明确返回待用户实现/退出码2，不是环境错误。--stage all仍仅检查已完成的离线五项，不重复卡住旧练习。
+
+实际源码入口：LVM在上游lerobot_eval_modified_detection.py的RobustThresholdState/robust_threshold_step及到期队列；OGG在smolvla_modified/modeling_smolvla_modified.py的sample_actions引导分支。guidance_injector.py不是当前SmolVLA分支的主要实际调用入口。
+先理解输入输出和写短核心，再由助手补到期队列/状态机调用、日志和0.6.1适配。正式监控必须对齐10Hz训练k10=1秒与20Hz在线时间；保持动作标准化、相机顺序与视觉版本一致。
+
+### 2026-11-08补充：物理预测跨度与在线步数
+
+固定k训练的MLP只接收z_t和a_t，没有接收k、FPS或时间跨度。当前监督目标为z_(t+1秒)-z_t；将监控等待步数改为20Hz下的10步，不会自动把模型变成0.5秒预测器。较短跨度对重新训练的模型可能更容易，但不能据此直接复用1秒模型并声称其输出就是0.5秒变化。
+最低改动方案：保留10Hz/k10模型，在线20Hz时将到期比较设在20个控制步之后；依据仿真控制步/观测时间戳，不依据GPU墙钟耗时。另一方案：复用已有逐帧特征，以10Hz/k5重新构造0.5秒目标、重新训练，再在20Hz下10步到期比较。不通过简单乘0.5或复制/插值帧声称完成时间语义适配。
+对齐物理跨度是使预测与实际变化可比较的必要协议核对，不是充分保证：后续动作序列、相机、状态分布、控制器和动作尺度仍需检查。当前预测器只输入a_t，未显式输入未来全部动作，仍可能受控制策略和采样频率的分布变化影响。上述两条方案尚未进行闭环验证，未修改现有训练权重或在线控制设置。
+
+在线对照按H50、H20、只监控、事件中止普通重规划、事件中止+OGG分开；冻结同一VLA/物理初始状态/seed，保存成功率分母、调用耗时、触发时间及视频。目前只有成功示范，不能报告失败检测召回率。GPU用于实际VLA+LIBERO运行，CPU先验证可微和状态接口。
 
 ### 2026-11-08：已有证据与未完成项
 
@@ -128,9 +274,9 @@ Notebook只是启动器，实际训练仍是独立.py进程；以后租用服务
 
 ## 下一次工作的最短路径
 
-1. 用户先完成任务A，助手审查；不要求默写其他训练流程。
-2. 将已保存的features取回本机，运行CPU inspect确认299/143样本对；不重提视觉特征。
-3. 完成其余训练步骤并检查后，CPU pilot真实训练3epoch；后续T4仅做更大模型/数据与闭环评测。
+1. 用户A～D已通过；下一步先实现visual_mismatch并读真实验证误差曲线，再推进状态机和OGG。
+2. features已在本机；inspect中upstream-random为398/44，episode为299/143；不重提视觉特征。
+3. reference与student真实CPU三轮都完成；小规模实验本地跑，大模型/数据与闭环评测安排T4。
 
 以下为合并的11-07历史，保留当时已完成/待完成状态；与当前状态不同时以上方11-08为准。
 
@@ -416,10 +562,10 @@ CPU回归验证覆盖选择分支和隔离目标；本地没有执行CUDA wheel�
 
 通过Hub API固定SHA清单与info.json核对，不凭网页显示的“行数”推断训练帧数：
 
-| 数据集 | 固定revision | 轨迹/帧数 | FPS | 全部文件字节数 | 视觉存储 |
-| --- | --- | --- | ---: | ---: | --- |
-| HuggingFaceVLA/libero | 86958911c0f959db2bbbdb107eb3e17c5f9c798e | 1693 / 273465 | 10 | 34926157548，约32.528GiB | PNG字节在Parquet中 |
-| lerobot/libero_plus | f3f49f426d75030177b18778374005bc12ccd588 | 14347 / 2238036 | 20 | 15832116939，约14.745GiB | front/wrist双路AV1 MP4 |
+| 数据集                | 固定revision                             | 轨迹/帧数       | FPS |           全部文件字节数 | 视觉存储               |
+| --------------------- | ---------------------------------------- | --------------- | --: | -----------------------: | ---------------------- |
+| HuggingFaceVLA/libero | 86958911c0f959db2bbbdb107eb3e17c5f9c798e | 1693 / 273465   |  10 | 34926157548，约32.528GiB | PNG字节在Parquet中     |
+| lerobot/libero_plus   | f3f49f426d75030177b18778374005bc12ccd588 | 14347 / 2238036 |  20 | 15832116939，约14.745GiB | front/wrist双路AV1 MP4 |
 
 文件清单/元信息本地在outputs/corrector_env_fix_20261107/dataset_inventory，未下载全量训练分片/视频。
 用户确认Drive总容量15GB、已用约660MB，剩余约14.3GB；不启动全库下载。已按实际episode元信息列出当前完整单任务44条/6867帧范围，

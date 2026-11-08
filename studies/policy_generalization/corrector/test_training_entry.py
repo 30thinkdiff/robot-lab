@@ -38,13 +38,77 @@ def fake_cache(root):
 
 @unittest.skipUnless((SOURCE / ".git").exists(), "需要本地固定上游源码")
 class TrainingEntryTests(unittest.TestCase):
+    def test_user_update_accumulates_then_clips_steps_and_clears(self):
+        model = torch.nn.Linear(1, 1, bias=False).double()
+        with torch.no_grad():
+            model.weight.zero_()
+        optimizer = torch.optim.SGD(model.parameters(), lr=.1)
+        optimizer.zero_grad(set_to_none=True)
+        loss1 = .5 * (model.weight - 1).square().sum()
+        self.assertIsNone(runner.student_update(model, optimizer, loss1, False))
+        torch.testing.assert_close(model.weight.grad, torch.tensor([[-1.]], dtype=torch.float64))
+        self.assertEqual(model.weight.item(), 0.)
+        loss2 = .5 * (model.weight - 2).square().sum()
+        norm = runner.student_update(model, optimizer, loss2, True)
+        self.assertAlmostEqual(float(norm), 3.)  # 第二次backward累加到-3，不会覆盖成-2。
+        self.assertAlmostEqual(model.weight.item(), .1 * 3 / (3 + 1e-6))
+        self.assertIsNone(model.weight.grad)
+
+    def test_actual_user_training_matches_reference_on_identical_batches(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            fake_cache(root / 'features')
+            student, reference = self.args(root, 'student_actual'), self.args(root, 'reference_actual')
+            student.implementation = 'student'
+            for args in (student, reference):
+                args.output.mkdir()
+                runner.run(args)
+            a = torch.load(student.output / 'latest.pt', weights_only=True)
+            b = torch.load(reference.output / 'latest.pt', weights_only=True)
+            self.assertEqual(a['step'], b['step'])
+            self.assertEqual(a['scheduler'], b['scheduler'])
+            for name in a['state_dict']:
+                torch.testing.assert_close(a['state_dict'][name], b['state_dict'][name], atol=0, rtol=0)
+
+    def test_user_components_create_upstream_model_and_expected_scheduler(self):
+        config, _, cls, _, _ = runner.reference_api(SOURCE)
+        cfg = config.SiglipMLPConfig(token_dim=4, action_dim=7, action_embed_dim=3,
+                                   scale=config.ModelScale.CUSTOM, custom_widths=(8, 8))
+        model, optimizer, scheduler = runner.student_components(cls, cfg, 'cpu', 3e-4, 1e-4, 3)
+        self.assertIsInstance(model, cls)
+        self.assertIsInstance(optimizer, torch.optim.AdamW)
+        self.assertEqual({id(p) for group in optimizer.param_groups for p in group['params']},
+                         {id(p) for p in model.parameters()})
+        expected = [3e-4, 2.2575e-4, 7.725e-5, 3e-6]
+        self.assertAlmostEqual(scheduler.get_last_lr()[0], expected[0])
+        for value in expected[1:]:
+            optimizer.step(); scheduler.step()
+            self.assertAlmostEqual(scheduler.get_last_lr()[0], value)
+
     def args(self, root, name):
         from argparse import Namespace
         return Namespace(mode="fit", features=root / "features", source_root=SOURCE,
                          output=root / name, local_cache=root / "staged", device="cpu", profile="pilot",
                          k_step=1, epochs=3, patience=5, batch_size=2, accumulate=2, lr=3e-4,
                          weight_decay=1e-4, loss_type="both", beta=1., seed=42, cpu_threads=1,
-                         resume=False, stop_after_epoch=0, implementation="reference")
+                         resume=False, stop_after_epoch=0, implementation="reference",
+                         split_mode="episode", val_ratio=.1)
+
+    def test_split_modes_match_original_random_split_and_report_episode_overlap(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            fake_cache(root / "features")
+            _, dataset, _, _, _ = runner.reference_api(SOURCE)
+            source, _, _ = runner.datasets(root / "features", None, dataset, 1)
+            groups, info, indices = runner.select_split(source, "upstream-random", .25, 42)
+            expected = torch.randperm(12, generator=torch.Generator().manual_seed(42)).tolist()
+            self.assertEqual(indices["train"].tolist(), expected[:9])
+            self.assertEqual(indices["validation"].tolist(), expected[9:])
+            self.assertTrue(info["shared_episodes"])
+            groups, info, indices = runner.select_split(source, "episode", .25, 42)
+            self.assertEqual(info["shared_episodes"], [])
+            self.assertEqual(info["episodes"], {"train": [813], "validation": [825]})
+            self.assertEqual(len(groups["train"]), 6)
 
     def test_unfinished_student_tasks_do_not_fall_back_or_write_protocol(self):
         with tempfile.TemporaryDirectory() as tmp:

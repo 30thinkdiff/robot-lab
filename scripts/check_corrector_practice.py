@@ -17,7 +17,29 @@ from studies.policy_generalization.corrector.training_step import train_correcto
 
 def check(stage):
     torch.manual_seed(7)
-    if stage == "dataset":
+    if stage in {"mismatch", "threshold", "guidance"}:
+        from studies.policy_generalization.corrector.online_practice import visual_mismatch, robust_limits, guided_velocity
+        if stage == "mismatch":
+            predicted = torch.tensor([[[1., 0.]], [[1., 0.]]])
+            observed = torch.tensor([[[1., 0.]], [[-1., 0.]]])
+            torch.testing.assert_close(visual_mismatch(predicted, observed), torch.tensor([0., 2.]))
+        elif stage == "threshold":
+            on, off = robust_limits([0., .2, .4, .6], noise_floor=0.)
+            assert np.isclose(on, .9) and np.isclose(off, .7)
+        else:
+            model = VisualDynamicsMLP(CorrectorConfig(token_dim=4, action_dim=7, action_embed_dim=3, widths=(8, 8)))
+            model.eval().requires_grad_(False)
+            z, target = torch.randn(2, 3, 4), torch.randn(2, 3, 4)
+            x, velocity, t = torch.randn(2, 5, 10), torch.randn(2, 5, 10), torch.tensor([.5, .7])
+            with torch.no_grad():
+                result, loss = guided_velocity(model, z, x, velocity, t, target)
+            assert result.shape == velocity.shape and not result.requires_grad
+            assert isinstance(loss, float) and np.isfinite(loss)
+            assert (result[:, 0, :7] - velocity[:, 0, :7]).abs().sum() > 0
+            torch.testing.assert_close(result[:, 1:], velocity[:, 1:])
+            torch.testing.assert_close(result[:, 0, 7:], velocity[:, 0, 7:])
+            assert all(p.grad is None for p in model.parameters())
+    elif stage == "dataset":
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp)
             np.save(path / "z_q.npy", np.arange(32, dtype=np.int8).reshape(4, 2, 4))
@@ -73,9 +95,11 @@ def check(stage):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--stage", choices=["all", "dataset", "block", "model", "loss", "step"], default="all")
+    parser.add_argument("--stage", choices=["all", "online", "dataset", "block", "model", "loss", "step",
+                                            "mismatch", "threshold", "guidance"], default="all")
     args = parser.parse_args()
-    stages = ["dataset", "block", "model", "loss", "step"] if args.stage == "all" else [args.stage]
+    stages = (["dataset", "block", "model", "loss", "step"] if args.stage == "all" else
+              ["mismatch", "threshold", "guidance"] if args.stage == "online" else [args.stage])
     incomplete = False
     for stage in stages:
         try:

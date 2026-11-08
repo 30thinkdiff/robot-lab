@@ -2,8 +2,8 @@
 
 **2026-11-08：统一入口为[按任务与日期维护的工作日志](studies/policy_generalization/work_log.md)和[研究报告](studies/policy_generalization/research_report.md)。**
 
-已完成472帧双相机视觉缓存、原始LIBERO/H50两回合冒烟（2/2成功）、上游算法接入及CPU保存恢复检查。Corrector真实预测器训练及在线收益尚未验证。
-当前由用户填写训练脚本四个student_*核心步骤；环境、归档、日志和对照路径由助手辅助。学习重实现不冒充正式算法贡献。
+已完成472帧双相机视觉缓存、原始LIBERO/H50两回合冒烟（2/2成功）、上游算法接入及CPU保存恢复检查。CPU pilot完成三轮；上游约38M预测器完成一个完整epoch、独立episode验证、权重重载与预测可视化。尚无跨视角泛化或在线恢复收益证据。
+用户已完成四个student_*训练步骤，审查后真实CPU运行通过；环境、归档、日志和对照路径由助手辅助。学习重实现不冒充正式算法贡献。
 运行入口：[数据与训练Notebook](scripts/corrector_data_prepare.ipynb)、[命令行训练脚本](scripts/corrector_train.py)；本地.py变更后使用[sync工具](scripts/sync_corrector_notebook.py)刷新远程快照。
 
 以 LeRobot / SmolVLA 为基础，研究相机视角变化下的操作失败、动作执行窗口及计算成本。

@@ -17,6 +17,7 @@ SOURCES = {
     "BATCH_SOURCE": "studies/policy_generalization/corrector/batch_evaluation.py",
     "INVENTORY_SOURCE": "scripts/inspect_robot_datasets.py",
     "TRAIN_SOURCE": "scripts/corrector_train.py",
+    "PREDICTION_SOURCE": "scripts/corrector_prediction_report.py",
 }
 
 

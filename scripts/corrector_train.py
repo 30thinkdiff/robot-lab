@@ -1,4 +1,4 @@
-"""在固定上游MLP/Dataset/损失之上，接入逐轨迹划分、训练记录和epoch边界续训。
+"""固定上游MLP/Dataset/损失，显式选择源码样本随机划分或episode划分。
 
 不导入用户练习实现；不加载VLA或仿真。inspect只校验缓存；fit显式开始训练。
 """
@@ -7,6 +7,7 @@ from __future__ import annotations
 import argparse
 import ast
 import csv
+import hashlib
 from contextlib import contextmanager
 from dataclasses import asdict
 import importlib
@@ -23,7 +24,7 @@ import time
 import numpy as np
 import torch
 import torch.nn.functional as F
-from torch.utils.data import ConcatDataset, DataLoader
+from torch.utils.data import ConcatDataset, DataLoader, Subset, random_split
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import corrector_data_workbench as archive
@@ -35,16 +36,37 @@ def student_components(model_cls, cfg, device, lr, weight_decay, epochs):
     模型由上游model_cls(cfg)创建并to(device)；优化器只接收其parameters()。
     调度器T_max=epochs，eta_min=0.01*lr。不要在这里加载VLA。
     """
-    raise NotImplementedError("先完成任务A：模型、优化器和调度器")
+    model = model_cls(cfg).to(device)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+        optimizer=optimizer,
+        T_max=epochs,
+        eta_min=0.01 * lr)
+
+    return model, optimizer, scheduler
 
 
 def student_loaders(groups, batch_size, generator):
     """任务B：返回(train_loader, val_loader)，调用DataLoader。
 
-    groups的train/validation已经按轨迹分好；禁止重新random_split。
+    groups已按--split-mode分好；不要在DataLoader里再次random_split。
     训练shuffle=True并传generator；验证shuffle=False；两者num_workers=0。
     """
-    raise NotImplementedError("先完成任务B：训练与验证DataLoader")
+    # groups是{"train": Dataset, "validation": Dataset}，尚未组成batch。
+    # generator是有独立随机状态的torch.Generator，控制训练样本打乱顺序。
+    # DataLoader按batch_size取样，默认collate把同名Tensor沿新batch轴堆叠。
+    train_loader = DataLoader(
+        groups["train"],
+        batch_size=batch_size,
+        shuffle=True,
+        generator=generator,
+        num_workers=0)
+    val_loader = DataLoader(
+        groups["validation"],
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=0)
+    return train_loader, val_loader
 
 
 def student_forward(model, batch, loss_fn, loss_type, beta):
@@ -54,7 +76,13 @@ def student_forward(model, batch, loss_fn, loss_type, beta):
     loss_fn接收(pred,target,loss_type,beta)；不要item/detach，训练还要反向。
     验证也调用本方法；train/eval模式与no_grad由外围管理。
     """
-    raise NotImplementedError("先完成任务C：前向与监督目标")
+    z_t = batch["z_t"]
+    a_t = batch["a_t"]
+    delta_z = batch["delta_z"]
+
+    pred = model(z_t, a_t)  # 上游forward先接收[B,L,D]视觉，再接收[B,A]动作。
+    total, mse, cos = loss_fn(pred, delta_z, loss_type, beta)
+    return pred, total, mse, cos
 
 
 def student_update(model, optimizer, scaled_loss, should_step):
@@ -65,7 +93,17 @@ def student_update(model, optimizer, scaled_loss, should_step):
     optimizer.step()，optimizer.zero_grad(set_to_none=True)，返回grad_norm。
     不更新时保留已累积的梯度。初始清梯度由外围完成。
     """
-    raise NotImplementedError("先完成任务D：反向、裁剪、更新和清梯度")
+    scaled_loss.backward()
+    if should_step:
+        grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), 1., error_if_nonfinite=True)
+        # nn为神经网络子模块，utils是其工具子模块；1.等于1.0，写1也可。
+        # clip_grad_norm_原地缩放梯度的总范数（默认L2），返回裁剪前的范数。
+        optimizer.step()
+        # 外围只在epoch开始清一次；此处每个更新后清，防止下一累积组混入旧梯度。
+        optimizer.zero_grad(set_to_none=True)
+        return grad_norm
+    # backward默认向.grad相加；should_step=False时故意保留，供本组后续micro-batch累积。
+    return None
 
 
 def reference_components(model_cls, cfg, device, lr, weight_decay, epochs):
@@ -141,7 +179,7 @@ def reference_api(source_root):
 
 
 def datasets(root, local, dataset_cls, k_step):
-    """校验原归档，再复制到本会话盘并调用上游Dataset；绝不跨轨迹随机拆样本。"""
+    """校验原归档，逐episode调用上游Dataset；最终划分由select_split显式决定。"""
     groups, episodes, records, dimensions = {"train": [], "validation": []}, set(), [], set()
     for source in sorted(root.glob("episode_*")):
         if not archive.verified(source):
@@ -202,6 +240,37 @@ def datasets(root, local, dataset_cls, k_step):
     if len(dimensions) != 1 or any(not group for group in groups.values()):
         raise ValueError("需要同一特征/时间协议下的训练和独立验证轨迹")
     return {k: ConcatDataset(v) for k, v in groups.items()}, records, dimensions.pop()
+
+
+def select_split(groups, mode, val_ratio, seed):
+    """upstream-random复现基础train.py的样本random_split；episode沿用metadata。"""
+    if mode not in {"upstream-random", "episode"} or not 0 < val_ratio < 1:
+        raise ValueError("未知split-mode或val-ratio不在(0,1)")
+    source_split = {int(ds.ep_idx[0]): part for part, group in groups.items() for ds in group.datasets}
+    ordered = sorted((ds for group in groups.values() for ds in group.datasets), key=lambda ds: int(ds.ep_idx[0]))
+    all_ds = ConcatDataset(ordered)
+    episode_per_pair = np.concatenate([np.full(len(ds), int(ds.ep_idx[0]), dtype=np.int64) for ds in ordered])
+    if mode == "upstream-random":
+        n = len(all_ds)
+        if n < 2:
+            raise ValueError("至少两个时序样本才能随机拆分")
+        n_val = min(max(1, int(n * val_ratio)), n - 1)
+        train, validation = random_split(all_ds, [n - n_val, n_val], generator=torch.Generator().manual_seed(seed))
+        indices = {"train": np.asarray(train.indices, dtype=np.int64),
+                   "validation": np.asarray(validation.indices, dtype=np.int64)}
+        result = {"train": train, "validation": validation}
+    else:
+        indices = {part: np.flatnonzero(np.array([source_split[int(ep)] == part for ep in episode_per_pair]))
+                   for part in ("train", "validation")}
+        result = {part: Subset(all_ds, rows.tolist()) for part, rows in indices.items()}
+    episodes = {part: sorted(set(episode_per_pair[rows].tolist())) for part, rows in indices.items()}
+    info = {"mode": mode, "val_ratio": val_ratio if mode == "upstream-random" else None,
+            "sample_order_episodes": [int(ds.ep_idx[0]) for ds in ordered],
+            "samples": {part: len(rows) for part, rows in indices.items()}, "episodes": episodes,
+            "shared_episodes": sorted(set(episodes["train"]) & set(episodes["validation"])),
+            "index_sha256": {part: hashlib.sha256(rows.astype('<i8').tobytes()).hexdigest()
+                             for part, rows in indices.items()}}
+    return result, info, indices
 
 
 def atomic_save(path, payload):
@@ -291,6 +360,7 @@ def run(args):
     config, dataset_cls, model_cls, loss_fn, source_hashes = reference_api(args.source_root)
     groups, records, (tokens, dim, action_dim, fps) = datasets(
         args.features, args.local_cache if args.mode == "fit" else None, dataset_cls, args.k_step)
+    groups, split_info, split_indices = select_split(groups, args.split_mode, args.val_ratio, args.seed)
     widths = (256, 256) if args.profile == "pilot" else (2048, 2048, 2048, 2048)
     cfg = config.SiglipMLPConfig(token_dim=dim, action_dim=action_dim, action_embed_dim=256,
                                 scale=config.ModelScale.CUSTOM, custom_widths=widths)
@@ -301,7 +371,7 @@ def run(args):
                 "lr": args.lr, "weight_decay": args.weight_decay, "epochs": args.epochs,
                 "patience": args.patience, "seed": args.seed, "batch_size": args.batch_size,
                 "accumulate": args.accumulate, "precision": "float32", "implementation": args.implementation,
-                "training_entry_sha256": archive.digest(Path(__file__))}
+                "training_entry_sha256": archive.digest(Path(__file__)), "split": split_info}
     with torch.device("meta"):
         nparams = sum(p.numel() for p in model_cls(cfg).parameters())
     print(json.dumps({"frames": sum(r["frames"] for r in records),
@@ -321,6 +391,7 @@ def run(args):
         raise RuntimeError("找不到原训练协议，不能续训")
     else:
         archive.write_json(args.output / "protocol.json", protocol)
+        np.savez_compressed(args.output / "split_indices.npz", **split_indices)
         archive.write_json(args.output / "config.json", {
             "model": model_cfg, "model_type": "mlp", "h_window": 1, "k_step": args.k_step,
             "data_fps": fps, "prediction_seconds": args.k_step / fps})
@@ -408,6 +479,7 @@ def run(args):
         raise RuntimeError("最佳权重重载指标与训练记录不一致")
     archive.write_json(args.output / "result.json", {"best_validation": result, "epochs_completed": len(history),
                        "optimizer_steps": step, "parameters": nparams,
+                       "split": split_info, "implementation": args.implementation,
                        "peak_cuda_gib": torch.cuda.max_memory_allocated() / 2**30 if device.type == "cuda" else None,
                        "checkpoint_reload_verified": True, "scope": "offline predictor; no robot success-rate claim"})
 
@@ -423,6 +495,9 @@ def main():
     parser.add_argument("--profile", choices=["pilot", "paper-width"], default="pilot")
     parser.add_argument("--implementation", choices=["student", "reference"], default="student",
                         help="默认执行四个用户任务；reference是显式选择的已验证对照，不会自动回退")
+    parser.add_argument("--split-mode", choices=["upstream-random", "episode"], default="upstream-random",
+                        help="默认沿用基础源码的样本随机拆分；episode按归档metadata拆分，两者结论须区分")
+    parser.add_argument("--val-ratio", type=float, default=.1)
     parser.add_argument("--k-step", type=int, default=10)
     parser.add_argument("--epochs", type=int, default=30)
     parser.add_argument("--patience", type=int, default=5)
