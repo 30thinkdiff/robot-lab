@@ -2,11 +2,45 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
 from .batch_evaluation import make_plan, run_plan, set_recording_fps, summarize
 
 
 class BatchEvaluationTests(unittest.TestCase):
+    def test_budget_pauses_at_episode_boundary_and_resume_keeps_plan(self):
+        plan=make_plan(['a'],[1,2],{'H50':{'video_policy':'none'}},{})
+        clock=[0.];calls=[]
+        def callback(case,directory):
+            calls.append(case['id']);clock[0]+=2.
+            return {'success':True,'video_paths':[]}
+        with tempfile.TemporaryDirectory() as tmp,patch('studies.policy_generalization.corrector.batch_evaluation.time.perf_counter',side_effect=lambda:clock[0]):
+            root=Path(tmp)
+            first=run_plan(root,plan,{'H50':callback},max_seconds=1.)
+            self.assertEqual(first[0]['completed'],1)
+            self.assertEqual(json.loads((root/'execution.json').read_text())['reason'],'time_budget')
+            second=run_plan(root,plan,{'H50':callback},max_seconds=10.)
+            self.assertEqual(second[0]['completed'],2)
+            self.assertEqual(len(calls),2)
+            self.assertEqual(json.loads((root/'execution.json').read_text())['status'],'completed')
+
+    def test_stop_request_and_disk_floor_do_not_count_as_robot_failure(self):
+        from types import SimpleNamespace
+        plan=make_plan(['a'],[1],{'H50':{'video_policy':'none'}},{})
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);stop=root/'STOP';stop.touch()
+            callback=lambda *_: {'success':True,'video_paths':[]}
+            rows=run_plan(root,plan,{'H50':callback},stop_file=stop)
+            self.assertEqual(rows[0]['completed'],0)
+            self.assertEqual(rows[0]['errors'],0)
+            self.assertEqual(json.loads((root/'execution.json').read_text())['reason'],'operator_stop_file')
+            stop.unlink()
+            with patch('studies.policy_generalization.corrector.batch_evaluation.shutil.disk_usage',return_value=SimpleNamespace(free=1)):
+                rows=run_plan(root,plan,{'H50':callback},min_free_gib=1.)
+            self.assertEqual(rows[0]['completed'],0)
+            self.assertEqual(json.loads((root/'execution.json').read_text())['reason'],'disk_space')
+            self.assertEqual(run_plan(root,plan,{'H50':callback})[0]['completed'],1)
+
     def test_optional_video_policy_keeps_failure_evidence_requirement(self):
         for policy,success,allowed in [('none',False,True),('failures',True,True),('failures',False,False)]:
             plan=make_plan(['v'],[1],{'H50':{'video_policy':policy}},{})

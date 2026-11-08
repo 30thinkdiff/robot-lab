@@ -10,6 +10,7 @@ import time
 from contextlib import ExitStack
 import shutil
 import inspect
+import math
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 try:
@@ -56,7 +57,12 @@ def main():
     parser.add_argument('--audit-mode',choices=['all','failures','none'],default='all')
     parser.add_argument('--trace-mode',choices=['all','failures','none'],default='all')
     parser.add_argument('--save-event-tensors',action='store_true')
+    parser.add_argument('--max-wall-hours',type=float,default=0.,help='本次调用预算；仅在完整回合边界暂停，0不限时')
+    parser.add_argument('--min-free-gib',type=float,default=2.,help='新回合启动前的剩余磁盘下限')
+    parser.add_argument('--stop-file',type=Path,help='出现此文件后在回合边界暂停，删除后可同计划续跑')
     args = parser.parse_args()
+    if not all(math.isfinite(x) and x >= 0 for x in (args.max_wall_hours,args.min_free_gib)):
+        raise ValueError('时间预算及磁盘下限须为非负有限数')
     methods=args.methods or [f'H{args.action_steps}']
     uses_corrector=any(m in {'monitor','lvm','ogg'} for m in methods)
     if len(methods)!=len(set(methods)):raise ValueError('方法不可重复')
@@ -152,6 +158,7 @@ def main():
         from lerobot.utils.random_utils import set_seed
         if not holder:
             load_policy()  # 全部回合已完成时，不重新加载模型
+        torch.cuda.reset_peak_memory_stats()
         policy, pre, post = holder["policy"], holder["pre"], holder["post"]
         policy.config.n_action_steps=case['config']['n_action_steps'];policy.reset()
         if policy._queues['action'].maxlen!=case['config']['n_action_steps']:raise RuntimeError('实际队列容量错误')
@@ -237,11 +244,13 @@ def main():
                     'monitor_s':runtime.monitor_s if runtime else 0.,
                     "event_replans": runtime.events if runtime else 0,
                     'guidance_calls':runtime.guidance_calls if runtime else 0,
+                    'peak_torch_allocated_gib':torch.cuda.max_memory_allocated()/2**30,
                     "video_paths": retained, "initial_state_id": chosen["initial_state_id"]}
         finally:
             env.close()
     print(f"冻结计划：{len(plan['cases'])}回合；任务{args.task_ids}，真实初始状态{args.initial_state_ids}，seed{args.seeds}", flush=True)
-    rows = run_plan(args.output, plan, {m: run_case for m in methods})
+    rows = run_plan(args.output, plan, {m: run_case for m in methods},
+                    max_seconds=args.max_wall_hours*3600,min_free_gib=args.min_free_gib,stop_file=args.stop_file)
     print(rows)
 
 

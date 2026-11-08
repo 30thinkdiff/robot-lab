@@ -64,6 +64,58 @@ class AutoDLTests(unittest.TestCase):
             self.assertEqual(len(args.methods)*len(args.initial_state_ids)*len(args.seeds)*len(args.task_ids),50)
             self.assertEqual(batch[batch.index('--control-implementation')+1],'student')
 
+    def test_large_schedule_uses_real_initial_state_count_and_budget_only_in_batch(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            args=self.args(Path(tmp))
+            args.initial_state_count=50;args.seed_count=10;args.max_wall_hours=10.
+            self.assertEqual(runner.initial_states(args),list(range(50)))
+            self.assertEqual(runner.trial_seeds(args),list(range(1000,1010)))
+            batch,_=runner.evaluation_command(args,'batch')
+            self.assertEqual(batch[batch.index('--max-wall-hours')+1],'10.0')
+            smoke,_=runner.evaluation_command(args,'smoke')
+            self.assertNotIn('--max-wall-hours',smoke)
+            self.assertNotIn('--debug-force-step',batch)
+            self.assertEqual(len(runner.initial_states(args))*len(runner.trial_seeds(args))*len(args.methods),2500)
+            pilot,_=runner.evaluation_command(args,'pilot')
+            self.assertEqual(pilot[pilot.index('--initial-state-ids')+1:pilot.index('--seeds')],['0','1'])
+            self.assertEqual(pilot[pilot.index('--seeds')+1:pilot.index('--video-policy')],['1000'])
+            self.assertEqual(pilot[pilot.index('--max-wall-hours')+1],'0.0')
+
+    def test_night_runs_pilot_before_long_batch(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);calls=[]
+            def evaluate(args,mode,log):
+                calls.append(mode)
+                if mode=='pilot':
+                    _,out=runner.evaluation_command(args,mode);out.mkdir(parents=True)
+                    (out/'execution.json').write_text('{"status":"completed"}')
+            with patch.object(sys,'argv',['corrector_autodl.py','night','--workdir',str(root),'--output',str(root/'results')]), \
+                    patch.object(runner,'verify_bundle'),patch.object(runner,'check_checkpoint'), \
+                    patch.object(runner,'prepare'),patch.object(runner,'check_runtime'),patch.object(runner,'evaluate',side_effect=evaluate):
+                runner.main()
+            self.assertEqual(calls,['smoke','pilot','batch'])
+
+    def test_waiter_accepts_ready_markers_and_stops_if_latest_prepare_failed(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            args=self.args(Path(tmp));args.wait_ready_minutes=3.
+            args.workdir.mkdir()
+            prep=args.workdir/'logs/20261108T000000Z_prepare';prep.mkdir(parents=True)
+            (prep/'status.json').write_text('{"ok":false}')
+            with self.assertRaisesRegex(RuntimeError,'最新prepare已失败'):
+                runner.wait_for_environment(args,Mock())
+            (args.workdir/'environment.json').write_text(json.dumps({'profile':'gpu','lerobot_revision':runner.wb.LEROBOT_SHA}))
+            (args.workdir/'simulation.json').write_text('{"ready":true}')
+            for name in ['venv/bin/python','sim-venv/bin/python']:
+                p=args.workdir/name;p.parent.mkdir(parents=True);p.touch()
+            (prep/'status.json').write_text('{"ok":true}')
+            with patch.object(runner.time,'sleep') as sleep:
+                runner.wait_for_environment(args,Mock())
+                sleep.assert_not_called()
+            # 就绪文件已写但原prepare尚未返回，也必须等，避免两个阶段同时写环境。
+            (prep/'status.json').unlink();args.wait_ready_minutes=.1
+            with patch.object(runner.time,'monotonic',side_effect=[0.,7.]),self.assertRaises(TimeoutError):
+                runner.wait_for_environment(args,Mock())
+
     def test_smoke_requires_actual_guidance_correct_horizon_and_model(self):
         for guidance,horizon,sha in [(0,20,None),(4,10,None),(4,20,'wrong')]:
             with self.subTest(guidance=guidance,horizon=horizon),tempfile.TemporaryDirectory() as tmp:

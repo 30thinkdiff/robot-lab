@@ -5,7 +5,9 @@ import hashlib
 import html
 import json
 import os
+import math
 from pathlib import Path
+import shutil
 import time
 
 
@@ -71,13 +73,15 @@ def read_legacy_case(directory):
             "scope": "legacy fixed-window rollout; no Corrector used"}
 
 
-def run_plan(root, plan, callbacks):
+def run_plan(root, plan, callbacks, *, max_seconds=0., min_free_gib=0., stop_file=None):
     """callback(case, attempt_dir)→真实结果dict；每次只运行一回合并立即持久化。
 
     attempt_dir位于root下，建议root是已挂载Drive。callback将日志、MP4、输入审计直接写该目录。
     标准输出不捕获为success；必须明确返回bool并有非空视频。断连的running/error不算机器人失败。
     """
     root = Path(root).absolute()
+    if not all(math.isfinite(x) and x >= 0 for x in (max_seconds,min_free_gib)):
+        raise ValueError('时间预算与磁盘下限须为非负有限数；时间0为不限时')
     if str(root).startswith("/content/drive/") and not os.path.ismount("/content/drive"):
         raise RuntimeError("Drive未挂载，拒绝把本地目录当作持久化评测")
     unknown = {c["method"] for c in plan["cases"]} - set(callbacks)
@@ -90,6 +94,11 @@ def run_plan(root, plan, callbacks):
     if frozen.exists() and json.loads(frozen.read_text()) != plan:
         raise RuntimeError("已有冻结计划不同，请换实验目录；不覆盖已完成记录")
     write_json(frozen, plan)
+    began = time.perf_counter()
+    stop_file = Path(stop_file) if stop_file is not None else root/'STOP'
+    execution = {'status':'running','started_utc':datetime.now(timezone.utc).isoformat(),
+                 'max_seconds':max_seconds,'min_free_gib':min_free_gib,'stop_file':str(stop_file)}
+    write_json(root/'execution.json',execution)
     for case in plan["cases"]:
         status_file = root / "trials" / f"{case['id']}.json"
         old = json.loads(status_file.read_text()) if status_file.exists() else {}
@@ -99,6 +108,13 @@ def run_plan(root, plan, callbacks):
                 if not p.is_file() or hash_file(p) != artifact["sha256"]:
                     raise RuntimeError(f"已完成回合视频缺失或损坏：{p}")
             continue
+        reason = ('operator_stop_file' if stop_file.exists() else
+                  'time_budget' if max_seconds and time.perf_counter()-began >= max_seconds else
+                  'disk_space' if min_free_gib and shutil.disk_usage(root).free < min_free_gib*2**30 else None)
+        if reason:
+            execution.update(status='paused',reason=reason)
+            print(f'在回合边界暂停：{reason}；已完成结果保留，同计划可续跑。',flush=True)
+            break
         attempt = int(old.get("attempt", 0)) + 1
         directory = root / "attempts" / case["id"] / f"attempt_{attempt:03d}"
         directory.mkdir(parents=True, exist_ok=False)
@@ -129,11 +145,23 @@ def run_plan(root, plan, callbacks):
                           wall_s=time.perf_counter() - start)
             write_json(directory / "error.json", record)
             write_json(status_file, record)
+            execution.update(status='interrupted_or_error',reason=type(error).__name__,
+                             wall_seconds=time.perf_counter()-began)
+            write_json(root/'execution.json',execution)
             raise  # 先定位环境/程序错误，不把几十个错误自动跑完当性能评测
         finally:
             records = [json.loads(p.read_text()) for p in sorted((root / "trials").glob("*.json"))]
             summarize(records, root / "analysis", plan=plan)
+            execution.update(wall_seconds=time.perf_counter()-began,planned=len(plan['cases']),
+                             completed=sum(r['status']=='completed' for r in records),
+                             errors=sum(r['status']=='error' for r in records))
+            write_json(root/'execution.json',execution)
     records = [json.loads(p.read_text()) for p in sorted((root / "trials").glob("*.json"))]
+    if execution['status']=='running':execution.update(status='completed',reason='all_planned_trials_completed')
+    execution.update(wall_seconds=time.perf_counter()-began,
+                     planned=len(plan['cases']),completed=sum(r['status']=='completed' for r in records),
+                     errors=sum(r['status']=='error' for r in records))
+    write_json(root/'execution.json',execution)
     return summarize(records, root / "analysis", plan=plan)
 
 
@@ -188,10 +216,13 @@ def summarize(records, output, plan=None):
                  "success_rate": successes / completed if completed else None,
                  "completion_rate": completed / planned if planned else None}
         completed_records = [r["result"] for r in records if r["status"] == "completed" and r["case"]["method"] == method]
-        for metric in ["chunk_calls", "policy_s", "monitor_s", "event_replans", "guidance_calls"]:
+        for metric in ["env_steps", "chunk_calls", "policy_s", "monitor_s", "event_replans", "guidance_calls", "peak_torch_allocated_gib"]:
             values = [r[metric] for r in completed_records if type(r.get(metric)) in (int, float)]
             total[f"mean_{metric}"] = sum(values) / len(values) if values else None
             total[f"observed_{metric}_n"] = len(values)
+        times = [r['wall_s'] for r in records if r['status']=='completed' and r['case']['method']==method
+                 and type(r.get('wall_s')) in (int,float)]
+        total['mean_episode_wall_s'] = sum(times)/len(times) if times else None
         totals.append(total)
     write_json(output / "summary.json", {"groups": rows, "overall_by_method": totals,
                "note": "总体按成功数/完成数加权，不直接平均各组百分比；error/未完成不当作任务失败；非配对因果结论"})

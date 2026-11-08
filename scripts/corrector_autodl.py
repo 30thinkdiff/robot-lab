@@ -1,6 +1,6 @@
 """AutoDL命令行启动器：复用现有准备/评测实现，不依赖Colab或Google Drive挂载。
 
-prepare只准备依赖；night顺序执行准备→真实权重检查→强制事件检查→自然事件批次。
+prepare只准备依赖；night顺序执行准备→权重检查→强制事件检查→小批次→长批次。
 代码与结果放数据盘；在tmux中执行，已完成回合可按原计划恢复。
 """
 from __future__ import annotations
@@ -14,6 +14,7 @@ from pathlib import Path
 import socket
 import sys
 import traceback
+import time
 import zipfile
 
 import smolvla_training_workbench as wb
@@ -85,6 +86,33 @@ def check_checkpoint(args):
     return actual
 
 
+def wait_for_environment(args, log):
+    """只等待另一个prepare写入完整就绪标记；绝不并行启动第二个安装器。"""
+    deadline = time.monotonic() + args.wait_ready_minutes*60
+    while True:
+        prepares=sorted((args.workdir/'logs').glob('*_prepare'))
+        status_path=prepares[-1]/'status.json' if prepares else None
+        status=json.loads(status_path.read_text()) if status_path and status_path.is_file() else None
+        if status is not None and status.get('ok') is False:
+            raise RuntimeError(f'最新prepare已失败，停止等待：{prepares[-1]}；请先查看其日志')
+        try:
+            environment=json.loads((args.workdir/'environment.json').read_text())
+            simulation=json.loads((args.workdir/'simulation.json').read_text())
+        except (FileNotFoundError,json.JSONDecodeError):
+            environment=simulation={}
+        if (environment.get('profile')=='gpu' and environment.get('lerobot_revision')==wb.LEROBOT_SHA
+                and simulation.get('ready') is True
+                and (args.workdir/'venv/bin/python').is_file()
+                and (args.workdir/'sim-venv/bin/python').is_file()
+                and (not prepares or (status is not None and status.get('ok') is True))):
+            log.say('已检测到固定训练环境及仿真就绪；不再运行prepare，转入真实权重和单回合检查。')
+            return
+        if time.monotonic()>=deadline:
+            raise TimeoutError('等待环境就绪超时，未启动第二次安装；现有文件保留')
+        log.say('等待正在运行的prepare完成（30秒复查）；尚未加载GPU模型或开始评测。')
+        time.sleep(min(30,max(0,deadline-time.monotonic())))
+
+
 def prepare(args, log):
     if not (3, 12) <= sys.version_info[:2] < (3, 14):
         raise RuntimeError('请使用已创建的Python3.12 bootstrap环境运行本入口')
@@ -132,24 +160,45 @@ def check_runtime(args, log):
 
 def evaluation_command(args, mode):
     code = Path(__file__).resolve().parent
-    output = args.output / ('debug_ogg_001' if mode == 'smoke' else 'paired_001')
+    output = args.output / {'smoke':'debug_ogg_001','pilot':'pilot_001','batch':'paired_001'}[mode]
     command = [args.workdir / 'sim-venv/bin/python', code / 'corrector_closed_loop_eval.py',
                '--workdir', args.workdir, '--output', output, '--suite', args.suite,
                '--task-ids', *map(str, args.task_ids), '--corrector-checkpoint', args.checkpoint,
                '--source-root', args.source_root, '--control-implementation', 'student']
+    initials = initial_states(args)
+    seeds = trial_seeds(args)
+    if mode=='pilot':initials,seeds=initials[:2],seeds[:1]
     if mode == 'smoke':
         # 只选第一个任务，不让强制事件进入正式计划。
         start = command.index('--task-ids') + 1
         end = command.index('--corrector-checkpoint')
         command[start:end] = [str(args.task_ids[0])]
-        command += ['--methods', 'ogg', '--initial-state-ids', str(args.initial_state_ids[0]),
-                    '--seeds', str(args.seeds[0]), '--max-steps', '60', '--debug-force-step', '24',
+        command += ['--methods', 'ogg', '--initial-state-ids', str(initials[0]),
+                    '--seeds', str(seeds[0]), '--max-steps', '60', '--debug-force-step', '24',
                     '--video-policy', 'all', '--audit-mode', 'all']
     else:
-        command += ['--methods', *args.methods, '--initial-state-ids', *map(str,args.initial_state_ids),
-                    '--seeds', *map(str,args.seeds), '--video-policy', args.video_policy,
-                    '--audit-mode', 'failures', '--trace-mode', 'all']
+        command += ['--methods', *args.methods, '--initial-state-ids', *map(str,initials),
+                    '--seeds', *map(str,seeds), '--video-policy', args.video_policy,
+                    '--audit-mode', 'failures', '--trace-mode', 'all',
+                    '--max-wall-hours',str(args.max_wall_hours if mode=='batch' else 0.),'--min-free-gib',str(args.min_free_gib),
+                    '--stop-file',str(args.output/'STOP')]
     return command, output
+
+
+def initial_states(args):
+    count = getattr(args,'initial_state_count',None)
+    if count is not None:
+        if count < 1:raise ValueError('initial-state-count须为正数')
+        return list(range(count))
+    return args.initial_state_ids
+
+
+def trial_seeds(args):
+    count = getattr(args,'seed_count',None)
+    if count is not None:
+        if count < 1 or args.seed_start < 0:raise ValueError('seed-count须为正数，seed-start不能为负')
+        return list(range(args.seed_start,args.seed_start+count))
+    return args.seeds
 
 
 def verify_smoke(args):
@@ -182,7 +231,7 @@ def verify_smoke(args):
 def evaluate(args, mode, log):
     command, root = evaluation_command(args, mode)
     env = wb.runtime_env(args.workdir)
-    if mode == 'batch':
+    if mode in {'pilot','batch'}:
         verify_smoke(args)
         if args.offline_batch:
             # smoke已成功加载完整模型、分词器和场景；批次阶段不依赖本机代理长久在线。
@@ -196,7 +245,7 @@ def evaluate(args, mode, log):
 
 def parser():
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument('mode', choices=['prepare','check','smoke','batch','night','summary','diagnostics'])
+    p.add_argument('mode', choices=['prepare','check','smoke','batch','night','summary','diagnostics','plan'])
     p.add_argument('--workdir', type=Path, default=Path(__file__).resolve().parent)
     p.add_argument('--output', type=Path)
     p.add_argument('--source-root', type=Path)
@@ -204,13 +253,22 @@ def parser():
     p.add_argument('--checkpoint-sha256', default=BEST_SHA)
     p.add_argument('--suite', choices=['libero_object','libero_spatial','libero_goal','libero_10'], default='libero_object')
     p.add_argument('--task-ids', type=int, nargs='+', default=[0])
-    p.add_argument('--initial-state-ids', type=int, nargs='+', default=[0,1,2,3,4])
-    p.add_argument('--seeds', type=int, nargs='+', default=[1000,1001])
+    initials=p.add_mutually_exclusive_group()
+    initials.add_argument('--initial-state-ids', type=int, nargs='+', default=[0,1,2,3,4])
+    initials.add_argument('--initial-state-count',type=int,help='使用前N个真实初始化；与显式ids互斥')
+    seeds=p.add_mutually_exclusive_group()
+    seeds.add_argument('--seeds', type=int, nargs='+', default=[1000,1001])
+    seeds.add_argument('--seed-count',type=int,help='从seed-start起生成N个种子；与显式seeds互斥')
+    p.add_argument('--seed-start',type=int,default=1000)
     p.add_argument('--methods', nargs='+', choices=['H50','H20','monitor','lvm','ogg'],
                    default=['H50','H20','monitor','lvm','ogg'])
     p.add_argument('--video-policy', choices=['all','failures','none'], default='failures')
     p.add_argument('--offline-batch', action=argparse.BooleanOptionalAction, default=True)
     p.add_argument('--proxy-url', help='可选：只为本启动器及其子进程设置HTTP(S)代理，例如http://127.0.0.1:17890')
+    p.add_argument('--max-wall-hours',type=float,default=0.,help='仅正式评测的本次时间预算，回合边界暂停；0不限时')
+    p.add_argument('--min-free-gib',type=float,default=5.,help='正式回合开始前磁盘余量下限')
+    p.add_argument('--wait-ready-minutes',type=float,default=0.,
+                   help='night仅等待另一个prepare完成后接续工作，不再同时安装；0按正常night准备')
     return p
 
 
@@ -229,6 +287,19 @@ def main():
     args.source_root = (args.source_root or args.workdir / 'vla-corrector-reference').absolute()
     args.checkpoint = (args.checkpoint or args.workdir / 'checkpoints/best_model.pt').absolute()
     verify_bundle(Path(__file__).resolve().parent)
+    import math
+    if not all(math.isfinite(x) and x>=0 for x in (args.max_wall_hours,args.min_free_gib,args.wait_ready_minutes)):
+        raise ValueError('时间预算和磁盘下限须为非负有限数')
+    if args.wait_ready_minutes and args.mode!='night':
+        raise ValueError('--wait-ready-minutes只用于night接续当前prepare')
+    if args.mode=='plan':
+        print(json.dumps({'scope':'execution preview, not validated environment or results',
+                          'planned_trials':len(args.task_ids)*len(initial_states(args))*len(trial_seeds(args))*len(args.methods),
+                          'methods':args.methods,'initial_state_ids':initial_states(args),'seeds':trial_seeds(args),
+                          'max_wall_hours':args.max_wall_hours,'output':str(args.output),
+                          'stop_file':str(args.output/'STOP'),
+                          'note':'预算是上限；计划完成会结束，不循环凑时长。实际初始化在评测环境加载后核验。'},ensure_ascii=False,indent=2))
+        return
     if args.mode == 'diagnostics':
         diagnostics(args)
         return
@@ -243,23 +314,36 @@ def main():
     wb.write_json(log.directory / 'launch.json', {
         'mode':args.mode,'python':sys.executable,'workdir':str(args.workdir),'output':str(args.output),
         'checkpoint':str(args.checkpoint),'checkpoint_sha256':args.checkpoint_sha256,
-        'methods':args.methods,'task_ids':args.task_ids,'initial_state_ids':args.initial_state_ids,'seeds':args.seeds,
+        'methods':args.methods,'task_ids':args.task_ids,'initial_state_ids':initial_states(args),'seeds':trial_seeds(args),
         'proxy_configured':bool(os.environ.get('HTTPS_PROXY')),
         'scope':'original LIBERO adaptation; single-task development evaluation, not paper table reproduction'})
     try:
-        if args.mode in {'prepare','night'}:
+        if args.mode=='night' and args.wait_ready_minutes:
+            wait_for_environment(args,log)
+        elif args.mode in {'prepare','night'}:
             prepare(args,log)
         if args.mode in {'check','smoke','batch','night'}:
             check_runtime(args,log)
         if args.mode in {'smoke','night'}:
             evaluate(args,'smoke',log)
+        if args.mode=='night':
+            evaluate(args,'pilot',log)
+            _,pilot_root=evaluation_command(args,'pilot')
+            pilot=json.loads((pilot_root/'execution.json').read_text())
+            if pilot['status']!='completed':
+                wb.write_json(log.directory/'status.json',{'ok':True,'mode':'night','paused_phase':'pilot','execution':pilot})
+                log.say('小批次暂停，尚未启动长批次；解除暂停原因后续跑同一night计划。')
+                return
         if args.mode in {'batch','night'}:
             evaluate(args,'batch',log)
     except BaseException as error:
         log.say(traceback.format_exc())
         wb.write_json(log.directory/'status.json',{'ok':False,'type':type(error).__name__,'error':wb.redact(str(error))})
         raise
-    wb.write_json(log.directory/'status.json',{'ok':True,'mode':args.mode})
+    status={'ok':True,'mode':args.mode}
+    execution=args.output/'paired_001/execution.json'
+    if execution.is_file():status['batch_execution']=json.loads(execution.read_text())
+    wb.write_json(log.directory/'status.json',status)
 
 
 if __name__ == '__main__':
