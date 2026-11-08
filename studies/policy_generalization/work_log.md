@@ -5,12 +5,12 @@
 
 ## 当前状态
 
-| 主线     | 已完成                                                                | 当前阻塞或下一步                                       |
-| -------- | --------------------------------------------------------------------- | ------------------------------------------------------ |
-| 数据     | 3条示范/472帧原始归档与T4视觉提取，Drive SHA复查完整                  | 真实features已取回本机并校验；尚未扩大到44条 |
-| 算法理解 | 用户完成配对、模型、损失和单步更新练习，审查通过                      | 练习用于理解；正式训练调用上游数学实现                 |
-| 训练工程 | 上游算法接入、日志、独立验证、保存重载、epoch边界续训的对照路径已检验 | A～D及38M结构一轮已验证；LVM/OGG核心待用户实现      |
-| 闭环评测 | 原始LIBERO/H50新入口完成2回合，2/2成功                                | 50回合计划、在线Corrector尚未执行                      |
+| 主线     | 已完成                                                                | 当前阻塞或下一步                               |
+| -------- | --------------------------------------------------------------------- | ---------------------------------------------- |
+| 数据     | 3条示范/472帧原始归档与T4视觉提取，Drive SHA复查完整                  | 真实features已取回本机并校验；尚未扩大到44条   |
+| 算法理解 | 用户完成配对、模型、损失和单步更新练习，审查通过                      | 练习用于理解；正式训练调用上游数学实现         |
+| 训练工程 | 上游算法接入、日志、独立验证、保存重载、epoch边界续训的对照路径已检验 | A～D及38M结构一轮已验证；LVM/OGG核心待用户实现 |
+| 闭环评测 | 原始LIBERO/H50新入口完成2回合，2/2成功                                | 50回合计划、在线Corrector尚未执行              |
 
 ## 任务1：数据下载、特征提取与训练样本
 
@@ -106,10 +106,10 @@ pilot约82.5万参数；paper-width在当前D=960/A=7下为38,052,800参数，�
 
 划分现支持两个显式选项，不再强制只有episode模式：
 
-| 参数 | 方式 | 本次k=10样本数 | 结论边界 |
-| --- | --- | --- | --- |
-| --split-mode upstream-random（默认） | 汇总442对，再按seed42、val_ratio=0.1调用random_split | train398 / validation44 | 三条episode在两集合均出现；对齐基础源码口径，不是独立轨迹泛化 |
-| --split-mode episode | 沿用metadata中的813/818训练、825验证 | train299 / validation143 | 独立episode验证，作为后续对照 |
+| 参数                                 | 方式                                                 | 本次k=10样本数           | 结论边界                                                      |
+| ------------------------------------ | ---------------------------------------------------- | ------------------------ | ------------------------------------------------------------- |
+| --split-mode upstream-random（默认） | 汇总442对，再按seed42、val_ratio=0.1调用random_split | train398 / validation44  | 三条episode在两集合均出现；对齐基础源码口径，不是独立轨迹泛化 |
+| --split-mode episode                 | 沿用metadata中的813/818训练、825验证                 | train299 / validation143 | 独立episode验证，作为后续对照                                 |
 
 不是“论文只随机打乱、我们才按轨迹”。固定上游基础train.py按样本random_split；论文v2附录C.1的数据规模研究另说明按episode先固定训练/验证/测试。两者应分别标注，不能笼统声称同一协议。
 模式、实际样本数、共享episode、索引哈希写入protocol，split_indices.npz保存索引。原缓存metadata不改；random模式会将825的部分样本用于训练，之后不能再把该模型在825上的结果称为未见轨迹测试。
@@ -153,29 +153,29 @@ AdamW的weight_decay单独按1-lr*weight_decay缩小参与更新的参数，不�
 
 已执行用户student路径真实训练，目录`outputs/corrector_local/student_upstream_cpu_001`，3epoch/597更新/825024参数，最终权重与之前reference_upstream_cpu_001逐位相同；best重载验证通过。不是拿测试替身冒充用户函数，运行协议明确implementation=student。
 
-| 测量项 | 实际结果 |
-| --- | ---: |
-| 之前reference三轮训练+验证 | 10.94秒 |
-| 本次student三轮训练+验证 | 10.07秒 |
-| 本次student完整命令（含启动/校验/保存/重载） | 12.68秒 |
-| 本次进程峰值RSS | 408244KiB，约398.68MiB |
-| 线程/批次 | 2线程，batch2 |
+| 测量项                                       |               实际结果 |
+| -------------------------------------------- | ---------------------: |
+| 之前reference三轮训练+验证                   |                10.94秒 |
+| 本次student三轮训练+验证                     |                10.07秒 |
+| 本次student完整命令（含启动/校验/保存/重载） |                12.68秒 |
+| 本次进程峰值RSS                              | 408244KiB，约398.68MiB |
+| 线程/批次                                    |          2线程，batch2 |
 
 resource_usage.txt为GNU time原记录，review_evidence.json记录解释；RSS是进程峰值，非整机新增占用或大模型容量保证。当前本机可用内存约3.5GiB是瞬时观察。训练不加载完整VLA。
 
 对照的是固定上游927a06d的`src/siglip_dynamics/train.py`，核对其build_arg_parser→_build_config→train，而非仅看TrainConfig dataclass默认值：
 
-| 项目 | 上游基础CLI | 本项目当前CPU运行 | 影响 |
-| --- | --- | --- | --- |
-| 模型、反量化/时序配对、损失公式 | SiglipResidualMLP/Dataset/_combined_loss | 直接加载相同上游代码 | 计算定义相同 |
-| AdamW / LR / decay /裁剪/调度 | 3e-4 / 1e-4 / 1.0 /cosine到1% | 相同 | 规则相同 |
-| 默认结构 | scale=20m，四块2048 | pilot，两块256 | 模型容量有实质差异，不能称论文规模 |
-| epoch / batch / loss | 150 / 8 / both | 3 / 2 / cosine | 更新预算与目标有实质差异；是管线实践配置 |
-| 数据划分 | 样本random_split，val_ratio=.1 | upstream-random复用相同索引规则；episode可选 | 同一数据顺序/seed时划分一致；不同模式须分开报告 |
-| shuffle随机数 | DataLoader用默认全局随机状态 | 独立Generator并保存恢复 | 不保证与上游全脚本每个batch/权重逐位一致 |
-| 梯度更新 | 每batch更新 | accumulate=1时相同；大于1可累积 | 开启累积会改变有效batch和更新次数 |
-| checkpoint | 按目标选best，额外best_mse/best_cosine | 按所选目标导出best，加optimizer/scheduler/RNG完整续训 | 额外选模文件与恢复功能不同；当前cosine目标的best规则对齐 |
-| 记录/并行 | W&B，支持DDP/DP | 本地JSON/CSV/日志，单设备 | 工程适配；不能说完整上游训练器已执行 |
+| 项目                            | 上游基础CLI                              | 本项目当前CPU运行                                     | 影响                                                     |
+| ------------------------------- | ---------------------------------------- | ----------------------------------------------------- | -------------------------------------------------------- |
+| 模型、反量化/时序配对、损失公式 | SiglipResidualMLP/Dataset/_combined_loss | 直接加载相同上游代码                                  | 计算定义相同                                             |
+| AdamW / LR / decay /裁剪/调度   | 3e-4 / 1e-4 / 1.0 /cosine到1%            | 相同                                                  | 规则相同                                                 |
+| 默认结构                        | scale=20m，四块2048                      | pilot，两块256                                        | 模型容量有实质差异，不能称论文规模                       |
+| epoch / batch / loss            | 150 / 8 / both                           | 3 / 2 / cosine                                        | 更新预算与目标有实质差异；是管线实践配置                 |
+| 数据划分                        | 样本random_split，val_ratio=.1           | upstream-random复用相同索引规则；episode可选          | 同一数据顺序/seed时划分一致；不同模式须分开报告          |
+| shuffle随机数                   | DataLoader用默认全局随机状态             | 独立Generator并保存恢复                               | 不保证与上游全脚本每个batch/权重逐位一致                 |
+| 梯度更新                        | 每batch更新                              | accumulate=1时相同；大于1可累积                       | 开启累积会改变有效batch和更新次数                        |
+| checkpoint                      | 按目标选best，额外best_mse/best_cosine   | 按所选目标导出best，加optimizer/scheduler/RNG完整续训 | 额外选模文件与恢复功能不同；当前cosine目标的best规则对齐 |
+| 记录/并行                       | W&B，支持DDP/DP                          | 本地JSON/CSV/日志，单设备                             | 工程适配；不能说完整上游训练器已执行                     |
 
 结论：同一输入、模型和超参数下，核心MLP监督训练没有另设算法；当前运行与上游默认/论文规模并不相同，不能说没有任何差异。原始图像提取与动作归一化的版本适配也保留在metadata，未声称完整论文数据协议已复现。
 
@@ -200,6 +200,7 @@ resource_usage.txt为GNU time原记录，review_evidence.json记录解释；RSS�
 训练+验证140.75秒，完整命令164.91秒（2分44.91秒），进程峰值RSS约1272.32MiB（1.24GiB），最佳权重重载通过。产物约0.73GiB，当前工作盘余量约3.9GB；不自动并行启动第二个大模型或跑完整30epoch。
 
 单独梯度探测位于`paper_width_probe_20261108/gradient_trace.json`，用新初始化相同38M结构、真实episode813帧0→10、BOTH目标，未保存为训练模型：
+
 - 32个Parameter Tensor合计38,052,800个标量参数。action_proj.weight和其grad均为[256,7]，bias均为[256]，out_proj.weight及其grad均为[960,2048]。
 - 全局梯度范数/函数返回值均5.4603858，所有梯度统一乘约0.1831372，之后全局范数约0.9999974。浮点误差下接近上限1，并非每层各自归一化到1。
 - grad_norm是0维标量Tensor，不是梯度矩阵副本；函数完成原地缩放后返回已算好的裁剪前范数。单个数学权重的梯度在矩阵相应坐标；只有一个scalar Parameter时也可裁剪，其L2范数为梯度绝对值。
@@ -207,14 +208,14 @@ resource_usage.txt为GNU time原记录，review_evidence.json记录解释；RSS�
 预测报告入口`scripts/corrector_prediction_report.py`读取原冻结验证索引，校验数据/源码与checkpoint，只从训练样本计算均值残差基线。第一幅例子固定取首个验证样本，不挑最优。
 报告目录为运行下的`prediction_report/`：summary.json、per_pair.csv、first_pair.npz、latent_prediction.png和real_observations.png。后者是记录的真实前后图像，不是解码生成的未来图。
 
-| 指标 | 143对独立episode验证样本均值 |
-| --- | ---: |
-| 模型残差余弦相似度 | 0.522144 |
-| 训练集均值残差基线余弦 | 0.119931 |
-| 模型MSE | 8.283773 |
-| 零变化基线MSE | 10.634333 |
-| 训练集均值基线MSE | 10.468400 |
-| 模型预测范数 / 目标范数的各自均值 | 332.15 / 1124.88 |
+| 指标                              | 143对独立episode验证样本均值 |
+| --------------------------------- | ---------------------------: |
+| 模型残差余弦相似度                |                     0.522144 |
+| 训练集均值残差基线余弦            |                     0.119931 |
+| 模型MSE                           |                     8.283773 |
+| 零变化基线MSE                     |                    10.634333 |
+| 训练集均值基线MSE                 |                    10.468400 |
+| 模型预测范数 / 目标范数的各自均值 |             332.15 / 1124.88 |
 
 图中有一定方向一致性，但预测幅度偏小；cosine目标不直接约束幅度，不由这些回归指标推断任务成功率或LVM检出率。仅一条验证轨迹，仍是同任务开发验证，不是正式盲测或相机偏移泛化结论。
 
@@ -229,6 +230,7 @@ resource_usage.txt为GNU time原记录，review_evidence.json记录解释；RSS�
 
 不等待全量训练数据才开始在线机制学习。先用已保存的38M预测器学习误差计算与输入梯度，同时逐步扩展训练数据/预算。
 三个核心空位在`corrector/online_practice.py`，不由助手代写答案：
+
 1. visual_mismatch：当前到期真实变化与期望变化的逐样本1-cos；需在t+k观测到达才比较。
 2. robust_limits：median/MAD高低阈值。只是阈值公式练习；正式状态机还要对齐上游EWMA、bootstrap、持续超限、冷却与重触发逻辑，不冒充整个LVM。
 3. guided_velocity：使用冻结Torch预测器，候选动作从x_tau-tau*v得到，以目标纠偏变化为条件计算速度梯度。冻结参数仍允许输入动作梯度；不能用返回NumPy/no_grad的predict_delta_z路径替代。
