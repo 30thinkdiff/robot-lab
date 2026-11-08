@@ -5,6 +5,7 @@ import argparse
 import bisect
 import csv
 import json
+import shutil
 from pathlib import Path
 
 import numpy as np
@@ -16,7 +17,8 @@ def predict(args):
     import corrector_train as train
 
     torch.set_num_threads(2)
-    if not (args.run / "result.json").is_file():
+    selected = getattr(args, "checkpoint", None)
+    if selected is None and not (args.run / "result.json").is_file():
         raise RuntimeError("需要已完成并重载验证的训练运行；不读取正在写入的best权重")
     protocol = json.loads((args.run / "protocol.json").read_text())
     config, dataset_cls, model_cls, _, hashes = train.reference_api(args.source_root)
@@ -36,7 +38,14 @@ def predict(args):
     cfg["scale"] = config.ModelScale(cfg["scale"])
     cfg["custom_widths"] = tuple(cfg["custom_widths"])
     model = model_cls(config.SiglipMLPConfig(**cfg))
-    checkpoint = torch.load(args.run / "best_model.pt", map_location="cpu", weights_only=True)
+    checkpoint_path = selected if selected is not None else args.run / "best_model.pt"
+    checkpoint_sha = train.archive.digest(checkpoint_path)
+    previous = args.output / "summary.json"
+    if previous.exists() and json.loads(previous.read_text())["checkpoint_sha256"] != checkpoint_sha:
+        raise ValueError("报告目录已有另一份权重结果；为每个checkpoint指定独立output")
+    checkpoint = torch.load(checkpoint_path, map_location="cpu", weights_only=True)
+    if checkpoint.get("feature_protocol") != protocol or checkpoint.get("model_cfg") != protocol["model"]:
+        raise ValueError("checkpoint来源与本运行协议不一致")
     model.load_state_dict(checkpoint["state_dict"], strict=True)
     model.eval()
     # 均值基线只从训练样本估计，不用验证目标拟合基线。
@@ -75,7 +84,8 @@ def predict(args):
         writer.writeheader(); writer.writerows(rows)
     numeric = ("cosine", "mse", "zero_mse", "train_mean_mse", "train_mean_cosine", "pred_norm", "target_norm")
     summary = {"run": str(args.run), "parameters": sum(p.numel() for p in model.parameters()),
-               "checkpoint_sha256": train.archive.digest(args.run / "best_model.pt"),
+               "checkpoint_sha256": checkpoint_sha, "checkpoint": str(checkpoint_path),
+               "checkpoint_epoch": checkpoint.get("epoch"), "optimizer_step": checkpoint.get("step"),
                "split": split, "sample_count": len(rows),
                "metrics": {key: float(np.mean([r[key] for r in rows])) for key in numeric},
                "first_pair": {k: rows[0][k] for k in ("episode", "frame", "future_frame")},
@@ -96,6 +106,13 @@ def predict(args):
             row = next(r for r in images if r["frame_index"] == idx)
             for camera, key in enumerate(train.archive.IMAGE_KEYS, 1):
                 Image.open(io.BytesIO(row[key]["bytes"])).convert("RGB").save(args.output / f"real_{label}_camera{camera}.png")
+    else:
+        ep,t,future=(summary['first_pair'][k] for k in ('episode','frame','future_frame'))
+        references=[(args.features/f'episode_{ep}'/f'reference_camera{camera}_frame{frame:04d}.png',
+                     args.output/f'real_{label}_camera{camera}.png')
+                    for label,frame in [('t',t),('future',future)] for camera in (1,2)]
+        if all(src.is_file() for src,_ in references):
+            for src,dst in references:shutil.copy2(src,dst)
     print(json.dumps(summary, ensure_ascii=False, indent=2))
 
 
@@ -151,6 +168,7 @@ def main():
     parser.add_argument("--run", type=Path)
     parser.add_argument("--features", type=Path)
     parser.add_argument("--source-root", type=Path)
+    parser.add_argument("--checkpoint", type=Path, help="显式评估已发布的中间权重；省略时评估best_model.pt")
     parser.add_argument("--raw-root", type=Path)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()

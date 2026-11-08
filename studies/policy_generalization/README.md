@@ -2,7 +2,7 @@
 
 当前进展与行动安排统一见[工作日志](work_log.md)，按任务和日期维护；结论与证据见[研究报告](research_report.md)。
 
-2026-11-08：472帧真实双相机特征已归档；新原始LIBERO/H50基线2/2成功。用户四个student_*训练步骤已审查并真实运行。CPU pilot完成三轮；38,052,800参数的上游宽度模型完成1epoch、独立episode验证和预测可视化，尚无跨视角泛化或在线恢复收益。LVM/OGG三个核心练习已搭好接口，等待用户实现。
+2026-11-08：472帧真实双相机特征已归档；新原始LIBERO/H50基线2/2成功。用户四个student_*训练步骤已审查并真实运行。CPU pilot完成三轮；38,052,800参数的上游宽度模型完成1epoch、独立episode验证和预测可视化，尚无跨视角泛化或在线恢复收益。用户已完成LVM/OGG三核心并通过CPU审查及真实预测器输入梯度探测；中间快照与离线评估入口已准备，流式提取与单/批闭环入口已准备，仍待T4实际冒烟。
 
 - 运行入口：[数据与训练Notebook](../../scripts/corrector_data_prepare.ipynb)、[CPU/GPU命令行](../../scripts/corrector_train.py)。
 - 技术参考：[上游源码导读](corrector_source_walkthrough.md)、[算法核心练习与审查](corrector/practice.md)。

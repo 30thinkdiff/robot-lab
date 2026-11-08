@@ -5,12 +5,12 @@
 
 ## 当前状态
 
-| 主线     | 已完成                                                                | 当前阻塞或下一步                               |
-| -------- | --------------------------------------------------------------------- | ---------------------------------------------- |
-| 数据     | 3条示范/472帧原始归档与T4视觉提取，Drive SHA复查完整                  | 真实features已取回本机并校验；尚未扩大到44条   |
-| 算法理解 | 用户完成配对、模型、损失和单步更新练习，审查通过                      | 练习用于理解；正式训练调用上游数学实现         |
-| 训练工程 | 上游算法接入、日志、独立验证、保存重载、epoch边界续训的对照路径已检验 | A～D及38M结构一轮已验证；LVM/OGG核心待用户实现 |
-| 闭环评测 | 原始LIBERO/H50新入口完成2回合，2/2成功                                | 50回合计划、在线Corrector尚未执行              |
+| 主线     | 已完成                                                                | 当前阻塞或下一步                                  |
+| -------- | --------------------------------------------------------------------- | ------------------------------------------------- |
+| 数据     | 3条示范/472帧原始归档与T4视觉提取，Drive SHA复查完整                  | 44条物理清单已核验；T4流式提取与测速待执行        |
+| 算法理解 | 用户完成配对、模型、损失和单步更新练习，审查通过                      | 练习用于理解；正式训练调用上游数学实现            |
+| 训练工程 | 上游算法接入、日志、独立验证、保存重载、epoch边界续训的对照路径已检验 | 训练/在线核心已审查；完整评测适配已实现，待T4冒烟 |
+| 闭环评测 | 原始LIBERO/H50新入口完成2回合，2/2成功                                | 50回合计划、在线Corrector尚未执行                 |
 
 ## 任务1：数据下载、特征提取与训练样本
 
@@ -49,6 +49,8 @@ corrector_train.py
 视觉特征实测每帧[128,960]。raw和features均位于Drive的`robot-lab/experiments/corrector_data_pilot_20261107`下；昨天保存的Notebook显示各三条COMPLETE。GPU训练新单元格尚无执行输出，不能据数据完成推断模型已训练。
 
 ### 2026-11-08：本地CPU的可行范围
+
+本节以下为早期资源审计记录，不代表最新数据位置。2026-11-08后续T4输出已确认task24的44条、6867帧特征全部归档到Drive的corrector_stream_task24_001；本地也已完成38M预测器CPU训练。CPU完整视觉提取仍未实测。
 
 - 准备原始轨迹、构造样本、训练pilot、验证和保存恢复：可以在本地.py进程中完成。
 - 本地已有三轨迹raw，但没有云端真实features，也没有完整SmolVLA权重缓存。可用内存约4.5GiB、工作盘剩余约4.8GB是本次检查的瞬时值，不作为固定硬件容量。
@@ -224,6 +226,20 @@ resource_usage.txt为GNU time原记录，review_evidence.json记录解释；RSS�
 
 继续CPU完整训练需保留同协议、加--resume并去掉--stop-after-epoch 1（或设0）；重新选择预算/协议则换目录。当前71项CPU基础/回归检查通过，新增报告检查验证索引与训练集均值基线，不把在线练习占位计为算法已通过。
 
+### 2026-11-08补充：间歇T4训练、中间权重与分阶段评估
+
+采用训练与闭环评测串行进行的方案：训练期间每个epoch已记录独立验证；额外按固定epoch保存评估快照，之后选少量快照运行完整VLA/环境。避免频繁反复加载VLA，或训练器和VLA并存占用显存。
+
+corrector_train.py新增`--snapshot-every 5`：保存epoch0、5、10……和正常完成/早停的最后epoch；每份只含当前权重与配置、完整数据协议、epoch/step/验证指标，不含优化器。snapshots/index.json记录SHA。latest.pt继续每个完整epoch保存全训练状态，不把评估快照当作可完整续训状态。38M每份约145MiB；30epoch按5间隔约7份、约1GiB，另有latest/best。若只是stop-after-epoch主动暂停且未到间隔，则以latest续训，不承诺该epoch另有快照。
+
+预测报告新增`--checkpoint <run>/snapshots/epoch_0005.pt`，不再只能评估最终best；验证来源必须与run的冻结协议一致。每个checkpoint使用独立output，同目录已有不同权重结果会拒绝覆盖。中间权重可在尚未产生result.json时单独评估；绘图仍为离线latent指标，不算成功率。
+
+Notebook训练配置更新为T4 paper-width、episode划分、batch8×累积4（名义有效batch32）、30epoch、快照间隔5；CPU仍默认pilot。此batch不是论文512的数值复现。旧代码或协议已变，使用新的TRAIN_RUN；旧38M结果仍可离线分析，按旧快照代码续训才保持原协议，不强改哈希冒充续训。
+
+数据规模仍只有三轨迹472帧。完整单任务44条/6867帧只是已知候选清单，现data-workbench的CLI只允许三条pilot；下一阶段先在CPU核对剩余Parquet映射、固定episode训练/验证/保留测试清单并扩展入口，核对容量，再按episode提取至Drive。未完成这一步，不启动大预算T4训练，也不把单纯增加epoch称为扩大数据。
+
+比较预测能力时保留cosine、MSE、变化幅度与零/训练均值基线，所有快照复用相同独立验证轨迹。先选验证最佳与末期等最多两份作闭环开发对照，不对全部快照反复搜索成功率；最终保留任务/初始状态用于一次独立评测。
+
 ## 任务3：闭环基线、失败诊断与后续在线Corrector
 
 ### 2026-11-08：LVM与OGG开始学习和准备接入
@@ -248,11 +264,97 @@ resource_usage.txt为GNU time原记录，review_evidence.json记录解释；RSS�
 
 在线对照按H50、H20、只监控、事件中止普通重规划、事件中止+OGG分开；冻结同一VLA/物理初始状态/seed，保存成功率分母、调用耗时、触发时间及视频。目前只有成功示范，不能报告失败检测召回率。GPU用于实际VLA+LIBERO运行，CPU先验证可微和状态接口。
 
+### 2026-11-08补充：用户LVM/OGG三核心实现审查与实测
+
+用户已完成visual_mismatch、robust_limits和guided_velocity，原三个CPU调用检查通过。保留其主体，补充history显式NumPy数组/有限值检查、标量float返回，以及OGG预测器eval/参数冻结前置检查、inference_mode拒绝和形状/生成进度/非有限梯度检查。不静默改变调用者模型模式。
+
+冻结预测器参数不会切断其输入梯度；loss→预测残差→候选动作→v的计算图仍成立。enable_grad用于覆盖策略外层no_grad，不能用它覆盖inference_mode。detach切图但共享存储，clone另建数据副本；autograd.grad(loss,v)返回导数元组、不累加参数.grad，create_graph=False不建立高阶导数图。B=1时mean不改变值；OGG是候选动作预测与纠偏目标比较，不是LVM的到期观测比较。当前直接引导仅涉及第0个动作的有效维度。
+
+共44项Corrector CPU回归检查通过，新增有限差分检查确认速度梯度数值、第一动作以外的速度不变、输入及冻结权重不变、零生成时间梯度为零、快照保存恢复/独立评估/错误来源拒绝。构造张量用于数学与接口验证，不计作真实闭环收益。
+
+另用已训练38M真实权重与episode825第0帧执行输入梯度探测：v为[1,50,32]、tau=.5，监督目标仅为真实1秒变化（用于此离线探测，不在在线偷看未来）。eta=1时梯度范数0.00094882，损失0.36473912→0.36473823；预测器参数无.grad，后续动作未直接改变。eta=.01时变化低于float32稳定分辨率，未将其用作“引导有效”的在线证据；eta=1也不是已调定的闭环参数。
+
+时间跨度不是仅为实验规范：以真实episode825的143对帧，假定预测器完美输出实际1秒特征变化，却拿0.5秒实际变化比较，1-cos均值0.272011、范围0.071537～0.684922，第0帧0.229597；时间戳0/5/10帧为0/.5/1秒。只改比较跨度就引入分数，可能导致误触发或抬高自适应阈值。方向恒定的特殊情况下cosine可能相同，不能据此保证抓取/抬起等阶段切换也成立。
+
+原始证据：outputs/corrector_local/online_review_20261108/{time_horizon_mismatch,real_predictor_gradient_probe}.json。完整上游LVM状态机、到期队列、动作中止及0.6.1采样引导仍未接入；本轮没有完整VLA+LIBERO在线执行。
+
+接下来按两条线推进：CPU先扩展44轨迹数据清单/持久化，再对齐上游完整LVM和OGG适配；T4先一回合端到端冒烟，再提取更大缓存并训练。正式闭环按冻结VLA、同一初始化与seed对比H50、H20、LVM中止普通重规划、LVM+OGG；保留分母、失败视频、触发时间、调用与耗时。两项主指标为独立轨迹预测质量与完整任务成功率，辅以正常执行误触发和计算成本解释收益/代价。更准的离线预测不自动保证更高成功率。
+
 ### 2026-11-08：已有证据与未完成项
 
 默认原始LIBERO task0，真实初始状态0/1、seed1000、H50，两回合完成且成功，平均3次动作块生成。只是2/2冒烟，不是完整benchmark。
 早期Plus窗口实验已完成30回合；view_5/view_10是开发条件，不应重复作为未见测试。尚未训练在线Corrector或得到Corrector任务收益。
 先完成真实预测器训练和独立验证，再依次接入只监控、事件触发普通重规划、OGG；保留H50/H20对照及调用/耗时。视频由闭环评测产生，不是离线训练自动产生。
+
+### 2026-11-08 15:21任务：流式数据、三段测速与完整闭环入口
+
+用户剩约2.5–3小时，采用方案2的保守变体：原始物理Parquet只留Colab临时磁盘，按轨迹提取；完整训练特征每条立即写Drive、核对SHA并最后发布COMPLETE，之后清理本地原图。默认不将原始大分片复制到Drive；keep-raw显式可选。少量0/5/10帧双相机PNG随特征保存，原始文件清理后仍可解释首个预测例子，不能称生成的未来RGB。
+
+已在本机读取固定Hub版本的元信息与实际Parquet页脚，定位task24的44条/6867帧；元信息中episode813的file_index=37与实际file213不符，不能照元信息直接下载。公开冻结清单在corrector/task24_manifest.json，含真实候选分片、字节数及固定split；下载后仍逐帧验证episode/帧序/长度/任务/动作维度，页脚定位本身不等于全部原始帧已验证。
+35条训练5434帧（k10时5084对），9条验证1433帧（1343对）；此为开发集，没有另设预测器盲测集。所需物理分片总3,538,853,095字节（3.296GiB），估计量化数组846,000,666字节（0.788GiB），另有少量PNG/头部/来源信息；不是已完成全量下载或提取。
+
+新脚本corrector_stream_workbench.py支持plan/run/status；默认单任务44，可改任务列表和limit但须换archive。4GiB特征预算上限先限制范围。plan可直接使用预核验模板，省去T4网络扫描；也可现场扫描，页脚缓存逐次落Drive。run先跳过经SHA校验的特征，模型在同一命令只加载一次，在每条开始前临时下载并筛选原始数据。按max-new-episodes和minutes在轨迹边界停止；断连后仅未完成轨迹需重做，当前正在写入/同步的记录不能保证零损失。临时盘、主机RAM、GPU显存是不同资源，不把T4显存当下载空间。
+
+环境同步格若已在运行，完成后执行独立“仅同步最新代码”格，不重新安装环境；13份快照与来源清单统一由sync工具刷新。提取/训练子进程运行时不重写远程脚本。
+
+新Notebook“今日主线”1～4先运行：计划→3轨迹提取→38M一个epoch→capacity_estimate。清单范围与先跑3条的批次限制分开，扩大时不改变轨迹split。stream_report逐条保存下载字节/墙钟/是否缓存命中、提取与Drive发布耗时、模型准备耗时及代码SHA。train_speed保存完整命令耗时、实际更新数/验证指标；若子进程已完成而父格摘要丢失，仅恢复能确认的字段，墙钟记None不捏造。
+根据实测决定先完成44条，或另建多任务范围。时间估算仅作量级参考，另留30–40分钟闭环调试。完整提取与训练开关默认False；测速已确认后开启。训练结果留在stream scope下，与原pilot及speed_001独立；数据改变不能作为旧run续训。训练期间每完整epoch保存latest，快照间隔5；半个epoch可能重做。
+
+闭环新入口corrector_closed_loop_eval.py复用原基线脚本，支持H50/H20/monitor/lvm/ogg、task×真实init_state_id×seed。首版原始LIBERO，未接Plus视角。完整RobustThresholdState/step直接从固定上游源码加载；到期队列按训练prediction_seconds换算控制步，默认1秒→20步。当前使用PyTorch余弦eps处理零变化，不添加上游随机微噪声，作为明确适配差异。
+重要修复：0.6.1 eval_policy外层实际使用inference_mode；适配器在本实例select_action中临时退出inference_mode，VLA保持no_grad，必要输入克隆为正常Tensor，再由用户guided_velocity局部enable_grad。不会改安装包。已用构造策略检验外层inference_mode、到期清队列、强制OGG、梯度冻结和方法恢复；真实旧38M checkpoint也已通过CPU加载验证。
+
+控制决策两短空位留在corrector_online_runtime.py：student_should_interrupt、student_correction_target。默认显式reference可先连通，选student时未完成会在加载GPU模型前停止，不暗中回退。已有用户score/threshold/guidance练习保留；正式状态机复用上游，阈值练习不替代完整状态机。
+
+录像、审计输入与分数日志各自可选all/failures/none；事件特征Tensor显式开关。成功视频按规则删除前已验证，保留retention.json；失败视频索引、任务成功率/分母、pending/error、模型调用/耗时、监控耗时、事件次数与guidance_calls均落Drive。无视频模式需显式写入冻结计划，默认仍要求真实视频；中断/程序错误不算机器人失败。每回合独立原子状态和重试目录，已完成回合核对视频SHA后跳过。
+
+首个T4闭环测试：ogg单初始化、60控制步、强制第24步事件，检查guidance_calls>0与20步监控跨度，仅证明调用链，不能当性能。随后关掉强制事件、恢复完整时限，按H50/H20/monitor/lvm/ogg对相同初始化和seed成对比较。先2个初始化共10回合，耗时足够再扩大；自然触发为0也是需要记录的结果，不能强制触发后宣称性能改善。
+本轮54项Corrector CPU检查通过（含新增流式恢复、边界跨分片、无需网络模板、可选录像、完整适配构造调用检查）；没有在本机运行完整VLA+模拟器，也尚未远程验证新提取/闭环入口。
+
+### 2026-11-08：报告图直接显示与闭环评测入口确认
+
+用户无法直接看到云盘PNG；已在RUN_STREAM_REPORTS后增加stream-report-view，只用IPython显示已有latent_prediction.png与real_observations.png，不重跑预测/训练。后者明确为真实前后参考图，并非生成画面。末尾新增closed-video-view读取汇总与最多2个已保存视频，优先失败回合，默认debug并可显式切paired。
+
+确认仿真准备、单回合OGG接线和5方法成对批次代码均已存在；没有伪称远程真实闭环已通过。Notebook RUN_CLOSED_SETUP/RUN_CLOSED_SMOKE/RUN_CLOSED_BATCH默认False，用户逐步开启。单回合新增实际断言：完成1回合、event_replans>0、guidance_calls>0，以及1秒跨度对应20控制步。它只验证调用链，不计正式收益；正式批次关闭强制事件，计划5方法×2初始状态=10回合，失败视频/审计和全量轻量trace归档Drive。保留已有Notebook输出及执行计数；本次不修改训练器或已冻结模型。
+
+### 2026-11-08：44轨迹训练结束与独立轨迹预测报告
+
+最新Notebook显示训练恢复自epoch17，继续到epoch27；epoch22验证余弦损失0.22188286，23–27连续5轮未改善，符合patience5早停。共44轨迹6867帧进入冻结清单，实际35条训练5084对、9条验证1343对；不是44条全部参与梯度更新，也没有独立测试集。目标为10FPS数据k10的一秒后视觉变化，动作/相机/编码器沿用冻结协议。
+
+RUN_STREAM_REPORTS已完成predict与plot，Saved plots输出已保存。真实best_model SHA19f73f07cc75a32500aaaeb6f059f30b11ce8cc5b3626eff84a33f4b8ca7492c，38,052,800参数；1343验证对平均cosine0.7781184552、MSE8.0261217142、零预测MSE11.4308883251、训练均值基线MSE11.2480434784/cosine0.1240375492。MSE相对零预测下降约29.79%；预测变化平均范数265.522，目标1162.598，幅度明显偏小。cosine不等于任务成功率，平均范数比不等于每样本固定缩放因子。best导出未写epoch字段，报告checkpoint_epoch/optimizer_step为null，不能据此声称第0轮权重；来源SHA/模型/数据/划分校验均有检查。
+
+该报告在CPU单样本推理，直接读取Drive全部特征完成SHA校验、遍历5084个训练样本估计均值基线，再评估1343个验证样本并绘图。用户观察约3分30秒，不是LIBERO闭环执行耗时；尚无本轮LVM/OGG真实任务成功率。输出在paper_width_001/prediction_reports/best_model，包括summary.json/per_pair.csv/latent_prediction.png/real_observations.png。后续先仿真环境准备与强制事件接线验证，再关闭强制事件开展H50/H20/monitor/lvm/ogg成对闭环。
+
+### 2026-11-08：44条特征完成、训练断连与本地CPU提取方案
+
+最新Notebook的stream-expand已打印“有效特征轨迹44/44”。完整训练paper_width_001保存的输出到epoch9、optimizer step1431，验证1343对、独立9轨迹；epoch1余弦损失0.363362，epoch9为0.231304，MSE由8.74107到7.93931（零预测MSE11.43089）。日志随后为远程Jupyter不可连接，不能据前端断连判断后台训练一定终止；实际最后进度以Drive latest.pt为准。脚本在每个epoch验证/调度器更新后原子保存完整latest，然后记录history及打印epoch；续训恢复模型、optimizer、scheduler、best/stale、随机数及DataLoader生成器，中断半轮重做。Notebook第6格自动检测latest并加--resume；不改变数据/训练脚本/配置/输出目录。若运行时重置，需要恢复环境与变量，已有44条缓存无需重提取。
+
+用户考虑剩余50GB的外接U盘用于本地CPU下载/特征提取。普通CPU计算及正常文件读写属于硬件正常用途；U盘只扩展磁盘，不增加RAM，也不保证视觉推理速度。此次本机瞬时总内存13GiB、available约6.1GiB；外接U盘尚未在lsblk中识别，不尝试下载或写入未知设备。已有本地CPU predictor训练不等于完整视觉编码器已跑通。本地pilot extract已有显式CPU选项，但流式run_stream当前仍写死cuda，尚不能直接按原44条GPU命令改路径就做CPU提取。后续如需要扩展，先独立CPU缓存目录用少量真实帧测时间、峰值RAM及特征误差，再决定批量规模；不混入当前已冻结的44条特征目录。当前44条特征约0.8GiB量级，已经持久化Drive，优先复用，不重复提取。
+
+### 2026-11-08：提取收到KeyboardInterrupt后的续跑确认
+
+用户从Drive读得16个完成标记，最近attempt=interrupted_or_error，error=KeyboardInterrupt。可确认提取进程收到中断，尚不能据此判断是手动停止、前端操作还是其他来源；与程序45分钟预算触发的BudgetStop不同。已有16条将在续跑时逐文件验SHA后跳过，当前episode984从第0帧重新提取，不从第26帧续写。原始目录完整时复用，当前特征memmap以w+重建；不需要清空Drive或更换实验清单。
+
+扩展流式恢复测试：第一条发布后删除本地原始数据，第二条在原始归档/临时特征创建后抛KeyboardInterrupt，检查错误落盘、旧特征保留、未发布特征不计完成，再用同命令成功续做。5项流式检查通过。当前远程内核可运行诊断格，优先直接重跑第5格；待44条完成后再运行训练和报告，不重复环境安装。
+
+### 2026-11-08：T4测速通过与用户在线控制实现核对
+
+用户报告环境准备重跑用时3分39秒通过。当前Notebook保存的三轨迹T4测速：472帧提取约0.21995秒/帧，冷下载约46.68MiB/s；38,052,800参数模型一个epoch训练及验证5.108秒，整个命令17.156秒，10次optimizer更新，143个独立验证样本余弦损失0.74507、MSE10.0482。仅为速度和工程验证，不与CPU299次更新实验直接比较。扩大格输出已有多条真实轨迹完成归档，仍在执行；未声称44条全部完成。下一格训练要求清单全部COMPLETE，且训练器再次验SHA；45分钟截止可留下部分数据，此时应续提取，不能跳过完整清单断言。
+
+用户完成student_should_interrupt与student_correction_target，核心与reference一致。本次补未知模式报错及同形状[B,L,D]/同设备浮点检查，防止静默None或广播。新增测试确认全部模式/触发分支与reference一致、不修改输入，并让实际在线适配测试显式走student：monitor强制事件不清队列、LVM重规划不引导、OGG在外层inference_mode下确实引导且冻结参数不变。在线与OGG数学检查共9项通过；构造策略检查不等于真实LIBERO任务收益。
+
+两处Notebook源码快照已更新并核对，全部代码格可解析、已有运行输出与执行计数保留。当前排队的完整训练和预测报告不调用在线控制方法；无需中断。它们完成后再运行独立代码同步格，随后准备仿真、单回合强制事件接线、无强制事件成对评测。闭环默认student实现，优先选择已完成完整训练的best_model。尚未在T4运行新在线闭环。
+
+### 2026-11-08恢复格缺失后的再次核验
+
+用户报告断连后看不到恢复格。重新读取磁盘中的Notebook，确认setup-recovery和stream-code-refresh均缺失，准备格仍写Drive逐行日志；不能以此前修改记录代替当前文件事实，也未确定缺失原因。本次补回可见启动说明、环境格前的可选恢复格、环境格后的独立代码同步格。同步工具增加旧模板迁移：后续同步会补齐缺失操作格并改为本地准备日志，保留已有输出与执行计数。恢复格默认只检查，本项目prepare残留进程需用户显式开启终止；不针对训练/提取。全新运行时跳过恢复格，执行环境格即可；重新连接本身不等于运行时一定重置。
+
+新增两项定向检查覆盖操作格恢复/幂等迁移、脚本快照更新和输出保留；Notebook代码格语法检查及git diff空白检查通过。尚未声称新T4环境安装已成功，也未把Drive写入判断为卡住的已确认根因。
+
+### 2026-11-08环境停顿与结构快速核对
+
+用户报告环境格在host_torch输出后约10分钟无进展。Notebook输出证实独立Torch2.11/cu128已安装，CUDA张量及torchvision NMS通过；尚未出现明确报错。后续静默区间为工作venv建立/探测及日志IO，不把推测说成已确认根因。Drive连接日志检索未及时返回，当前定位依据是用户保存的Notebook输出及实际代码路径。
+准备入口原来逐行反复打开Drive日志，并有多层子进程Tee；改为准备期间写workdir/setup_logs_local，结束后一次性压缩发布到Drive。给Python/pip启动探测30秒、独立CUDA探测60秒超时，增加准备阶段与子进程PID输出。新增setup-recovery格：停止旧格后，仅识别本项目prepare及其后代并终止；保留运行时、数据、模型、pip缓存和已装Torch，复测CUDA；工作venv若启动失败/超时只原样改名备份。再执行准备格复用缓存，不断开/删除T4。
+结构核对使用固定上游类在meta设备创建：ModelScale.M20与本项目CUSTOM四块2048，token_dim960/action_dim7/action_embed_dim256/dropout0时均38,052,800参数，state_dict参数名称和形状逐项相同。上游README将论文主体称为约38–42M，40M是近似名，无需人为加参数。当前有效batch8×4=32与论文512不同；结构已对齐，不将数据量/批次/训练预算也说成完整复现。此次没有改变训练超参数或启动GPU训练。
 
 ## 任务4：本地开发、远程执行、提交与知识积累
 
@@ -689,3 +791,37 @@ SmolVLA上至少完成一次独立验证的预测器和基线/监控/重规划�
 来源：[论文v2](https://arxiv.org/abs/2607.01804v2)、[已完成窗口结果](replanning_results.md)、[资源与基线核对](resources_and_baseline_20261107.md)。
 
 </details>
+
+
+### 2026-11-08：AutoDL4090迁移与本地TUN的SSH分流定位
+
+用户租用单4090/24GB显存，16vCPU/120GB内存；远程检查为Ubuntu22.04、Miniconda Python3.10.8、驱动595.71.05（nvidia-smi显示最高CUDA13.2）、系统盘30GB、数据盘50GB几乎空。当前固定准备器要求Python3.12/3.13；后续在数据盘建独立Python3.12环境并复用已验证Torch2.11/cu128，不更改系统Python或宿主驱动。当前目标复用已训练best权重完成新GPU上的闭环评测，不重复44条特征提取和训练。尚未在AutoDL执行环境安装或GPU算子检查。
+
+用户反馈开启虚拟网卡无法SSH、关闭则可连。只读检查本机Mihomo Party：mode=global、TUN开启auto-route、DNS fake-ip、无AutoDL专属直连规则。该配置支持“SSH被全局代理接管”的推测；尚无目标连接内核日志，不能据此断定最终失败原因。路由查询受本地沙箱权限限制，未获得实际内核路由表。已生成outputs/autodl_setup/autodl_ssh_direct.yaml：前置两条AutoDL域名DIRECT，追加fake-ip排除，不覆盖9816条原订阅规则，不改代理服务器、凭据或系统网络。用户需在GUI选择规则模式并启用该覆写，再测试TUN下SSH；没有自动写入工作区外代理配置或重启代理。文档来源Mihomo Party官方YAML覆写说明与Mihomo DNS说明。公开日志不记录SSH地址/端口、实例ID或代理订阅。
+
+
+### 2026-11-08：远程VSCode解释器、Todo Tree与独立网络出口
+
+用户确认已在TUN开启、Mihomo规则模式下成功通过VSCode SSH连接AutoDL，但此前未调整也曾恢复，因而不将先前失败单一归因为规则缺失。新问题：远程Python发现失败、Todo Tree缺rg、Codex OAuth令牌兑换返回403地区不支持。已有远程base Python3.10不等于没有Python；优先选择真实存在的Python3.12绝对路径，尚未创建时base可临时用于编辑器发现，不能据此声称训练环境已准备。Todo Tree本地安装manifest和官方README均确认设置键todo-tree.ripgrep.ripgrep；在远程安装系统ripgrep后指向/usr/bin/rg。
+
+本地TUN/DIRECT只控制本机发起的网络流量，不会自动给服务器进程提供代理。后续可通过SSH -R把本地Mihomo mixed端口转发为远端127.0.0.1上的专用端口，验证普通HTTPS下载；只绑定回环，不公开代理、不修改全局TLS校验。仅export到当前远程终端不会自动影响已运行的VSCode扩展宿主。OpenAI官方错误码文档确认403地区不支持属于区域访问限制；浏览器Google授权可达不代表令牌兑换出口相同。未验证远程Codex实际出口或登录成功，不用设备登录/复制auth缓存冒充解决地区限制。网络与解释器操作仍需在用户远程环境执行，本地未连接远端或读取凭据。
+
+
+### 2026-11-08：AutoDL便携部署与夜间成对评测入口
+
+用户确认远端bootstrap为Python3.12.16，VSCode远程解释器/rg路径已配置；经SSH反向代理访问GitHub得到CONNECT200及HTTP200，设置代理变量后git ls-remote成功。该HEAD只是连通性测试，不改变实验固定LeRobot SHA。远端Codex地区403尚未解决，终端网络变量不会自动影响已运行IDE扩展；优先在已继承代理变量的远端CLI检查认证，设备码只处理无浏览器回调，不保证解决地区支持问题。不要求在AutoDL容器再开TUN或公开代理。
+
+新增scripts/corrector_autodl.py，标准库入口：prepare/check/smoke/batch/night/summary/diagnostics。prepare从Python-only bootstrap复用现有独立Torch2.11/cu128准备器、固定LeRobot与独立sim-venv；真实GPU算子与EGL/编码检查仍须在远程执行。night先验证当前best_model SHA19f73f...，加载带44条轨迹协议的38,052,800参数模型，强制单回合必须实际中止队列、执行OGG且监测跨度20步，才进入5方法×5初始化×2seed=50个自然事件回合。任务默认原始LIBERO object/task0，与数据task24的alphabet-soup任务对应；不是Plus扰动评测，也不是论文表格复现。默认只留失败视频/审计、全部轻量监测日志，按完成回合恢复。
+
+smoke通过后批次默认HF_HUB_OFFLINE=1，避免在模型已缓存情况下因本机休眠/代理断开而再次请求Hub；此为代码设计，尚未远程实测。--proxy-url只影响启动器和子进程，不改系统网络。diagnostics收集脱敏日志/JSON/CSV，不含权重、视频或账号目录，64MiB预算，便于取回本地定位。新增打包器package_corrector_autodl.py只按白名单收集当前13份源码/清单、启动器及说明；平铺路径+逐文件SHA，不包含Git凭据或个人配置；无需等待push。部署包outputs/autodl_setup/corrector_autodl.zip约84KB。
+
+19项CPU定向检查通过，覆盖独立部署包CLI可启动/哈希拒绝、强制事件与正式计划分离、50回合组合、接线必须有实际引导/正确时间/同模型/同在线核心、离线批次前置检查、诊断包排除与脱敏，以及现有在线适配/批次恢复。未执行远程安装/完整仿真。助手尝试现有SSH配置的BatchMode只读访问，默认沙箱DNS失败，获准网络检查后连接超时；未输入密码、未登录远端、未改远端文件。用户需通过已正常连接的VSCode/终端上传包并启动。今晚优先prepare，再迁移Drive的约152MB best_model.pt，tmux运行night；44条特征无需重新传入评测机器。
+
+
+### 2026-11-08：AutoDL安装因代理断连暂停与阶段提交
+
+用户已上传便携部署代码和checkpoints/best_model.pt；仅确认文件位置，SHA需入口实际验。prepare在首次补齐独立venv的pip时失败：远端127.0.0.1:17890 Connection refused。明确是代理端口当时未监听/不可达，不能从末尾from versions:none推断pip25.0.1不存在；没有改变版本、重装Conda或删除半成品venv。tmux维持远端进程，不会维持另一条已断开的SSH -R隧道。先在本机重建并保留反向SSH，远端curl经代理返回200后，原prepare命令可修复半成品并续做。night尚未执行，不声称真实闭环已通过。
+
+新增prepare安装前代理TCP检查，5秒内失败给出定位与重建隧道提示，不自动回退另一出口。TCP检查通过不等于全部HTTPS域名可达。更新部署包说明，建议先显式选择2初始化×1seed×5方法=10个自然事件开发回合，用独立pilot输出；先环境/CUDA/EGL→真实预测器→强制事件单回合→10回合对照，检查延时/触发/失败视频后才扩50回合/更多任务/更多数据。仍以预测器独立轨迹质量和完整Corrector闭环成功率为两个主指标，不把硬件升级当性能收益。
+
+阶段提交前86项Corrector/准备入口CPU检查通过。包内新增代理拒绝时不进入安装的检查；已有输出/远程地址/会话信息只留本地Notebook，公开提交清空输出、执行次数、元数据，不提交weights/logs/账号目录。当前未在AutoDL完成环境部署，未取得新机器人任务成功率。远端用户使用IDE Codex，当前优先修复prepare，不强制另装CLI或更换账号处理403。

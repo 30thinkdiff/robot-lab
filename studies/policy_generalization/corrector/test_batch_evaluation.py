@@ -7,6 +7,16 @@ from .batch_evaluation import make_plan, run_plan, set_recording_fps, summarize
 
 
 class BatchEvaluationTests(unittest.TestCase):
+    def test_optional_video_policy_keeps_failure_evidence_requirement(self):
+        for policy,success,allowed in [('none',False,True),('failures',True,True),('failures',False,False)]:
+            plan=make_plan(['v'],[1],{'H50':{'video_policy':policy}},{})
+            with tempfile.TemporaryDirectory() as tmp:
+                callback=lambda *_:{'success':success,'video_paths':[]}
+                if allowed:
+                    rows=run_plan(tmp,plan,{'H50':callback})
+                    self.assertEqual(rows[0]['completed'],1)
+                else:
+                    with self.assertRaises(ValueError):run_plan(tmp,plan,{'H50':callback})
     def test_overall_rate_weights_episodes_and_records_coverage(self):
         plan = make_plan(["a", "b"], [1, 2, 3], {"H50": {}}, {})
         records = [{"case": plan["cases"][i], "status": "completed",

@@ -15,6 +15,7 @@ import shutil
 import subprocess
 import sys
 import traceback
+import time
 
 DATA_ID = "HuggingFaceVLA/libero"
 DATA_SHA = "86958911c0f959db2bbbdb107eb3e17c5f9c798e"
@@ -187,19 +188,23 @@ def extract(args):
     import torch
     from PIL import Image
     todo = []
+    raw_root = getattr(args, "raw_root", None) or args.output_root / "raw"
+    before_episode = getattr(args, "before_episode", None)
+    on_complete = getattr(args, "on_complete", None)
     for ep in args.episodes:
-        if not verified(args.output_root / "raw" / f"episode_{ep}"):
-            raise RuntimeError(f"先prepare原始episode{ep}")
         if verified(args.output_root / "features" / f"episode_{ep}"):
             meta = json.loads((args.output_root / "features" / f"episode_{ep}" / "metadata.json").read_text())
             if meta.get("policy_revision") != POLICY_SHA or meta.get("corrector_revision") != CORRECTOR_SHA:
                 raise RuntimeError("已有特征缓存来源不一致，请使用新output-root")
         else:
+            if before_episode is None and not verified(raw_root / f"episode_{ep}"):
+                raise RuntimeError(f"先prepare原始episode{ep}")
             todo.append(ep)
     if not todo:
         print("全部特征缓存已完成并校验；未加载模型")
         return
     device = extraction_device(args.device, args.allow_cpu_extraction)
+    setup_started = time.perf_counter()
     ensure_source(args.source_root)
     # 上游helper会调整sys.path；明确指定已安装0.6.1的位置，避免换成参考仓库的旧LeRobot。
     import lerobot
@@ -227,8 +232,17 @@ def extract(args):
     camera_keys = list(encoder.policy.config.image_features)
     if len(camera_keys) != 2:
         raise RuntimeError(f"本协议要求两路真实相机，实际为{camera_keys}")
+    setup_seconds = time.perf_counter() - setup_started
     for ep in todo:
-        raw = args.output_root / "raw" / f"episode_{ep}"
+        if before_episode is not None:
+            before_episode(ep)
+        raw = raw_root / f"episode_{ep}"
+        if not verified(raw):
+            raise RuntimeError(f"原始轨迹不完整：{raw}")
+        provenance = json.loads((raw / "provenance.json").read_text())
+        if provenance.get("revision") != DATA_SHA or provenance.get("episode") != ep:
+            raise RuntimeError("原始轨迹来源不一致")
+        began = time.perf_counter()
         rows = pq.read_table(raw / "frames.parquet").to_pylist()
         local = args.work_root / "features" / f"episode_{ep}"
         local.mkdir(parents=True, exist_ok=True)
@@ -236,6 +250,10 @@ def extract(args):
         actions = []
         for i, row in enumerate(rows):
             images = {key: decode_rgb(row[key]["bytes"]) for key in IMAGE_KEYS}
+            # 保留极少量参照帧，原始分片清理后仍能解释首个预测例子；不是预测器生成图。
+            if i in {0,5,10}:
+                for camera,key in enumerate(IMAGE_KEYS,1):
+                    Image.fromarray(images[key]).save(local/f'reference_camera{camera}_frame{i:04d}.png')
             z = encoder.encode_item(images, image_key=IMAGE_KEYS[0], wrist_image_key=IMAGE_KEYS[1], use_wrist_image=True)
             if not np.isfinite(z).all():
                 raise RuntimeError("视觉特征含NaN/Inf")
@@ -257,7 +275,7 @@ def extract(args):
                      for src, dst in zip(IMAGE_KEYS, camera_keys, strict=True)}
             batch.update({"observation.state": torch.tensor(row["observation.state"], dtype=torch.float32),
                           "action": torch.tensor(row["action"], dtype=torch.float32),
-                          "task": "pick up the alphabet soup and place it in the basket"})
+                          "task": provenance["task"]})
             a = pre(batch)["action"].reshape(-1).detach().cpu().numpy()
             if a.shape != (7,) or not np.isfinite(a).all():
                 raise RuntimeError(f"动作processor输出错误：{a.shape}")
@@ -274,7 +292,7 @@ def extract(args):
         np.save(local / "frame_index.npy", np.asarray([r["frame_index"] for r in rows], dtype=np.int64))
         np.save(local / "timestamp.npy", np.asarray([r["timestamp"] for r in rows], dtype=np.float64))
         write_json(local / "metadata.json", {"format": "siglip_frame_cache_v2", "num_frames": n,
-                   "l_tokens": l_tokens, "d_dim": d_dim, "action_dim": 7, "split": EPISODES[ep][2],
+                   "l_tokens": l_tokens, "d_dim": d_dim, "action_dim": 7, "split": provenance["split"],
                    "fps": 10.0, "policy_id": POLICY_ID, "policy_revision": POLICY_SHA,
                    "corrector_revision": CORRECTOR_SHA, "image_keys": IMAGE_KEYS, "camera_keys": camera_keys,
                    "dtype_actions": "float16", "dtype_z_q": "int8", "dtype_z_scale": "float16",
@@ -282,11 +300,19 @@ def extract(args):
                    "extraction_device": device,
                    "action_normalization": "saved policy preprocessor; raw_actions.npy retained for audit",
                    "raw_archive_sha256": digest(raw / "COMPLETE.json"),
+                   "raw_provenance": provenance,
                    "scope": "offline demonstration features; no predictor trained, no online frequency alignment claimed"})
         final = args.output_root / "features" / f"episode_{ep}"
         final.parent.mkdir(parents=True, exist_ok=True)
+        extraction_seconds = time.perf_counter() - began
+        publish_started = time.perf_counter()
         publish(local, final)
         print(f"特征episode{ep}已完成并归档：{final}", flush=True)
+        if on_complete is not None:
+            on_complete(ep, {"frames": n, "extraction_seconds": extraction_seconds,
+                             "publish_seconds": time.perf_counter() - publish_started,
+                             "encoder_setup_seconds": setup_seconds,
+                             "feature_bytes": sum(p.stat().st_size for p in final.iterdir() if p.is_file())})
 
 
 def main():

@@ -76,6 +76,7 @@ class Log:
         self.say("运行：" + json.dumps([str(x) for x in command], ensure_ascii=False))
         with subprocess.Popen([str(x) for x in command], stdout=subprocess.PIPE,
                               stderr=subprocess.STDOUT, text=True, errors="replace", env=env) as process:
+            self.say(f"子进程PID={process.pid}；正在执行上方命令。")
             for line in process.stdout:
                 self.say(line.rstrip())
             code = process.wait()
@@ -139,7 +140,7 @@ def ensure_environment(environment, log, env):
         log.run([sys.executable, "-m", "venv", "--without-pip", environment], env=env)
     probe = subprocess.run(
         [str(python), "-c", "import sys,json;print(json.dumps([sys.prefix,list(sys.version_info[:2])]))"],
-        text=True, capture_output=True, env=env,
+        text=True, capture_output=True, env=env, timeout=30,
     )
     if probe.returncode:
         log.say(probe.stdout + probe.stderr)
@@ -148,11 +149,11 @@ def ensure_environment(environment, log, env):
     if Path(prefix).resolve() != environment.resolve() or py_version != list(sys.version_info[:2]):
         raise RuntimeError(f"已有Python属于其他环境或版本，保留现场：{environment}")
     pip_probe = subprocess.run([str(python), "-m", "pip", "--version"],
-                               text=True, capture_output=True, env=env)
+                               text=True, capture_output=True, env=env, timeout=30)
     if pip_probe.returncode:
         log.say("环境的Python已存在但pip未就绪，开始补齐；不删除已有文件。")
         host = subprocess.run([sys.executable, "-c", "import pip;print(pip.__version__)"],
-                              text=True, capture_output=True, env=env)
+                              text=True, capture_output=True, env=env, timeout=30)
         match = re.match(r"(\d+)\.(\d+)", host.stdout.strip())
         if host.returncode == 0 and match and tuple(map(int, match.groups())) >= (22, 3):
             # --python指定安装目标，不向Colab全局环境安装/升级依赖。
@@ -191,7 +192,7 @@ def prepare_with_managed_torch(args, log):
         "print(json.dumps({'torch':torch.__version__,'torchvision':torchvision.__version__,"
         "'cuda':torch.version.cuda,'gpu':torch.cuda.get_device_name(0)}))"
     )
-    probe = subprocess.run([str(python), "-c", probe_code], env=env, capture_output=True, text=True)
+    probe = subprocess.run([str(python), "-c", probe_code], env=env, capture_output=True, text=True, timeout=60)
     if probe.returncode:
         log.say("宿主Torch不符合固定LeRobot约束；在独立torch-runtime安装官方2.11.0/cu128组合。宿主不变。")
         log.say("已有独立环境检查：" + probe.stderr[-2000:])
@@ -238,8 +239,10 @@ def prepare(args, log):
 
     environment = workdir / "venv"
     env = runtime_env(workdir)
+    log.say(f"阶段：创建/检查工作venv {environment}；Python与pip探测各限30秒。")
     python = ensure_environment(environment, log, env)
-    site = Path(subprocess.check_output([str(python), "-c", "import sysconfig;print(sysconfig.get_path('purelib'))"], text=True).strip())
+    log.say("阶段：定位site-packages并链接已验证的Torch/native包，不重复下载CUDA。")
+    site = Path(subprocess.check_output([str(python), "-c", "import sysconfig;print(sysconfig.get_path('purelib'))"], text=True,env=env,timeout=30).strip())
     # 只借用现有PyTorch/native wheel，避免复制大文件，也不继承全局diffusers/torchao等可选包。
     source_site = Path(torch.__file__).resolve().parent.parent
     names = ["torch", "torchgen", "functorch"]
@@ -272,6 +275,7 @@ def prepare(args, log):
                 pass
     constraint_file = workdir / "torch-constraints.txt"
     constraint_file.write_text("\n".join(constraints) + "\n")
+    log.say("阶段：安装固定Python依赖；缓存位于workdir/pip-cache。")
     log.run([python, "-m", "pip", "install", "--constraint", constraint_file,
              "--report", log.directory / "pip-core-report.json", *PINS], env=env)
     source = workdir / "lerobot"

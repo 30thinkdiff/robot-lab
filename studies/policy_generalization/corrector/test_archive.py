@@ -14,6 +14,18 @@ publish, verified = workbench.publish, workbench.verified
 
 
 class ArchiveTests(unittest.TestCase):
+    def test_finished_features_do_not_require_deleted_raw_or_loading_encoder(self):
+        import json
+        from types import SimpleNamespace
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);final=root/'features/episode_813';final.mkdir(parents=True)
+            (final/'metadata.json').write_text(json.dumps({'policy_revision':workbench.POLICY_SHA,
+                'corrector_revision':workbench.CORRECTOR_SHA}))
+            workbench.write_json(final/'COMPLETE.json',{'files':{'metadata.json':workbench.digest(final/'metadata.json')}})
+            args=SimpleNamespace(output_root=root,episodes=[813])
+            with patch.object(workbench,'ensure_source',side_effect=AssertionError('不应加载模型')):
+                workbench.extract(args)
     def test_cpu_extraction_requires_explicit_opt_in_and_cuda_never_silently_falls_back(self):
         from unittest.mock import patch
         with self.assertRaises(RuntimeError):

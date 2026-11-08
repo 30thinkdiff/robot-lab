@@ -161,7 +161,8 @@ class TrainingEntryTests(unittest.TestCase):
             source = "".join(f"{key} = 'old snapshot'\n" for key in sync.SOURCES)
             output = [{"output_type": "stream", "name": "stdout", "text": ["saved real run\n"]}]
             path.write_text(json.dumps({"cells": [{"id": "corrector-data-1", "cell_type": "code",
-                "source": source.splitlines(True), "execution_count": 17, "outputs": output}]}))
+                "source": source.splitlines(True), "execution_count": 17, "outputs": output},
+                {'id':'stream-code-refresh','cell_type':'code','source':[],'execution_count':8,'outputs':output}]}))
             sync.sync(path)
             cell = json.loads(path.read_text())["cells"][0]
             self.assertEqual(cell["outputs"], output)
@@ -170,6 +171,42 @@ class TrainingEntryTests(unittest.TestCase):
             parsed = {node.targets[0].id: ast.literal_eval(node.value)
                       for node in ast.parse("".join(cell["source"])).body}
             self.assertEqual(parsed["TRAIN_SOURCE"], (ROOT / "scripts/corrector_train.py").read_text())
+            refresh=json.loads(path.read_text())['cells'][1]
+            self.assertEqual(refresh['outputs'],output)
+            bundle=next(ast.literal_eval(n.value) for n in ast.parse(''.join(refresh['source'])).body
+                        if isinstance(n,ast.Assign) and n.targets[0].id=='REFRESH_FILES')
+            self.assertEqual(bundle['corrector_train.py'],(ROOT/'scripts/corrector_train.py').read_text())
+            self.assertEqual(bundle['corrector_online_practice.py'],(ROOT/'studies/policy_generalization/corrector/online_practice.py').read_text())
+
+    def test_old_notebook_recovers_setup_cells_and_local_logs_without_losing_outputs(self):
+        import ast
+        spec = importlib.util.spec_from_file_location('sync_setup_recovery', ROOT/'scripts/sync_corrector_notebook.py')
+        sync = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(sync)
+        value = json.loads((ROOT/'scripts/corrector_data_prepare.ipynb').read_text())
+        value['cells'] = [c for c in value['cells'] if c.get('id') not in
+                          {'setup-recovery', 'setup-start-guide', 'stream-code-refresh'}]
+        setup = next(c for c in value['cells'] if c.get('id') == 'corrector-data-1')
+        setup['source'] = ("log = wb.Log(ARCHIVE / 'setup_logs')\n"
+                           "command = ['--log-root', ARCHIVE / 'setup_logs']\n").splitlines(True)
+        outputs = [{"output_type": "stream", "name": "stdout", "text": ["保留旧运行证据\n"]}]
+        setup['outputs'] = outputs
+        setup['execution_count'] = 21
+        sync.repair_setup_cells(value)
+        first = json.dumps(value)
+        sync.repair_setup_cells(value)
+        self.assertEqual(json.dumps(value), first)
+        ids = [c.get('id') for c in value['cells']]
+        self.assertEqual(ids[ids.index('corrector-data-1') - 1], 'setup-recovery')
+        self.assertEqual(ids[ids.index('corrector-data-1') + 1], 'stream-code-refresh')
+        source = ''.join(setup['source'])
+        ast.parse(source)
+        ast.parse(sync.RECOVERY_SOURCE)
+        self.assertNotIn("'--log-root', ARCHIVE", source)
+        self.assertIn("'--log-root', LOCAL_SETUP_LOGS", source)
+        self.assertIn("str(WORKDIR / ('setup_logs_'", source)
+        self.assertEqual(setup['outputs'], outputs)
+        self.assertEqual(setup['execution_count'], 21)
 
     def test_resume_matches_uninterrupted_training(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -228,6 +265,27 @@ class TrainingEntryTests(unittest.TestCase):
             _, dataset, _, _, _ = runner.reference_api(SOURCE)
             with self.assertRaises(RuntimeError):
                 runner.datasets(root / "features", root / "staged", dataset, 1)
+
+    def test_periodic_snapshots_survive_resume_and_preserve_initial_weights(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            fake_cache(root / 'features')
+            args = self.args(root, 'snapshots')
+            args.snapshot_every, args.stop_after_epoch = 1, 1
+            args.output.mkdir(); runner.run(args)
+            directory = args.output / 'snapshots'
+            original = runner.archive.digest(directory / 'epoch_0000.pt')
+            a = torch.load(directory / 'epoch_0000.pt', weights_only=True)
+            b = torch.load(directory / 'epoch_0001.pt', weights_only=True)
+            self.assertTrue(any(not torch.equal(a['state_dict'][k], b['state_dict'][k]) for k in a['state_dict']))
+            self.assertNotIn('optimizer', b)  # 快照仅供评估，避免每份复制完整训练状态。
+            args.resume, args.stop_after_epoch = True, 0
+            runner.run(args)
+            self.assertEqual(original, runner.archive.digest(directory / 'epoch_0000.pt'))
+            index = json.loads((directory / 'index.json').read_text())
+            self.assertEqual([r['epoch'] for r in index], [0, 1, 2, 3])
+            self.assertEqual(index[-1]['step'], 6)
+            self.assertTrue(all(r['sha256'] == runner.archive.digest(directory / r['file']) for r in index))
 
 
 if __name__ == "__main__":

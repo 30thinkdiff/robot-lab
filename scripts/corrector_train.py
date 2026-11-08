@@ -279,6 +279,34 @@ def atomic_save(path, payload):
     temporary.replace(path)
 
 
+def save_snapshot(output, model, model_cfg, protocol, epoch, step, validation):
+    """仅供评估的不可变权重快照；续训仍使用latest.pt，不复制优化器状态。"""
+    directory = output / "snapshots"
+    directory.mkdir(exist_ok=True)
+    path = directory / f"epoch_{epoch:04d}.pt"
+    index_path = directory / "index.json"
+    index = json.loads(index_path.read_text()) if index_path.exists() else []
+    existing = next((r for r in index if r["epoch"] == epoch), None)
+    if existing:
+        if not path.is_file() or archive.digest(path) != existing["sha256"]:
+            raise RuntimeError("历史快照丢失或被修改，不覆盖现场")
+        return
+    if path.exists():
+        # 文件已完整落盘、但index未发布即断连时，核对后补全index。
+        saved = torch.load(path, map_location="cpu", weights_only=True)
+        if saved["feature_protocol"] != protocol or saved["epoch"] != epoch or saved["step"] != step:
+            raise RuntimeError("已有快照与本次训练状态不一致")
+    else:
+        atomic_save(path, {"state_dict": model.state_dict(), "model_cfg": model_cfg,
+            "train_cfg": {"model": model_cfg, "model_type": "mlp", "h_window": 1,
+                          "k_step": protocol["k_step"], "data_fps": protocol["fps"],
+                          "prediction_seconds": protocol["prediction_seconds"]},
+            "feature_protocol": protocol, "epoch": epoch, "step": step, "validation": validation})
+    index.append({"epoch": epoch, "step": step, "file": path.name,
+                  "sha256": archive.digest(path), "validation": validation})
+    archive.write_json(index_path, sorted(index, key=lambda r: r["epoch"]))
+
+
 def save_history(output, history):
     archive.write_json(output / "history.json", history)
     temporary = output / "metrics.csv.partial"
@@ -345,6 +373,9 @@ def log_to(path):
 
 
 def run(args):
+    snapshot_every = getattr(args, "snapshot_every", 0)
+    if snapshot_every < 0:
+        raise ValueError("snapshot-every应为非负epoch间隔，0表示不额外保留快照")
     if args.device == "cuda" and not torch.cuda.is_available():
         raise RuntimeError("请求CUDA但不可用；不会静默回退CPU")
     if args.batch_size < 1 or args.accumulate < 1 or args.epochs < 1 or args.k_step < 1:
@@ -366,12 +397,14 @@ def run(args):
                                 scale=config.ModelScale.CUSTOM, custom_widths=widths)
     model_cfg = json.loads(json.dumps(asdict(cfg)))
     protocol = {"source_sha": archive.CORRECTOR_SHA, "source_files": source_hashes, "records": records,
+                "encoder_policy_revision": archive.POLICY_SHA,
                 "model": model_cfg, "h_window": 1, "k_step": args.k_step, "fps": fps,
                 "prediction_seconds": args.k_step / fps, "loss_type": args.loss_type, "beta": args.beta,
                 "lr": args.lr, "weight_decay": args.weight_decay, "epochs": args.epochs,
                 "patience": args.patience, "seed": args.seed, "batch_size": args.batch_size,
                 "accumulate": args.accumulate, "precision": "float32", "implementation": args.implementation,
-                "training_entry_sha256": archive.digest(Path(__file__)), "split": split_info}
+                "training_entry_sha256": archive.digest(Path(__file__)), "split": split_info,
+                "snapshot_every": snapshot_every}
     with torch.device("meta"):
         nparams = sum(p.numel() for p in model_cls(cfg).parameters())
     print(json.dumps({"frames": sum(r["frames"] for r in records),
@@ -419,6 +452,10 @@ def run(args):
     else:
         initial = evaluate(model, val_loader, device, loss_fn, loss_type, args.beta, forward_fn)
         archive.write_json(args.output / "initial_validation.json", initial)
+    if snapshot_every and (start == 0 or start % snapshot_every == 0 or start >= args.epochs
+                           or stale >= args.patience):
+        save_snapshot(args.output, model, model_cfg, protocol, start, step,
+                      history[-1]["validation"] if history else initial)
     for epoch in range(start, args.epochs):
         if stale >= args.patience:
             break
@@ -461,6 +498,9 @@ def run(args):
         atomic_save(latest, state)
         save_history(args.output, history)
         print(json.dumps(record, ensure_ascii=False), flush=True)
+        if snapshot_every and ((epoch + 1) % snapshot_every == 0 or epoch + 1 == args.epochs
+                               or stale >= args.patience):
+            save_snapshot(args.output, model, model_cfg, protocol, epoch + 1, step, val)
         if args.stop_after_epoch and epoch + 1 >= args.stop_after_epoch:
             break
     # 用新模型严格加载最佳权重并复查指标，不以“文件存在”冒充重载成功。
@@ -510,6 +550,8 @@ def main():
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--cpu-threads", type=int, default=2)
     parser.add_argument("--resume", action="store_true")
+    parser.add_argument("--snapshot-every", type=int, default=0,
+                        help="每N个完整epoch保留评估权重，另存epoch0及训练结束；0关闭，不影响latest续训")
     parser.add_argument("--stop-after-epoch", type=int, default=0,
                         help="保留原总epochs和调度器，仅提前停在完整epoch，供断连恢复检查")
     args = parser.parse_args()

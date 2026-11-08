@@ -1,4 +1,4 @@
-"""冻结公开SmolVLA的原始LIBERO基线；不依赖Corrector或五步LoRA练习。
+"""冻结公开SmolVLA的原始LIBERO基线及可选Corrector；H50/H20无需预测器权重。
 
 顺序运行task×真实init_state_id×seed，一回合一视频/输入审计，断连按已完成回合续跑。
 这是本项目公开checkpoint基线，不宣称复现Corrector论文的MetaWorld/SmolVLA数值。
@@ -7,6 +7,9 @@ import argparse
 from pathlib import Path
 import sys
 import time
+from contextlib import ExitStack
+import shutil
+import inspect
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 try:
@@ -39,7 +42,29 @@ def main():
     parser.add_argument("--action-steps", type=int, default=50)
     parser.add_argument("--max-steps", type=int, default=None)
     parser.add_argument("--fps", type=int, default=20)
+    parser.add_argument('--methods',nargs='+',choices=['H50','H20','monitor','lvm','ogg'])
+    parser.add_argument('--corrector-checkpoint',type=Path)
+    parser.add_argument('--source-root',type=Path)
+    parser.add_argument('--control-implementation',choices=['reference','student'],default='reference')
+    parser.add_argument('--monitor-stride',type=int,default=1)
+    parser.add_argument('--monitor-cooldown',type=int,default=0)
+    parser.add_argument('--guidance-eta',type=float,default=1.)
+    parser.add_argument('--guidance-every',type=int,default=3)
+    parser.add_argument('--debug-force-step',type=int,default=-1,
+                        help='只用于验证事件/OGG调用链；带强制事件的结果不能当正式性能')
+    parser.add_argument('--video-policy',choices=['all','failures','none'],default='all')
+    parser.add_argument('--audit-mode',choices=['all','failures','none'],default='all')
+    parser.add_argument('--trace-mode',choices=['all','failures','none'],default='all')
+    parser.add_argument('--save-event-tensors',action='store_true')
     args = parser.parse_args()
+    methods=args.methods or [f'H{args.action_steps}']
+    uses_corrector=any(m in {'monitor','lvm','ogg'} for m in methods)
+    if len(methods)!=len(set(methods)):raise ValueError('方法不可重复')
+    if uses_corrector:
+        if not args.corrector_checkpoint or not args.corrector_checkpoint.is_file() or not args.source_root:
+            raise ValueError('Corrector模式需要已保存的checkpoint和source-root')
+        from corrector_online_runtime import decisions, guided_velocity
+        decisions(args.control_implementation)
     if not 1 <= args.action_steps <= 50:
         raise ValueError("action-steps须为1..50")
     if args.fps <= 0 or (args.max_steps is not None and args.max_steps <= 0):
@@ -72,13 +97,26 @@ def main():
             conditions[name] = {"task_id": task_id, "initial_state_id": init_id,
                                 "language": suite.tasks[task_id].language}
     method = f"H{args.action_steps}"
+    method_configs={m:{'n_action_steps':int(m[1:]) if m.startswith('H') else args.action_steps,
+                       'uses_corrector':m in {'monitor','lvm','ogg'},'video_policy':args.video_policy,
+                       'corrector_sha256':wb.digest(args.corrector_checkpoint) if m in {'monitor','lvm','ogg'} else None}
+                    for m in methods}
     plan = make_plan(list(conditions), args.seeds,
-                     {method: {"n_action_steps": args.action_steps, "uses_corrector": False}},
-                     {"scope": "public SmolVLA / original LIBERO baseline, not a paper table reproduction",
+                     method_configs,
+                     {"scope": "frozen SmolVLA / original LIBERO; Corrector adaptation when selected, not a paper table reproduction",
                       "policy_id": POLICY_ID, "policy_revision": POLICY_SHA, "lerobot_revision": wb.LEROBOT_SHA,
                       "libero_revision": sim.LIBERO_SHA, "conditions": conditions,
                       "runtime": runtime,
-                      "fps": args.fps, "horizon": horizon, "control_mode": "relative"})
+                      "fps": args.fps, "horizon": horizon, "control_mode": "relative",
+                      'corrector_settings':{'stride':args.monitor_stride,'eta':args.guidance_eta,
+                          'guidance_every':args.guidance_every,'cooldown':args.monitor_cooldown,
+                          'force_step':args.debug_force_step,'control_implementation':args.control_implementation},
+                      'retention':{'video':args.video_policy,'audit':args.audit_mode,'trace':args.trace_mode},
+                      'debug_forced_event':args.debug_force_step>=0})
+    plan['protocol']['evaluation_entry_sha256']=wb.digest(Path(__file__))
+    if uses_corrector:
+        plan['protocol']['runtime_source_sha256']=wb.digest(Path(__file__).parent/'corrector_online_runtime.py')
+        plan['protocol']['learner_core_sha256']=wb.digest(Path(inspect.getfile(guided_velocity)))
     holder = {}
 
     def load_policy():
@@ -101,6 +139,10 @@ def main():
         pre, post = make_pre_post_processors(policy_cfg=cfg, pretrained_path=snapshot,
                                             preprocessor_overrides={"device_processor": {"device": "cuda"}})
         holder.update(policy=policy, pre=pre, post=post)
+        if uses_corrector:
+            from corrector_online_runtime import load_predictor
+            predictor,protocol=load_predictor(args.corrector_checkpoint,args.source_root,'cuda')
+            holder.update(predictor=predictor,predictor_protocol=protocol)
 
     def run_case(case, directory):
         import torch
@@ -111,6 +153,8 @@ def main():
         if not holder:
             load_policy()  # 全部回合已完成时，不重新加载模型
         policy, pre, post = holder["policy"], holder["pre"], holder["post"]
+        policy.config.n_action_steps=case['config']['n_action_steps'];policy.reset()
+        if policy._queues['action'].maxlen!=case['config']['n_action_steps']:raise RuntimeError('实际队列容量错误')
         chosen = conditions[case["condition"]]
         camera_keys = list(policy.config.image_features)
         if len(camera_keys) != 2:
@@ -123,17 +167,25 @@ def main():
         env = sim.make_vector(cfg)
         env_pre, env_post = cfg.get_env_processors()
         steps, chunk_times = 0, []
+        runtime=None
+        if case['config']['uses_corrector']:
+            from corrector_online_runtime import OnlineCorrector
+            runtime=OnlineCorrector(policy,holder['predictor'],holder['predictor_protocol'],case['method'],
+                args.source_root,directory,fps=args.fps,stride=args.monitor_stride,eta=args.guidance_eta,
+                guidance_every=args.guidance_every,implementation=args.control_implementation,
+                trace=args.trace_mode!='none',event_tensors=args.save_event_tensors,
+                force_step=args.debug_force_step,cooldown=args.monitor_cooldown)
         try:
             select_initial_state(env, chosen["initial_state_id"])
             set_seed(case["seed"])
             def observe(batch):
                 nonlocal steps
-                if steps == 0:
+                if steps == 0 and args.audit_mode!='none':
                     state = torch.as_tensor(env.envs[0].unwrapped._env.get_sim_state()).clone()
                     torch.save(state, directory / "initial_sim_state.pt")
                     wb.save_inspection_images(batch, directory / "input_images")
                 value = pre(batch)
-                if steps == 0:
+                if steps == 0 and args.audit_mode!='none':
                     torch.save({k: v.detach().cpu() for k, v in value.items() if isinstance(v, torch.Tensor)},
                                directory / "first_policy_input.pt")
                 steps += 1
@@ -147,28 +199,49 @@ def main():
             original_noise = policy.model.sample_noise
             def record_noise(*a, **kw):
                 noise = original_noise(*a, **kw)
-                if not (directory / "first_noise.pt").exists():
+                if args.audit_mode!='none' and not (directory / "first_noise.pt").exists():
                     torch.save(noise.detach().cpu(), directory / "first_noise.pt")
                 return noise
-            with patch.object(policy, "_get_action_chunk", timed), patch.object(policy.model, "sample_noise", record_noise):
+            with ExitStack() as stack:
+                stack.enter_context(patch.object(policy,'_get_action_chunk',timed))
+                stack.enter_context(patch.object(policy.model,'sample_noise',record_noise))
+                if runtime is not None:stack.enter_context(runtime.installed())
                 info = eval_policy(env=env, policy=policy, env_preprocessor=env_pre, env_postprocessor=env_post,
                                    preprocessor=observe, postprocessor=post, n_episodes=1,
-                                   max_episodes_rendered=1, videos_dir=directory / "videos", start_seed=case["seed"])
+                                   max_episodes_rendered=0 if args.video_policy=='none' else 1,
+                                   videos_dir=directory / "videos", start_seed=case["seed"])
             videos = [sim.verify_video(p, args.fps) for p in info.get("video_paths", [])]
-            if len(videos) != 1 or videos[0]["frames"] != steps:
+            if args.video_policy!='none' and (len(videos) != 1 or videos[0]["frames"] != steps):
                 raise RuntimeError("视频帧数与控制步数不一致")
             wb.write_json(directory / "eval_info.json", info)
             wb.write_json(directory / "actual_protocol.json", {**chosen, "case": case,
                           "camera_keys": camera_keys, "chunk_size": policy.config.chunk_size,
                           "n_action_steps": policy.config.n_action_steps, "num_steps": policy.config.num_steps,
-                          "video": videos[0], "chunk_wall_s": chunk_times})
-            return {"success": bool(info["per_episode"][0]["success"]), "env_steps": steps,
-                    "chunk_calls": len(chunk_times), "policy_s": sum(chunk_times), "monitor_s": 0.,
-                    "event_replans": 0, "video_paths": info["video_paths"], "initial_state_id": chosen["initial_state_id"]}
+                          "video": videos[0] if videos else None, "chunk_wall_s": chunk_times,
+                          'monitor_source_sha256':runtime.monitor_sha if runtime else None,
+                          'monitor_horizon_steps':runtime.k if runtime else None,
+                          'predictor_protocol':holder.get('predictor_protocol') if runtime else None})
+            success=bool(info['per_episode'][0]['success'])
+            retained=list(info.get('video_paths',[]))
+            if success and args.video_policy=='failures':
+                for v in retained:Path(v).unlink()
+                retained=[]
+            if success and args.audit_mode=='failures':
+                for name in ['first_policy_input.pt','initial_sim_state.pt','first_noise.pt']:(directory/name).unlink(missing_ok=True)
+                if (directory/'input_images').exists():shutil.rmtree(directory/'input_images')
+            if success and args.trace_mode=='failures':(directory/'monitor_steps.jsonl').unlink(missing_ok=True)
+            wb.write_json(directory/'retention.json',{'success':success,'video_policy':args.video_policy,
+                'retained_video_paths':retained,'audit_mode':args.audit_mode,'trace_mode':args.trace_mode})
+            return {"success": success, "env_steps": steps,
+                    "chunk_calls": len(chunk_times), "policy_s": sum(chunk_times),
+                    'monitor_s':runtime.monitor_s if runtime else 0.,
+                    "event_replans": runtime.events if runtime else 0,
+                    'guidance_calls':runtime.guidance_calls if runtime else 0,
+                    "video_paths": retained, "initial_state_id": chosen["initial_state_id"]}
         finally:
             env.close()
     print(f"冻结计划：{len(plan['cases'])}回合；任务{args.task_ids}，真实初始状态{args.initial_state_ids}，seed{args.seeds}", flush=True)
-    rows = run_plan(args.output, plan, {method: run_case})
+    rows = run_plan(args.output, plan, {m: run_case for m in methods})
     print(rows)
 
 
