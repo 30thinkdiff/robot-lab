@@ -27,6 +27,8 @@ HOLDOUT_EPISODES = (825,)
 DATA_FILES = tuple(f"data/chunk-000/file-{i:03d}.parquet" for i in (213, 214, 215))
 VLM_ID = "HuggingFaceTB/SmolVLM2-500M-Video-Instruct"
 PINS = ["peft==0.21.0", "accelerate==1.14.0", "transformers==5.5.4", "tokenizers==0.22.2", "numpy==2.1.3"]
+MANAGED_TORCH_PINS = ["torch==2.11.0", "torchvision==0.26.0", "torchaudio==2.11.0"]
+MANAGED_TORCH_INDEX = "https://download.pytorch.org/whl/cu128"
 
 
 class BatchInspectionComplete(Exception):
@@ -116,7 +118,9 @@ def runtime_env(workdir):
     env.update({"HF_HOME": str(workdir / "hf"), "HF_HUB_DISABLE_IMPLICIT_TOKEN": "1",
                 "HF_HUB_DISABLE_TELEMETRY": "1", "TOKENIZERS_PARALLELISM": "false",
                 "PYTHONUNBUFFERED": "1", "PIP_CACHE_DIR": str(workdir / "pip-cache"),
-                "PIP_DISABLE_PIP_VERSION_CHECK": "1"})
+                "PIP_DISABLE_PIP_VERSION_CHECK": "1",
+                # Notebook的inline后端模块不一定装在隔离venv；CLI只需无显示器绘图。
+                "MPLBACKEND": "Agg"})
     # 不继承Notebook中临时拼接的另一份LeRobot源码。
     env.pop("PYTHONPATH", None)
     return env
@@ -162,6 +166,48 @@ def ensure_environment(environment, log, env):
     return python
 
 
+def torch_version_supported(version):
+    match = re.match(r"^(\d+)\.(\d+)", version)
+    return bool(match and (2, 7) <= tuple(map(int, match.groups())) < (2, 12))
+
+
+def prepare_with_managed_torch(args, log):
+    """宿主Torch不兼容时，用独立CUDA wheel环境启动prepare；不改Colab宿主。
+
+    安装和导入发生在新解释器，不会在当前已import的Torch进程内降级。
+    正式venv只链接此环境里的native包；不再借用不兼容的宿主native包。
+    """
+    workdir = args.workdir
+    env = runtime_env(workdir)
+    python = ensure_environment(workdir / "torch-runtime-2.11-cu128", log, env)
+    probe_code = (
+        "import json,torch,torchvision,torchaudio;"
+        "assert torch.__version__.split('+')[0]=='2.11.0';"
+        "assert torchvision.__version__.split('+')[0]=='0.26.0';"
+        "assert torchaudio.__version__.split('+')[0]=='2.11.0';"
+        "assert torch.cuda.is_available(), '独立环境CUDA不可用';"
+        "x=torch.ones(2,device='cuda');assert x.sum().item()==2;"
+        "torchvision.ops.nms(torch.tensor([[0.,0.,1.,1.]],device='cuda'),torch.tensor([1.],device='cuda'),.5);"
+        "print(json.dumps({'torch':torch.__version__,'torchvision':torchvision.__version__,"
+        "'cuda':torch.version.cuda,'gpu':torch.cuda.get_device_name(0)}))"
+    )
+    probe = subprocess.run([str(python), "-c", probe_code], env=env, capture_output=True, text=True)
+    if probe.returncode:
+        log.say("宿主Torch不符合固定LeRobot约束；在独立torch-runtime安装官方2.11.0/cu128组合。宿主不变。")
+        log.say("已有独立环境检查：" + probe.stderr[-2000:])
+        if shutil.disk_usage(workdir).free < 8 * 2**30:
+            raise RuntimeError("独立CUDA wheel安装至少保留8GiB磁盘余量；没有替换宿主Torch")
+        log.run([python, "-m", "pip", "install", "--only-binary=:all:",
+                 "--index-url", MANAGED_TORCH_INDEX, *MANAGED_TORCH_PINS], env=env)
+    log.run([python, "-c", probe_code], env=env)  # 真正做CUDA算子与torchvision ABI检查
+    command = [python, Path(__file__).resolve(), "prepare", "--profile", "gpu", "--workdir", workdir,
+               "--log-root", log.directory / "managed_prepare"]
+    if args.skip_assets:
+        command.append("--skip-assets")
+    # 不传allow-managed-torch：子解释器必须已经兼容，避免失败后无限递归。
+    log.run(command, env=env)
+
+
 def prepare(args, log):
     if not (3, 12) <= sys.version_info[:2] < (3, 14):
         raise RuntimeError("此固定依赖组合使用Python3.12或3.13；不会自动替换系统Python或在其他版本上编译依赖。")
@@ -179,9 +225,14 @@ def prepare(args, log):
     if free < minimum:
         raise RuntimeError(f"磁盘余量不足：{free:.2f}GiB；{args.profile}准备至少要求{minimum}GiB。")
     import torch
-    torch_version = tuple(int(x) for x in torch.__version__.split("+")[0].split(".")[:2])
-    if not (2, 7) <= torch_version < (2, 12):
-        raise RuntimeError("固定LeRobot提交使用torch>=2.7,<2.12；请选择匹配的宿主环境，脚本不会替换大体积PyTorch。")
+    log.say({"host_torch": torch.__version__, "host_torch_file": torch.__file__,
+             "host_cuda_build": torch.version.cuda, "host_cuda_available": torch.cuda.is_available()})
+    if not torch_version_supported(torch.__version__) or (args.profile == "gpu" and not torch.cuda.is_available()):
+        if args.profile == "gpu" and getattr(args, "allow_managed_torch", False):
+            prepare_with_managed_torch(args, log)
+            return
+        raise RuntimeError(f"实际宿主torch={torch.__version__}，固定LeRobot要求torch>=2.7,<2.12；"
+                           "GPU可传--allow-managed-torch在独立环境安装兼容版本，宿主不会改变。")
     if args.profile == "gpu" and not torch.cuda.is_available():
         raise RuntimeError("GPU准备需要已能使用CUDA的PyTorch；在Colab先选择GPU，服务器先安装匹配的CUDA版PyTorch。")
 
@@ -765,6 +816,7 @@ def export_notebook(args):
             "        ARCHIVE.mkdir(parents=True, exist_ok=True)\n"
             "        LOG_ROOT = ARCHIVE / 'setup_logs'\n"
             "    command = [sys.executable, str(SCRIPT), 'prepare', '--profile', PROFILE, '--workdir', str(WORKDIR)]\n"
+            "    if PROFILE == 'gpu': command.append('--allow-managed-torch')\n"
             "    command += ['--log-root', str(LOG_ROOT)]\n"
             "    if PREPARE_ENV:\n"
             "        with subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, errors='replace') as process:\n"
@@ -809,6 +861,8 @@ def main(argv=None):
     parser.add_argument("--workdir", type=Path, default=Path("outputs/training_workbench"))
     parser.add_argument("--profile", choices=["cpu", "gpu"], default="cpu")
     parser.add_argument("--skip-assets", action="store_true")
+    parser.add_argument("--allow-managed-torch", action="store_true",
+                        help="GPU宿主Torch不兼容时在独立环境安装官方2.11.0/cu128，不修改宿主")
     parser.add_argument("--archive-dir", type=Path)
     parser.add_argument("--inspect-only", action="store_true", help="train入口只保存首个真实batch，不执行参数更新")
     parser.add_argument("--practice-step-file", type=Path, help="train入口显式调用此文件的train_one_batch一次，然后结束；不影响正式五步入口")

@@ -1,5 +1,7 @@
 """CPU核对真实三条示范的时序索引；不加载VLA，不下载数据，不训练。"""
 import argparse
+from datetime import datetime, timezone
+import hashlib
 import json
 from pathlib import Path
 import sys
@@ -11,7 +13,7 @@ from studies.policy_generalization.corrector.transitions import make_transition_
 
 def main():
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument("--inspect-only", action="store_true", help="只读实际数据，不调用尚未完成的用户函数")
+    p.add_argument("--inspect-only", action="store_true", help="只读实际数据，不调用用户配对函数")
     p.add_argument("--dataset-root", type=Path, default=ROOT / "outputs/training_audit_20261105/raw_dataset")
     args = p.parse_args()
     import pyarrow.parquet as pq
@@ -27,6 +29,8 @@ def main():
         episodes.extend(r["episode_index"] for r in rows)
         frames.extend(r["frame_index"] for r in rows)
     report = {"scope": "real frame index alignment; no visual predictor trained",
+              "checked_utc": datetime.now(timezone.utc).isoformat(),
+              "pair_source_sha256": hashlib.sha256(Path(make_transition_pairs.__code__.co_filename).read_bytes()).hexdigest(),
               "episode_lengths": lengths, "rows": len(frames),
               "k1_expected_train_pairs": 317, "k1_expected_validation_pairs": 152,
               "boundary_examples": {"valid_last_813": [153, 154], "invalid_cross_episode": [154, 155]},

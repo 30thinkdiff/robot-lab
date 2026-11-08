@@ -1,15 +1,16 @@
 # Robot-Lab
 
-**2026-11-05当前进展：[持续研究报告](studies/policy_generalization/research_report.md)。** 已完成30回合相机/窗口对照、真实T4 LoRA五步训练、保存重载与离线评分；Corrector进入数据协议与核心重实现阶段，尚无监控/恢复收益结论。
+**2026-11-08：统一入口为[按任务与日期维护的工作日志](studies/policy_generalization/work_log.md)和[研究报告](studies/policy_generalization/research_report.md)。**
 
-下一步：[Corrector机制与实践](studies/policy_generalization/corrector_mechanism_practice.md)。训练练习已收束，旧checkpoint闭环是可选工程验证，不作为Corrector前置条件。
-动手参考：[LoRA机制与CPU/GPU实践](studies/policy_generalization/lora_training_practice.md)、[单单元格远程准备](scripts/smolvla_training_prepare.ipynb)、[训练结果](studies/policy_generalization/training_results_20261105.md)。
+已完成472帧双相机视觉缓存、原始LIBERO/H50两回合冒烟（2/2成功）、上游算法接入及CPU保存恢复检查。Corrector真实预测器训练及在线收益尚未验证。
+当前由用户填写训练脚本四个student_*核心步骤；环境、归档、日志和对照路径由助手辅助。学习重实现不冒充正式算法贡献。
+运行入口：[数据与训练Notebook](scripts/corrector_data_prepare.ipynb)、[命令行训练脚本](scripts/corrector_train.py)；本地.py变更后使用[sync工具](scripts/sync_corrector_notebook.py)刷新远程快照。
 
 以 LeRobot / SmolVLA 为基础，研究相机视角变化下的操作失败、动作执行窗口及计算成本。
 当前完成同一任务/物理初始化下的 30 个执行窗口评测回合，包含未参与窗口选择的两个保留视角。
 结果是有限改善，尚未解决所有视角下的抓取与恢复问题；当前阶段使用已有数据进行离线复核。
 
-- [最新中文进展与复现入口](studies/policy_generalization/progress_20261101.md)
+- [历史中文进展（2026-11-01）](studies/policy_generalization/progress_20261101.md)
 - [实验结果、计算成本与结论边界](studies/policy_generalization/replanning_results.md)
 - [队列、推理耗时、仿真时间与视频播放的区别](studies/policy_generalization/timing_and_queue.md)
 - [六个真实案例的视频/数据复核](studies/policy_generalization/video_review_20261101.md)

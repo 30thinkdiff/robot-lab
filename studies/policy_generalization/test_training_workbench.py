@@ -18,6 +18,52 @@ spec.loader.exec_module(module)
 
 
 class TrainingWorkbenchTests(unittest.TestCase):
+    def test_cli_backend_does_not_inherit_notebook_inline_and_parent_is_unchanged(self):
+        with patch.dict(module.os.environ, {"MPLBACKEND": "module://matplotlib_inline.backend_inline"}):
+            env = module.runtime_env(Path('/tmp/backend-contract'))
+            self.assertEqual(env['MPLBACKEND'], 'Agg')
+            self.assertEqual(module.os.environ['MPLBACKEND'], 'module://matplotlib_inline.backend_inline')
+
+    def test_supported_torch_range_keeps_lerobot_constraint(self):
+        self.assertTrue(module.torch_version_supported('2.11.0+cu130'))
+        self.assertTrue(module.torch_version_supported('2.7.1'))
+        self.assertFalse(module.torch_version_supported('2.12.0+cu130'))
+        self.assertFalse(module.torch_version_supported('2.6.0'))
+
+    def test_incompatible_host_dispatches_to_new_interpreter_before_linking(self):
+        from unittest.mock import Mock
+        fake = SimpleNamespace(__version__='2.14.0+cu130', __file__='/host/torch/__init__.py',
+                               version=SimpleNamespace(cuda='13.0'),
+                               cuda=SimpleNamespace(is_available=lambda: True))
+        with tempfile.TemporaryDirectory() as directory:
+            args = SimpleNamespace(workdir=Path(directory), profile='gpu', allow_managed_torch=True)
+            with patch.dict(sys.modules, {'torch': fake}), patch.object(module, 'prepare_with_managed_torch') as managed, \
+                    patch.object(module, 'ensure_environment') as environment, \
+                    patch.object(module.shutil, 'disk_usage', return_value=SimpleNamespace(free=20 * 2**30)):
+                module.prepare(args, Mock())
+                managed.assert_called_once()
+                environment.assert_not_called()
+            self.assertEqual(fake.__version__, '2.14.0+cu130')
+
+    def test_managed_torch_installs_only_inside_isolated_environment_and_no_recursive_flag(self):
+        from unittest.mock import Mock
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            python = root / 'torch-runtime-2.11-cu128/bin/python'
+            args = SimpleNamespace(workdir=root, skip_assets=True)
+            log = Mock(directory=root / 'logs')
+            with patch.object(module, 'ensure_environment', return_value=python), \
+                    patch.object(module.subprocess, 'run', return_value=SimpleNamespace(returncode=1, stderr='missing torch')), \
+                    patch.object(module.shutil, 'disk_usage', return_value=SimpleNamespace(free=20 * 2**30)):
+                module.prepare_with_managed_torch(args, log)
+            commands = [list(call.args[0]) for call in log.run.call_args_list]
+            self.assertEqual(commands[0][0], python)
+            self.assertIn(module.MANAGED_TORCH_INDEX, commands[0])
+            self.assertIn('torch==2.11.0', commands[0])
+            self.assertEqual(commands[-1][0], python)
+            self.assertIn('--skip-assets', commands[-1])
+            self.assertNotIn('--allow-managed-torch', commands[-1])
+
     def test_inspection_exports_latest_frame_for_five_dimensional_images(self):
         import torch
         from PIL import Image
