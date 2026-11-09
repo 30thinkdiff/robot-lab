@@ -238,6 +238,64 @@ class TrainingEntryTests(unittest.TestCase):
                 split.k_step = 2
                 runner.run(split)
 
+    def test_stop_before_first_epoch_can_resume_and_best_is_published_before_finish(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);fake_cache(root/'features')
+            args=self.args(root,'stopped');args.output.mkdir()
+            (args.output/'STOP').touch();runner.run(args)
+            self.assertEqual(torch.load(args.output/'latest.pt',weights_only=True)['epoch'],0)
+            self.assertFalse((args.output/'best_model.pt').exists())
+            self.assertEqual(json.loads((args.output/'training_status.json').read_text())['status'],'paused')
+            (args.output/'STOP').unlink();args.resume=True
+            original=runner.reference_update
+            calls=0
+            def interrupt_on_epoch_two(*a):
+                nonlocal calls
+                calls+=1
+                if calls==4:raise KeyboardInterrupt()
+                return original(*a)
+            with patch.object(runner,'reference_update',side_effect=interrupt_on_epoch_two):
+                with self.assertRaises(KeyboardInterrupt):runner.run(args)
+            latest=torch.load(args.output/'latest.pt',weights_only=True)
+            best=torch.load(args.output/'best_model.pt',weights_only=True)
+            self.assertEqual(latest['epoch'],1)
+            self.assertEqual(best['epoch'],1)
+            for name in best['state_dict']:
+                torch.testing.assert_close(best['state_dict'][name],latest['best_state_dict'][name],atol=0,rtol=0)
+            runner.run(args)
+            self.assertEqual(torch.load(args.output/'latest.pt',weights_only=True)['epoch'],3)
+
+    def test_configurable_worker_loader_uses_original_datasets(self):
+        groups={'train':list(range(6)),'validation':list(range(3))}
+        train,val=runner.student_loaders(groups,2,torch.Generator().manual_seed(42),num_workers=2)
+        self.assertEqual(train.num_workers,2)
+        self.assertIs(train.dataset,groups['train'])
+        self.assertIs(val.dataset,groups['validation'])
+
+    def test_worker_training_resume_preserves_shuffle_and_weights(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);fake_cache(root/'features')
+            full,split=self.args(root,'full_workers'),self.args(root,'split_workers')
+            for args in (full,split):
+                args.output.mkdir();args.loader_workers=2
+            runner.run(full)
+            split.stop_after_epoch=1;runner.run(split)
+            split.resume=True;split.stop_after_epoch=0;runner.run(split)
+            a=torch.load(full.output/'latest.pt',weights_only=True)
+            b=torch.load(split.output/'latest.pt',weights_only=True)
+            for name in a['state_dict']:
+                torch.testing.assert_close(a['state_dict'][name],b['state_dict'][name],atol=0,rtol=0)
+
+    def test_manifest_rejects_partial_training_data(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path=Path(tmp)/'manifest.json'
+            records=[{'episode':1,'frames':20,'split':'train'},
+                     {'episode':2,'frames':21,'split':'validation'}]
+            path.write_text(json.dumps({'dataset':runner.archive.DATA_ID,
+                'revision':runner.archive.DATA_SHA,'records':records}))
+            self.assertEqual(runner.validate_manifest(records,path),runner.archive.digest(path))
+            with self.assertRaises(ValueError):runner.validate_manifest(records[:1],path)
+
     def test_accumulation_matches_full_batch_including_short_tail(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

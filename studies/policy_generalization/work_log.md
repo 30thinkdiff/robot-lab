@@ -1,16 +1,16 @@
 # 研究与工程工作日志：按任务、日期更新
 
-更新：2026-11-08。以后行动安排、运行命令和进展统一在本文件更新，不再新增按天命名的指南。
+更新：2026-11-09。以后行动安排、运行命令和进展统一在本文件更新，不再新增按天命名的指南。
 研究问题、方法、正式实验结论与个人贡献另见[研究报告](research_report.md)；源码原理文档保留为技术参考，不作为另一份待办清单。
 
 ## 当前状态
 
 | 主线     | 已完成                                                                | 当前阻塞或下一步                                  |
 | -------- | --------------------------------------------------------------------- | ------------------------------------------------- |
-| 数据     | 3条示范/472帧原始归档与T4视觉提取，Drive SHA复查完整                  | 44条物理清单已核验；T4流式提取与测速待执行        |
+| 数据     | Object10清单454条/66984帧已核验，4090特征已完成3条/472帧；完整分片并发下载测速通过 | 继续预下载剩余分片，再提取剩余451条；单任务44条历史结果保留 |
 | 算法理解 | 用户完成配对、模型、损失和单步更新练习，审查通过                      | 练习用于理解；正式训练调用上游数学实现            |
-| 训练工程 | 上游算法接入、日志、独立验证、保存重载、epoch边界续训的对照路径已检验 | 训练/在线核心已审查；完整评测适配已实现，待T4冒烟 |
-| 闭环评测 | 原始LIBERO/H50新入口完成2回合，2/2成功                                | 50回合计划、在线Corrector尚未执行                 |
+| 训练工程 | 单任务38,052,800参数模型训练、开发集验证、保存重载；完整epoch续训已检验 | Object10完整特征后测4090一轮，再恢复至最多30轮 |
+| 闭环评测 | 4090真实LVM/OGG已接通；旧模型长批次2394回合、程序错误0，已人工暂停 | 保留旧结果；新模型离线选best后再做有限多任务配对评测 |
 
 ## 任务1：数据下载、特征提取与训练样本
 
@@ -838,3 +838,247 @@ smoke通过后批次默认HF_HUB_OFFLINE=1，避免在模型已缓存情况下�
 night自动先强制事件检查，再最多10回合小批次，完成后进入长批次；小批次因磁盘/STOP暂停则不会启动长批次。--wait-ready-minutes只等待另一prepare的environment/simulation/解释器与最新成功status，不同时启动第二安装器；发现最新prepare失败即停止。新版代码应解压到独立longrun-code目录，通过--workdir指向旧runtime共享环境/权重，避免覆盖正在运行的旧代码。首次模型下载与调用检查仍依赖当前本地反向代理；只有缓存与小批次通过后的正式批次默认HF离线，tmux本身不会维持本机网络。
 
 本轮91项CPU回归检查通过，涵盖时间/磁盘/人工STOP正常暂停与同计划恢复、等待prepare完成但不并行安装、首次小批次先于长批次、预算只作用正式批次。尚未在AutoDL执行新闭环。新包corrector_autodl_longrun.zip约88KB，不覆盖正在运行的旧安装代码。
+
+
+### 2026-11-09：cuDNN下载完成、tmux缺失与等待队列启动方式
+
+用户已解压longrun-code但tmux命令不存在，故不能据解压成功认为后台等待任务已启动。cuDNN文件达到657906812字节，pip已转向287.2MB的cuSPARSELt；此前find只匹配cudnn，看到的是旧完整文件，不代表新包停滞。继续只读检查*cusparselt*增长，不中断现有pip，不并行安装同一Python环境。
+
+当前night带--wait-ready-minutes时可在依赖下载期间启动：只检查最新prepare成功状态和完整环境/仿真标记，不重复运行prepare；完成后检查权重、单回合、小批次、长批次。tmux可在独立终端通过apt补装；今晚也可用系统nohup单次启动同一等待命令，stdin重定向/dev/null，stdout/stderr重定向持久日志，避免为了终端工具再阻塞队列。nohup与tmux均不维持另一条SSH反向代理隧道；本机仍需在下载/首次模型加载阶段保持联网不休眠。没有从本地启动远程任务，实际启动与运行状态待用户反馈。
+
+### 2026-11-09 07:58：准备完成，长批次进度待只读核验
+
+用户提供实际远端日志：独立LIBERO安装成功、pip check无冲突，真实reset/step、初始状态配对、两路图像/状态及MP4编码检查全部通过；prepare返回shell后SSH才出现Broken pipe。因此环境准备已完成，不能将随后客户端断连判为安装失败。Gym维护提示不抵消这次实际检查，也不为消除提示而改动已验证仿真版本。
+
+用户此前ps确认nohup进程的完整参数：50初始化×20seed×5方法，正式批次每次启动预算10小时；不是新的Corrector训练。目录中已有debug_ogg_001、pilot_001、paired_001。正常night调用顺序只有在强制OGG检查和小批次完成后才进入paired，但仅有目录不能证明正式回合数量、成功率或当前存活。核验顺序为相关进程及命令行→三个阶段execution.json→trials回合记录和analysis/summary.json→启动日志错误；running标记也可能因进程被强杀而陈旧。检查前不重复启动同一输出目录。
+
+nohup针对SSH挂断信号，screen/tmux保存远程会话；它们不保证SSH网络本身不掉线，也不保持独立反向代理。pilot和正式batch代码在强制检查通过后默认启用HF离线缓存，不能仅因本机代理断连就判当前批次必停。对现有nohup任务先检查，不为切换screen而终止。后续长任务可用screen并重定向日志；SSH ServerAliveInterval只发送保活/检测失联，不负责断线重连。来源：[AutoDL后台运行说明](https://api.autodl.com/docs/daemon/)、[GNU nohup](https://www.gnu.org/s/coreutils/manual/html_node/nohup-invocation.html)、[OpenSSH配置](https://man.openbsd.org/ssh_config)。
+
+助手本次只读SSH连接已到达认证阶段，但BatchMode返回Permission denied(publickey,password)，未获得远程执行权限、未输入或请求密码、未改远程进程或文件。实际完成数、失败原因及GPU占用仍须用户已登录终端回传；不将权限失败误报为实例网络故障。当前保留原Notebook及输出，未覆盖运行中的便携包。
+
+### 2026-11-09约08:24：AutoDL真实闭环已运行1757回合（中途快照）
+
+用户回传真实ps/nvidia-smi与JSON输出：nohup启动器及paired子进程仍在，4090当时GPU利用率43%、显存2405MiB；证明昨夜SSH断连后评测继续进行。强制OGG接线检查1回合completed、无程序错误、任务未成功；该检查设置max_steps=60并强制事件，不纳入正式成功率。pilot自然事件10回合全部成功、无程序错误，但每方法仅2次，不据此推断稳定性能。
+
+正式批次started_utc为2026-11-08T18:54:37Z，即北京时间11-09 02:54:37；快照wall_seconds=19849.16（约5.51小时），1757/5000完成、另1回合running、程序错误0。H20=300/352（85.23%），H50=209/352（59.38%），LVM=293/351（83.48%），monitor=208/351（59.26%），OGG=296/351（84.33%）。原始LIBERO alphabet-soup单任务、固定现有best权重；不是新训练或Plus相机泛化结果。数字来自用户粘贴，原始JSON/视频仍在远端，尚未取回本地核验。
+
+阶段解读：事件方案高于H50，但OGG暂低于固定H20约0.90个百分点，LVM低于H20约1.75个百分点，OGG较LVM高约0.85个百分点；方法各完成数略异，需以同condition+seed的完整配对重新计算。计划按初始化→seed→五方法顺序运行，中途覆盖并非随机抽样，不能当作50个初始化全覆盖的最终成绩，也不作统计显著性结论。下一步优先核验自然事件触发数、实际引导调用及耗时，再从OGG独有成功/失败和LVM对照中抽视频；不在当前冻结计划中途调参。
+
+现有平均约11.30秒/正式回合（含本阶段启动等开销）；若吞吐近似不变，10小时预算约完成3200回合而非5000，预计北京时间约12:54后在回合边界暂停。此为粗估，后续初始化难度、视频和OGG调用可能改变速度；10小时到期不自动关闭计费实例。当前不重启活跃进程；screen只需在远端安装并用于后续新任务，无需本地同装或迁移现有nohup任务。
+
+### 2026-11-09：纠正主线——先扩大预测器训练，再选择少量权重闭环验证
+
+用户明确：不能把已用单任务44条示范训练的best直接扩为长时间主评测；期望先扩大数据覆盖、充分训练预测器，离线验证/可视化持续开展，最终主要用best做闭环，少量中间权重留作后续分析。助手此前将接线检查扩大为5000回合，偏离了此优先级。昨晚的真实贡献是环境部署、断连后持续运行和LVM/OGG接通；AutoDL没有新增预测器训练，也不能把该单任务结果称为充分训练或论文完整复现。建议在远端touch runtime/results/overnight_001/STOP，等待完整回合结束和评测进程退出；未从本地擅自终止远端任务或删除其结果。
+
+用户随后回传CSV快照：H20=368/420、平均8.4048次预测、policy_s=1.7602；H50=271/420、4.0643次；monitor=271/420、4.0643次，监测约4.0065秒；LVM=357/419、6.1862次预测、3.3174次事件；OGG=360/419、6.1599次预测、3.3150次事件、13.2601次引导计算。OGG相较H20减少约26.71%动作块调用，但policy_s+monitor_s约5.0334秒，高于H20的1.7602秒；两组平均回合墙钟12.4441秒与8.9140秒。不得将调用次数节省直接表述为整体计算或控制延迟节省。现有OnlineCorrector.select_action同步执行视觉/MLP，并显式CUDA同步，尚非论文D.5与执行并行的监控路径。今后分别报告同步CUDA计算总耗时、控制链路暴露等待、引导增量、p95、实际仿真吞吐；恢复率还须明确分母，不能从event数量推断。当前功能性接入仍有价值，不冒充论文异步开销复现。
+
+重新查阅论文v2附录C.2/C.3、D.4/D.5：四块2048宽MLP、AdamW lr3e-4/wd1e-4、cosine调度eta_min=.01lr、30epoch/早停5、部署h1-k10用有效batch512和cosine损失。Table11为MetaWorld训练比例与系统成功率，不是LIBERO预测器余弦目标值；数据扩充不保证指标单调上升，也不能由此前早停27epoch直接断言训练不足。论文数据比例研究采用episode级80/10/10；本项目现有开发缓存为80/20，独立test协议尚待补齐，不宣称两者完全一致。[论文及附录](https://arxiv.org/html/2607.01804v2)。
+
+**实际容量与本轮选择。** 固定数据SHA869589...的真实info/episodes/tasks及377个分片清单：全库40任务、1693轨迹、273465帧；原始分片32.5266GiB，同一双相机128×960量化特征估算31.3766GiB。Object任务为dataset task20～29，454轨迹、66984帧。已实际查询Parquet页脚核验Object所需98个分片映射，生成outputs/corrector_stream_audit_20261109/object10/manifest.json：原始下载总量9402105058字节（8.7564GiB），量化特征8252294832字节（7.6855GiB），364训练/90验证episode，k10对应50175训练/12269验证对。此轮仅下载元信息和页脚，没有下载这些原始图像、提取新特征或运行4090训练。
+
+当前远端50GiB数据盘已用约15GiB，优先制作并训练Object完整10任务；全40任务需同时容纳约31.38GiB特征、当前环境、临时副本、checkpoint和5GiB余量，现有磁盘偏紧，可在用户确认容量/费用后扩至80～100GiB，或另行审计旧缓存，不能自动扩容/删除结果。现有120GB RAM可由系统页缓存复用量化数据；不将全部特征展开成float32常驻内存。不要训练完一小批就丢弃特征：后续epoch、验证、重训仍需它们。
+
+**已完成的最小工程修正。**
+- corrector_stream_workbench.py按未完成轨迹对物理分片计数，最后一个引用完成且特征已SHA发布后才删分片；跨运行仍要使用的共享分片保留。恢复时可清理“已发布、清理前断开”留下的已无引用文件，失败轨迹原始数据保留。只清单内data路径，拒绝越界/符号链接。新增STOP轨迹边界暂停与磁盘余量检查；首次STOP在加载编码器前就停止。
+- corrector_train.py不改用户前向/反向/更新核心数学；新增可选loader-workers与pin-memory、非阻塞传输，默认CPU练习保持原样。首次训练前保存epoch0的完整latest；每完整epoch保存模型/AdamW/调度器/打乱与Torch随机状态。验证改善即发布带真实best epoch/step的best_model.pt，恢复时从latest修复best。STOP在epoch边界暂停；被硬中断的半轮重做，不声称支持任意batch无损接续。
+- 新--manifest检查训练特征与冻结完整清单的episode/frames/split一致，拒绝把部分提取的454任务当全量训练。修改数据、源码、batch或精度后须新output；旧44轨迹训练输出不覆盖、不混作精确续训。增加每5轮的轻量快照已有实现，不逐快照触发全仿真。
+- AutoDL权重检查去掉写死44条记录的限制，允许后续真实大数据模型；新权重进入闭环仍须显式选择checkpoint/SHA和新实验目录，避免默认旧best混淆。
+
+**部署与下一步操作。** 新包outputs/autodl_setup/corrector_training_object10_20261109.zip包含当前代码、核验清单和START_TRAINING.txt，解压至远端新training-code目录，复用runtime/venv与runtime/hf；不覆盖运行中的longrun-code/旧输出，也不用重装环境。START_TRAINING逐节复制执行，不能整份当脚本一口气运行。
+1. 旧评测STOP后确认paused和相关子进程退出，保留其trials/统计/失败视频；screen仅需远程安装，当前nohup已能抗SSH断开，不必为工具切换重启实验。
+2. plan使用包内object10_manifest.json，不再重扫页脚；run --max-new-episodes 3先测下载/视觉提取/归档速度。初始3条含813/818/825，仅为资源测速，不代表10任务已覆盖。
+3. 测速合理后同archive继续run --max-new-episodes 0 --minutes 0；逐轨迹发布，完成454条后训练。特征保留，原始数据在无后续引用后清理；原始来源/分片SHA和少量参照图保留。此版视觉提取仍按上游逐帧路径，尚未验证批处理提取吞吐。
+4. 使用corrector_train.py inspect和--manifest核实完整数据，再用新predictor_001输出fit --profile paper-width --split-mode episode --batch-size 32 --accumulate 16 --loader-workers 2 --pin-memory --cpu-threads 4 --epochs 30 --snapshot-every 5 --stop-after-epoch 1，先真实测一轮。有效batch512不意味着把512份token激活同时装进24GB显存。若32仍OOM，以新output尝试16/累积32；性能用真实秒数、样本/秒及峰值显存核对，不预先承诺4090满载。
+5. 保持其余协议参数不变，去掉stop-after-epoch、加--resume完成训练；每轮离线验证，best/last/少量中间权重落数据盘。部署前取回关键权重和清单备份；数据盘持久化不等于外部备份。
+6. 先比较held-out预测的cosine/MSE、零/训练均值基线、幅值、分任务结果与固定样本图，再只选best进行10～30组完整配对的闭环初筛；有差异再扩大。最终研究模型数据量/训练时长影响时，最多选择少量代表快照，不给每份pt安排5000回合。独立test与异步控制成本是明确未完成项，不把开发验证结果冒充最终测试。
+
+本轮验证：38项CPU检查通过（4.330秒），包括两个DataLoader工作进程下的连续/恢复最终权重逐项完全一致；初始epoch0暂停恢复；epoch2中断时epoch1的latest/best仍完整；原始共享分片跨次保留/最后引用释放；STOP与磁盘保护；完整清单拒绝半成品训练。另验证18文件部署包逐文件SHA、START_TRAINING的bash语法与解压后标准库CLI可启动。多进程测试需本地Unix套接字，默认沙箱限制导致通信失败，已停止该次测试并在允许本地进程通信的环境重跑通过；不更改训练算法规避测试。没有执行远端安装/原始数据下载/4090新训练。部署包SHA256=a3c383cacb345b208d401ac9823025b585bf327facc13d4bfccf3a32004155cf。操作预览另存outputs/autodl_setup/START_TRAINING_20261109.txt，公开文档仍统一维护本日志。
+
+### 2026-11-09：训练范围澄清、旧评测暂停确认与基线版本固定
+
+用户已在远端执行STOP并回传execution.json：status=paused、reason=operator_stop_file、completed=2394/5000、errors=0、wall_seconds=26116.881565（约7小时15分17秒）。这是完整回合边界的正常人工暂停；不重新运行night、不移除该旧STOP，不把未完成的2606回合计为任务失败。用户尚未上传新Object训练部署包，也未扩容、重启或启动新的多任务提取/训练；以上不能写作已完成。
+
+**范围与项目目标。** 已训练的44条/6867帧仅含alphabet-soup单任务，现有结论限定该任务。可以用它测其他任务，但那属于额外的未见任务迁移实验，不是当前必做项。新包Object10不是一个任务，而是LIBERO Object套件的10个任务（dataset task20～29），454轨迹；推荐训练一个共享Corrector，在这10个任务各自的新初始化/episode上评估同一套H50/H20/LVM/OGG，再报告逐任务结果和任务宏平均。任务内训练与验证episode须分开，但不要求训练/评测任务类别不同；这不需要逐任务各训一个模型、也不需要10×10泛化矩阵。论文写的是benchmark示范训练与逐任务评测，不能从“逐任务评测”推断“每个任务单独训练一个Corrector”，公开说明也不足以承诺作者所用绝对轨迹清单与本库完全相同。
+
+主交付为可复现的多任务数据→特征→训练与续训→离线预测评估→系统对照与成本→失败分析；先完成Object10这个明确边界，不强制完成四套件/所有backbone/所有泛化消融再形成求职项目。若扩充到全40任务仍只训练共享模型并在对应40任务评估，不自动扩展成多模型泛化研究。简历按已做内容写“基于公开源码复现并适配VLA-Corrector、实现数据与恢复/评测链路”等，不能把上游算法作为原创。论文/arXiv作为可选后续：须有明确新问题/改进和可复核对照，完整工程流程本身不等于新的论文贡献。
+
+**基线版本。** 已在research_report.md前部补全当前主实验版本表：基础policy=lerobot/smolvla_libero@a24f1f380461b665158d52acd140152c79e8b36d；LeRobot0.6.1源码7e241bd...；Corrector方法源码927a06d...；旧单任务best权重SHA19f73f...；原始LIBERO8f1084e...；chunk50/去噪10步/环境20Hz、Corrector1秒跨度和H50/H20差异。LoRA练习的smolvla_base独立列明。固定revision是权重版本标识；远端plan.protocol和每回合actual_protocol中的真实审计仍须取回，dtype/实际库版本未获得原文件时不补猜。今后报告须同时注明基础VLA与Corrector权重及训练范围，而非只写SmolVLA。
+
+**耗时差异。** 当前timed wrapper同步GPU后计_get_action_chunk整体时间，包含图像准备/条件编码/所有去噪步/OGG输入梯度等；monitor_s计额外的同步视觉编码、预测/比较/阈值，两段不是论文的暴露控制等待。例OGG每回合policy约1.498秒，是约6.16次动作块查询累计，不能与论文单次普通/引导调用232/243ms直接对比。monitor_s约3.536秒遍布约165.76个控制步，粗略平均约21.3ms/步（不是p95或严格逐步样本统计）。论文D.5将LVM与执行并行，用同步CUDA测全部计算、另测控制等待；本项目当前同步select_action没有该流水线。回合wall_s还包含仿真/渲染/录像与文件审计。A100与4090硬件不同，OGG引导频率也须核对（本次10个去噪步、每3步引导约4次/触发，图片计时协议每次2步引导）。因此差异既来自统计单位也来自真实运行结构，不能仅改统计标签宣称低延迟；后续选best后做普通/引导匹配调用、均值/p95和控制等待专项基准，再考虑异步监控改进。当前先推进预测器训练，不在本轮顺手改同步机制。
+
+**扩容核查。** 查询AutoDL官方本地盘/计费/FAQ文档：按量实例关机后GPU不预留；包年包月才明确保证预留；系统盘和数据盘的文件/已装依赖在普通实例关机重启后保留。未查到针对“运行中扩容后的专用重启”保证不释放当前GPU库存的明确官方承诺，故不向用户保证一定保卡，也不把保留数据等同保留GPU。不执行平台重启、关机、扩容或容器内reboot。现有50GiB足以先开展完整Object10；若决定直接全40/扩至80～100GiB，先由平台控制台说明或官方客服确认该操作是否保留当前GPU占用，再选择扩容。无论screen/nohup都不跨实例重启保持进程，后续从保存的文件恢复。资料来源：[计费规则](https://api.autodl.com/docs/price/)、[依赖保留](https://www.autodl.com/docs/deps/)、[本地数据盘](https://api.autodl.com/docs/local_disk/)、[VLA-Corrector论文](https://arxiv.org/html/2607.01804v2)。
+
+### 2026-11-09：Object测速卡在原始VLM联网重试，显式代理与完整检查点加载修复
+
+用户实际运行的是三轨迹probe（PID仅作当时证据），日志为object10-probe.log，全量object10-extract.log尚不存在。经恢复SSH反向隧道，curl --proxy访问Hub返回CONNECT200/HTTP200；但probe仍在SmolVLM2-500M-Video-Instruct的adapter_config/model.safetensors等HEAD请求上报Errno99 Cannot assign requested address并反复重试。可定位为模型初始化阶段的连接错误，不是已确认权重缺失、CUDA OOM或特征提取吞吐慢。curl的显式代理不配置Python，日志不足以唯一确定Errno99底层原因；先停止旧重试进程、使用显式代理的新进程复核，不将恢复隧道等同已有Python自动更换路由。
+
+检查发现上游SmolVLAExtractor默认先初始化并下载原始VLM权重，再加载完整policy；AutoDL此前使用load_vlm_weights=False已加载完整策略，未缓存原始约2GB VLM权重。这是本地数据适配器没有复用完整checkpoint加载方式导致的额外依赖。修复corrector_data_workbench.py：优先固定revision的完整策略snapshot本地缓存，设置load_vlm_weights=False并strict=True加载完整策略参数；VLM转回上游原提取路径的bfloat16，然后上游Extractor记录model_dtype。避免把改加载方式悄悄变成float32特征；严格参数匹配失败则直接停止，不以随机参数提取。局部适配AutoConfig/AutoProcessor优先local_files_only，允许联网时仅补齐缺失配置/分词器，不调用原始VLM权重加载。未全局设置HF_HUB_OFFLINE，后续真实示范分片仍需联网；参考仓库和安装包源码未修改。
+
+流式入口新增--proxy-url：导入Hub/HTTPX前为本次进程设置HTTP(S)_PROXY及回环NO_PROXY，TCP不可达5秒内失败，日志不输出代理凭据；配置代理不自动创建SSH隧道。新增加载编码器/准备episode阶段日志与运行状态。修复包corrector_training_object10_netfix_20261109.zip解压到独立training-code-netfix，复用原object10归档、临时缓存和runtime/hf；不用重新发布清单或重装依赖。旧进程停止后用同三轨迹范围重试，nohup保护计算进程，追加日志保留旧错误；本地代理隧道仍须联网阶段维持。START_TRAINING预览已更新显式代理与日志追加，当前cwd由用户进入实际新解压目录，不切回旧代码。
+
+29项CPU定向检查通过（1.464秒），包括完整checkpoint参数/严格加载调用合同、视觉权重bf16转换、上游Extractor局部适配与退出恢复、缓存策略不发Hub请求、代理环境/死端口检查和已有流式/部署合同；使用构造模型验证调用与精度，不计为完整VLA或GPU回归。新部署包逐文件SHA、命令bash语法通过，包SHA=a0ff6418f899301ccc378fa54f2848740f3dc4362bc19ad8b12a56e79c37f6dc。尚未在远端上传/验证这份修复包或确认三条特征完成；之后先核对严格加载、特征数值/shape与测速，再扩大454条。
+
+用户随后补充旧probe最终异常：Transformers在原始SmolVLM的多个文件HEAD请求Errno99重试后，抛出OSError“does not appear to have ... pytorch_model.bin or model.safetensors”，旧进程已自行异常退出，故不再要求对该已退出进程Ctrl+C。Trace路径仍为training-code的旧compatible_loader，尚未部署netfix。该末尾信息不能单独证明Hub仓库确实缺文件；应结合先前网络失败判断为未成功解析远端权重。下一步先pgrep确认没有排队启动的其他run，再上传97,765字节netfix到新目录，复用固定manifest/缓存，以显式代理的三轨迹nohup重试；不重装依赖、不删缓存、不启动全量提取或训练。
+
+用户随后以nohup启动得到PID，但日志出现unrecognized arguments: --proxy-url；提示符仍为旧training-code，usage也无新参数。此轮是旧脚本在参数解析阶段退出，日志中的前一OSError是追加保留，不是新修复模型加载失败。明确要求先以新目录绝对路径运行--help确认--proxy-url，再启动；PID本身不代表参数解析或提取成功。修复包代码保持不变，操作说明改用training-code-netfix绝对脚本/清单路径，并使用object10-probe-netfix.log隔离新旧日志；不依赖用户是否切换了cwd。当前仍无新三轨迹完成证据。
+
+### 2026-11-09 11:24后：4090三轨迹测速完成，按下载瓶颈推进Object10
+
+用户回传新一次真实运行报告：started_utc=2026-11-09T03:16:00.043173Z，即北京时间11:16:00；episode813/818/825共472帧，status=finished_selected_batch、phase=idle，wall_seconds=463.942967，约11:23:44结束。前一个attempt的1148.873805秒属于另一轮，不能混加为本次成功耗时。current_episode=825仅表示最后处理项，不表示仍在运行。本次三条在新Object10归档完成，不代表另外新增三个任务，也不与早先Colab的同三条重复计为新的独立示范。
+
+| 本次实际量 | 数值与解释 |
+| --- | --- |
+| 原始分片 | file-213/214/215，合计288114375字节，约274.77MiB；均非缓存命中 |
+| 下载时间 | 110.802+141.632+173.797=426.230秒，约7分6秒 |
+| 总墙钟 | 463.943秒，约7分44秒；下载占91.87% |
+| 平均下载吞吐 | 0.645MiB/s；包含这些请求的实际等待，非链路理论带宽 |
+| 其他时间 | 37.713秒，含模型初始化、数据准备、解码、视觉提取、SHA和归档，不能称为纯GPU提取耗时 |
+| 输出与源码 | 每帧128×960；stream SHA=96bb9002d214060a4c3f719b38f8bc225776ef61c2db9872fe045fe61d139616；data/extract适配脚本SHA=fd990da64e02814ab3f3710a0cf9fa4d6e948dec5f56b84398d1195c9085ae4b |
+
+released_source_bytes=0符合共享引用策略：file-213还含814～817，file-214还含819～822，file-215还含823/824/826等未完成轨迹。不能为让统计显示释放而删除这三份文件。上游特征提取已在真实4090严格加载路径运行成功；不再把完整checkpoint修复写成仅通过构造模型检查。
+
+**接下来按以下顺序推进，不启动旧5000回合队列。**
+
+1. 用已验证的training-code-netfix绝对路径，确认没有同archive的run进程后，以nohup继续全量提取；max-new-episodes=0、minutes=0。451条待处理，已发布三条按SHA跳过；复用共享原始文件，最后引用完成再删除。日志object10-extract.log；停止文件为object10/STOP，保留特征供所有epoch复用。仅日志重定向不能保护前台进程，启动说明已改为nohup。无需为这次计划修改重新上传代码包或重新安装环境。
+2. 完整集合只有98个物理分片，不能按454/3倍放大本次下载。已下载288114375字节，其余约9113990683字节；若维持这次速率，剩余下载约3.75小时。总制作暂按约4～6小时安排，含后续提取和归档；这不是保证，换线路/任务长度/服务波动后应重估。准确提取速度取stream_report.episodes各项extraction_seconds、publish_seconds，编码器setup只计一次，不能重复相加。
+3. 优先改善下载出口，先不改已验证的逐帧提取数学路径。在独立终端可测试AutoDL官方学术加速source /etc/network_turbo，对固定revision的真实Parquet做限时传输测速；主页HTTP200不足以证明CDN吞吐。官方不保证稳定。确实更快才在下一次启动使用其环境代理，并省略本地隧道的--proxy-url；两种出口不要混用。保留原工作出口可直接继续，不为测试另起同archive写入者。若继续使用127.0.0.1:17890，本地电脑及隧道需在线；远端nohup不保持本地隧道。[AutoDL官方说明](https://api.autodl.com/docs/network_turbo/)。
+4. 454条全部校验通过后，inspect核对364训练/90验证episode、50175/12269个k10样本对；再运行真实完整一轮，调度器仍设epochs=30，仅用stop-after-epoch=1暂停。记录train+val秒数、吞吐、Torch峰值显存与nvidia-smi。有效批512下每轮约98次更新，最多30轮约2940次，早停可能更少；不从特征提取时间猜训练时长。
+5. 先测32×16。如果GPU尚有足够余量，可在独立测速output测64×8，再酌情128×4，同为有效批512；用一轮耗时/峰值显存选择配置，不能只看显存占比。批量、数据或源码改变须新实验；若沿用32×16，可直接resume原一轮输出。16vCPU先用2个loader worker和4条Torch CPU线程，120GB RAM让系统页缓存复用约7.69GiB量化特征，避免不必要的全量FP32展开和双份local-cache。此阶段不并行仿真与训练争GPU，不盲目设置16个worker。
+6. 正式最多30轮/早停5：每轮开发验证，latest用于完整epoch恢复、best持续更新、每5轮少量快照。先离线检查逐任务cosine/MSE、幅值、零/均值基线及固定样本图；再仅选best做十任务小规模配对H50/H20/LVM/OGG，确认效果后扩大。没有单一的论文余弦分数可直接当跨数据集验收线；最终系统成功率和成本须另测。
+
+**本轮训练与论文/源码的对照（拟用配置，未冒充已完成训练）。**
+
+| 项目 | 论文或公开源码 | Object10本轮 | 原因与对结论的影响 |
+| --- | --- | --- | --- |
+| 架构/参数量 | 四块2048宽，约38～42M，随视觉/动作维度变化 | 上游MLP，2048×4，action embed256，D960/A7，38,052,800参数 | 结构对齐；不是为了CPU缩到256宽的pilot模型，不能为了凑整数40M任意加宽 |
+| 优化器/调度 | AdamW，lr3e-4、wd1e-4，余弦最低.01lr；30轮、早停5 | 同上，最低lr3e-6；沿用源码clip1、dropout0 | 对齐核心训练设置；早停27轮等不自动表示训练不足 |
+| 损失 | 主文公式含MSE+cosine；附录C.3部署h1-k10明确cosine-based | cosine，k10/h1 | 对齐部署版本，不与ratio-sweep或基础CLI默认both混为一谈；同时报告MSE/幅值 |
+| 批量 | 部署版本标注512；ratio-sweep训练128/验证256；源码CLI batch为per-rank | 微批32×累积16，名义有效512；验证微批32 | 24GB显存适配；按真实样本数加权，浮点累加顺序不同。作者具体多卡启动/全局批量不能仅由服务器8卡反推；不声称运行级完全一致 |
+| 训练来源/任务 | 多benchmark示范，主backboneπ0.5，并含SmolVLA等；不是本文库的精确清单 | 固定公开smolvla_libero，一个共享Corrector用Object十任务454轨迹 | 先在50GiB盘完成明确套件；不是只训单个任务，也不宣称复现MetaWorld或LIBERO全表分数 |
+| 划分 | 论文数据比例研究episode级80/10/10；基础train.py另用样本random_split | 冻结episode级80/20，364/90，无独立predictor test | 延续已核验清单及开发协议，不是硬件要求；不让同episode两边泄漏，但不能把用于选best的验证称独立test。未来正式test须另定协议，不能回头挑验证子集冒充未使用测试 |
+| 特征/精度 | 源码支持冻结视觉特征和int8量化；论文未明确所有训练精度 | 视觉BF16；int8缓存+FP16尺度；MLP输入/参数FP32，无新增AMP | 记录实际代码设置；不能把量化缓存说成int8训练，也不猜作者一定AMP或完全相同精度 |
+| 动作空间/跨度 | 特征/动作随backbone变化，需与在线一致 | 固定policy预处理器动作空间；10FPS、k10=1秒；在线20Hz对应20步 | 避免照搬其他backbone归一化和0.5秒/1秒错配；相同步数不自动等于相同时长 |
+| 资源 | 报告8×A100-SXM4-40GB服务器 | 1×4090 24GB、16vCPU、120GB RAM | 不预设作者每次训练用满8卡；比较任务质量需固定协议，耗时不能直接等同比较 |
+| 工程入口 | 上游模型/Dataset/损失与训练文件 | 用户实现的四个student核心由本地wrapper调度，调用固定上游数学实现 | 不是直接原train.py CLI；新增清单审计、磁盘保护、日志、每完整epoch恢复和少量快照，不把工程扩展称为算法改进 |
+| 在线阶段 | 论文异步LVM与执行重叠，OGG计时样本为每次两步引导 | 当前同步LVM，每3去噪步引导，cooldown0 | 属于明确待对齐的系统实现差异；不影响离线MLP训练入口，但会影响整体延迟/成功率解释 |
+
+以上核对基于固定源码927a06d及[论文v2附录C/D](https://arxiv.org/html/2607.01804v2)。启动说明已显式写出implementation、k、学习率、损失、早停等选项，避免把脚本默认值当作已审核的实验协议。本次仅更新文档/启动说明，未远程启动451条提取、训练或改变网络配置。
+
+### 2026-11-09：先比较下载出口与本地中转总耗时，暂不扩大任务
+
+用户尚未启动Object10训练，希望先解决准备阶段约92%时间耗在下载的问题，并提出先下载到本地U盘再SSH上传。先做有上限的真实传输测速，不启动全量下载、提取或训练。当前数据流为远端HTTP请求→SSH反向隧道→本地Mihomo→Hub/CDN；数据返回也经过本机和SSH。它不是服务器独立出口，可能受代理节点/CDN、家庭下行/上行、SSH路径等任一环节限制。单凭原报告只能定位下载阶段，不能唯一归因为SSH、Hub限速或硬件性能。
+
+已完成的本地限时测速（同一固定数据revision，不输出签名URL或凭据）：
+
+| 路线/样本 | 实测 | 解释 |
+| --- | --- | --- |
+| 默认路由，file213前8MiB | 3.340秒，约2.40MiB/s | 默认路由可能受本机TUN规则影响，不称为“关闭代理直连” |
+| 显式Mihomo HTTP代理，file213前8MiB | 2.520秒，约3.18MiB/s | 短请求受握手、CDN缓存、瞬时吞吐影响 |
+| 显式Mihomo HTTP代理，完整file216尝试 | 90.041秒收到57702752字节，约0.611MiB/s；到测速上限退出 | 未下载完整，不能称为成功全分片测速；持续速率与原服务器0.645MiB/s接近 |
+| 默认路由，file216前32MiB | 10.514秒，约3.04MiB/s | 比8MiB更长，但仍要复核完整文件后才外推 |
+| 本地HF镜像，file216前8MiB | 20.595秒，约0.388MiB/s | 本次不比原路线快，不凭镜像名义认定加速 |
+| 远端AutoDL官方加速，32MiB请求 | 用户回传TLS连接超时，8.001秒、HTTP000、0字节 | 此次不可用，不声称官方服务普遍故障；不切换现有进程 |
+
+本地完整file216已通过默认路由续传完毕：99657643字节，SHA256=1f7fb0f8105fa81f40819d8216f03057d273e8b1ea03bb005943138a1c2e87ee，与Hub响应X-Linked-ETag匹配。仅保留这一个约95MiB分片在outputs/network_probe_20261109/source/data/chunk-000/，供真实上传测速/后续复用，不自动下载98份。续传后的哈希脚本误用了系统Python没有的hashlib.file_digest，文件已完成但首次校验程序报错；改为分块sha256后验证通过，未保留该次续传的精确计时，因此不补猜速度。第一轮90秒和后续32MiB测速均有独立JSON证据。
+
+U盘`/media/<user>/UBUNTU 22_0`实际约52GiB空余，ntfs3挂载选项为ro，只读。空间足够Object原始分片，但当前不能写入；不自动重新挂载、格式化、修复文件系统或移动现有内容。本机根分区约2.4GiB、项目所在分区约3.5GiB可用，不把约8.76GiB全量原始数据写这些分区。读取已挂载U盘并不需要改它，但使用其作为下载目标前须先查明只读原因。
+
+新增scripts/corrector_upload_probe.py，只在本地终端执行，通过已有SSH别名发送32MiB真实Parquet，远端cat到/dev/null，不创建数据文件、不启动GPU。READY后才计时以排除密码输入/握手，禁SSH压缩，认证最多90秒、传输默认60秒；结果可写JSON。不读取/保存密码，不自动修改SSH认证。CLI/语法及本地管道冒烟已通过，不把管道检查当成真实网络上传。助手只读SSH仍返回认证失败，真实上传速度待用户交互登录后测量。
+
+选择标准：串行本地中转总时间约D/本地下行+D/SSH上传，不能只看本地下行；若逐文件流水可重叠两阶段，但吞吐仍受较慢一端限制。比如本地下行3MiB/s、上传3MiB/s，串行等效约1.5MiB/s；若本地下行仍0.61MiB/s，再增加上传不会比原0.645MiB/s更优。先对比完整文件吞吐与实测上传，再选本地中转或服务器独立出口，不仅为填满GPU而启动无关旧任务。
+
+若最终选择本地预下载，按固定manifest去重下载98个分片，保留data/chunk-000/file-XXX.parquet相对路径，完整性校验后rsync分批上传到object10-work/source/，与原提取的local_dir一致；先上传一份并确认当前远端Hub库验证SHA后复用、不重新下载。已核对本地Hub库在缺local_dir元数据且ETag为SHA256时会核验已有文件并补元数据，但远端库行为仍须实测。不要盲目复制一堆文件到不同目录后误称已命中缓存，不在正在提取时覆盖同名文件；若后续开启并发下载，需另做磁盘预留和单写者协调。
+
+**后续实测与本轮选择。** 用户在本地交互SSH后上传32MiB真实分片到远端/dev/null：20.654秒，1.5493MiB/s。再在远端以curl三并发Range请求不同分片各8MiB：各15.160/15.177/15.673秒，总墙钟15.704秒，24MiB/15.704=1.5283MiB/s，约原0.6446的2.37倍。程序均HTTP206、完整8MiB，没有GPU或文件写入。不能把每条请求的Bps相加再误乘并发数；实际总量除整体墙钟才是合计吞吐。单次上传不代表链路永久硬上限，但说明本地中转仍有第二段成本。
+
+助手补做完整分片传输对照：默认路由不带Range的90秒请求仅收到17903490字节（0.189MiB/s，测速超时），与短Range请求的3.04MiB/s差异很大，不能用短测承诺本地全库下载时长。改为同文件8MiB分段、两个连接下载，99657643字节在56.467秒完成，1.6831MiB/s；最终SHA与原文件/Hub一致，临时片段全部清理。这说明调整传输并发/分段值得继续验证，但不同请求时段、CDN缓存及路径也会影响结果，不能唯一归因为某种服务端限速机制。按本地分段1.683与上传1.549粗算串行中转约0.807MiB/s，低于当前远端并发小测1.528；因此优先直接在服务器预下载，不先修U盘或下载整库到本地。
+
+新增独立scripts/corrector_prefetch.py，调用现有Hub SDK、固定原manifest/revision与同一object10-work/source目录，默认3线程且只下载3个未完整缓存的分片；所有文件按清单去重与大小核对，SDK元数据/下载缓存继续复用。默认至少5GiB预留，并在提交前保守检查待下载总量及并发临时余量。SIGINT/SIGTERM或object10-work/PREFETCH_STOP停止提交新文件、等待在途文件结束；硬断后保留SDK的partial缓存。同一目录不同时运行原始清理/提取或另一预下载。这里没有另写分段下载器代替Hub验证，也不把curl Range小测当作新SDK入口的完整吞吐证据。
+
+下一步只需上传这一个新增脚本，复用venv/hf，在远端nohup先测3个完整新分片；缓存检查也会计入completed_files，max-new-files仅限制新文件数。确认SDK完整文件实际提速后，将该参数改为0下载剩余98分片；然后再按原入口集中提取451条、核对454条完整数据、一轮训练测速及正式续训。若完整SDK吞吐仍约0.64MiB/s，则不直接扩大，而针对传输实现再核验；Range分段只是本地已验证的备选，尚未作为正式下载路径部署。按远端小测1.53MiB/s持续下载剩余约8.49GiB需要约1.6小时，仅为条件估算，不包含特征提取，不承诺达到该速度。
+
+三份远端测速由用户回传终端证据，本地原始JSON保存在outputs/network_probe_20261109/；训练仍未启动。新增下载入口的缓存去重/限量、目录越界/符号链接防护、CLI实际创建数量、磁盘与STOP先于SDK导入等4项CPU检查通过；上传工具另通过CLI及本地管道检查，真实1.5493MiB/s结果来自用户SSH执行。没有修改SmolVLA、Corrector、特征数学路径或训练超参数。
+
+### 2026-11-09：三个完整新分片并发下载成功，转入剩余分片预下载
+
+用户回传corrector_prefetch.py真实日志：file212=94412007字节/31.2208秒，file216=99657643字节/100.8365秒，file211=99083096字节/115.6829秒；三份existed_before均为false。本轮status=completed、completed_files=6、errors=0，wall_seconds=115.833260。6份包括最初213/214/215三份缓存与本轮三个新分片，不代表6条episode、也不代表完成454条特征制作。
+
+新完成载荷293152746字节（279.57MiB），按整体墙钟得到2.413574865MiB/s，约原单文件测速0.644645的3.74倍；并发耗时不能把三份seconds相加。此指标按完整新文件载荷计算，如果SDK续传了此前的隐藏partial，会高估本次真实线上接收吞吐；existed_before=false本身不能排除partial。它仍证实三份完整新文件已经可复用，且没有程序错误；不将这一次短批次当作全库持续速率保证。
+
+按目前两轮记录累计6/98个物理分片，扣除原有288114375字节和本轮293152746字节后，剩余8820837937字节（约8.215GiB）。若维持这次载荷处理速率，约58分钟；临时安排约1～1.5小时下载窗口，随实际日志修正，不包含后续视觉特征提取。保持3个worker即可，暂不为追求并发继续加到8或增加本地中转。
+
+操作预览START_TRAINING_20261109.txt新增明确2c命令：同prefetch参数仅改max-new-files=0，以nohup继续剩余全部分片，仍复用object10-work/source、固定revision和磁盘预留5GiB。先确认没有其他prefetch/run任务；下载阶段保持本地代理隧道在线。若中断，用同命令复用SDK缓存；PREFETCH_STOP在文件结束后暂停。等status=completed且进程退出，再执行第3节特征提取（已完成3条按SHA跳过），最后454条完整校验后才进入训练。当前不同时运行预下载与会清理原始分片的提取器；没有在助手端远程启动任何新任务。
+
+### 2026-11-09：全量预下载持续完成分片，核对匿名warning及后续加速方案
+
+用户回传进程646405，参数为prefetch --workers 3 --max-new-files 0，确认全量预下载在运行；shell另行显示的Done属于旧max-new-files=3测速任务，不表示全量结束。随后回传file217～229等持续file_completed，已贴日志没有HTTP429或下载失败；不能仅因匿名warning认定当前已被限流，也不能从各文件seconds之和推导并发总吞吐。此轮明确保持现有进程、网络和环境不动，不并行运行新的下载测速竞争带宽。
+
+核对当前源码：prefetch和原stream均显式token=False，对公开数据使用匿名请求。即使另一个终端设置HF_TOKEN，已启动进程的环境不会自动更新，而且显式False也不会使用该凭据。Hub官方文档的rate limits主要是API/Resolver/页面的请求窗口配额，超限返回HTTP429；认证可提高配额、减少共享出口IP匿名配额风险，但不能由此承诺文件下载字节吞吐提升。现有日志不足以证明是否有其他网络或CDN层限速。[官方限额](https://huggingface.co/docs/hub/en/rate-limits)、[下载认证参数](https://huggingface.co/docs/huggingface_hub/en/package_reference/file_download)。
+
+用户提供的CSDN聚合文章URL本次网页工具无法访问，未声称已读全文；根据用户摘要核对HF-Mirror官网四类方式：网页下载、hf CLI、hfd/aria2、HF_ENDPOINT。镜像是更换下载服务入口，CLI是调用入口，hfd增加分段/连接能力，它们不是同一层面的提速开关。我们已采用SDK三文件并发，本地镜像此前8MiB实测仅0.388MiB/s，不能代表远端镜像，但足以说明不能承诺镜像恒快。下次选择同一固定revision的新分片，在独立临时位置对照官方认证/远端镜像/必要时分段下载；不改现有归档或从main取不同数据。公开数据镜像保持匿名，不向镜像发送官方账号凭据。[镜像使用说明](https://hf-mirror.com/)。
+
+官方当前将HF_HUB_ENABLE_HF_TRANSFER列为废弃，现代hf_xet提供分块传输；HF_XET_HIGH_PERFORMANCE尝试增加CPU/网络/磁盘并行，不是GPU加速，需先确认远端hf_xet版本、是否启用和代理兼容性，后续再单文件比较。当前文档还指出hf_xet>=1.3的并发自适应，一些旧Range参数已无效；不照抄旧教程在运行中的venv升级库或同时叠加多套加速器。HF_ENDPOINT/相关环境变量应在启动/导入库前设置，不会改变当前已运行的下载。[官方环境变量](https://huggingface.co/docs/huggingface_hub/en/package_reference/environment_variables)。
+
+仅在本地prefetch增加后续可选--use-hf-token：默认匿名不变；显式启用后调用SDK的token=True，使用HF_TOKEN或已保存凭据，不接受明文token命令行参数、不输出token。缺少凭据则在下载前报错，不悄悄回退；此认证选项仅允许HTTPS官方huggingface.co，避免与公开镜像选项混用。原stream公开数据路径不改。当前远程下载无须更新脚本、重启或补登录；之后启动新任务才按需部署此选项。认证/无凭据/镜像拦截和原预下载检查在本地构造SDK下验证，不计为已测真实认证提速。
+
+### 2026-11-09：下载等待期的并行预检、脚本导读与今日预算
+
+**最新进度及时间口径。** 用户进一步贴出file217～236共20份完整新分片（1893251536字节），结合此前6份，可确认至少26/98份已经完成，剩余最多6927586401字节（约6.452GiB）；摘录可能省略其他完成项，所以不称为实时精确计数。最近数份分片约88～104MB需141～299秒，速率较首轮测速波动；固定三worker下，暂以约1～2小时的剩余下载窗口安排，而非继续保证早先58分钟。文件seconds是各线程墙钟，不能简单求和当总耗时。进程当前只做网络/CPU解密/写盘，未执行视觉编码或模型训练，4090基本闲置。
+
+**可以与下载并行的工作。** 现有object10/features已发布813/818/825三条，共472帧；可以只读这些缓存，在新output probes/three_episode_gpu_001运行38M的一轮真实训练预检，验证CUDA、前向/反向、AdamW、显存、checkpoint保存重载。不调用完整VLA、不渲染、不联网，不与prefetch的source写入或清理冲突；用0个loader worker和2条CPU线程减小CPU竞争。source_root必须是已缓存固定仓库，启动设置HF_HUB_OFFLINE=1和TRANSFORMERS_OFFLINE=1；该环境变量不会影响另一个已运行的下载进程。具体命令已放在本地启动说明2d，不需要上传新代码或重装环境。助手尚未远程执行该任务。
+
+此预检明确不传454条manifest，实际3条时为299训练/143验证样本对，32×累积16只产生约一次更新；它是独立资源/流程检查，不是十任务训练、不是“已充分训练”，也不从如此短的epoch耗时直接线性外推完整30轮。其protocol/result保留真实范围及显存。完成后即可退出，不循环凑GPU工作时长；后续GPU特征提取要等预检退出。旧44轨迹checkpoint的完整预测报告需要对应44份缓存，远端仅有3份新缓存时不能直接拿来冒充完整旧开发集评估。当前预测报告默认CPU逐样本计算，后续扩大报告时要另评估耗时，不把CPU报告当作GPU任务。
+
+**本地代码与昨晚至今的调用关系。** Notebook主要写出脚本快照、准备环境、通过subprocess启动.py并显示输出；实际核心均在本地scripts/和studies/中。AutoDL使用其独立快照，与本地新提交不自动同步；正在执行的下载不必为提交而更换脚本。
+
+```mermaid
+flowchart TD
+    A[公开固定manifest] --> B[corrector_prefetch.py: 三线程下载原始Parquet]
+    B --> C[corrector_stream_workbench.py run: 逐episode准备与回调]
+    C --> D[corrector_data_workbench.py extract: 冻结SmolVLA视觉编码]
+    D --> E[int8视觉特征和尺度/动作/索引/来源SHA]
+    E --> F[corrector_train.py: 上游Dataset与MLP + 用户student步骤]
+    F --> G[latest/best/少量快照 + 每轮开发验证]
+    G --> H[corrector_prediction_report.py: 离线指标与图]
+    G --> I[corrector_closed_loop_eval.py: 仿真任务]
+    I --> J[smolvla_baseline_benchmark + OnlineCorrector]
+    J --> K[batch_evaluation: 逐回合恢复/成功率/成本/视频]
+```
+
+| 文件/重点入口 | 核心输入→处理→输出 | 建议阅读点 |
+| --- | --- | --- |
+| scripts/corrector_autodl.py: prepare/night | prepare复用环境并做CUDA/EGL检查；night依次接线检查、小批次、正式闭环 | night不是训练器；昨天长队列固定旧best，没有优化网络参数 |
+| scripts/corrector_prefetch.py: selected_files/main/download | manifest去重98分片；三线程SDK下载同revision到source；限量/磁盘/STOP | 下载与GPU训练是不同阶段，max-new-files与max-new-episodes单位不同 |
+| scripts/corrector_stream_workbench.py: make_manifest/run_stream | 固定episode/split/实际物理文件映射；prepare_episode读Parquet对应行，completed发布后清理 | 共享分片必须等最后引用完成才删除；断开按轨迹恢复，不是重新下载全部 |
+| scripts/corrector_data_workbench.py: cached_visual_extractor/extract | 严格加载完整冻结policy→双相机预处理/视觉推理→每帧128×960特征；上游量化→逐episode SHA归档 | 图像、动作和时间索引一起保存；缓存int8不等于MLP用int8训练；视觉BF16、MLP FP32 |
+| scripts/corrector_train.py: reference_api/datasets/select_split/run | 校验缓存和完整manifest；上游Dataset配对；user student_components/loaders/forward/update执行训练 | 输入(z_t,a_t)，目标z_(t+k)-z_t；k10/10FPS为1秒；累积、裁剪、step和清梯度的位置 |
+| 同文件checkpoint路径 | 每轮验证→改善即best；每完整epoch latest含优化器/调度器/随机状态；间隔快照 | latest用于续训，best用于评估；半轮中断重做；新数据或配置必须新output |
+| scripts/corrector_prediction_report.py: predict/plot | 按冻结验证索引加载权重；cosine/MSE/幅值/零与训练均值基线；保存CSV、特征图和参照图 | 预测的是latent变化，不是生成未来RGB；验证集选best，不称独立test |
+| scripts/corrector_closed_loop_eval.py | 小入口调用smolvla_baseline_benchmark.main，创建环境、policy和可选Corrector | H50/H20/monitor/lvm/ogg共享初始化和seed；1个或多个case由CLI参数选择 |
+| scripts/corrector_online_runtime.py + studies/.../online_practice.py | load_predictor→视觉预测入队→1秒后观测比较→阈值状态机→清空动作队列→OGG纠偏查询 | guided_velocity只对动作相关输入求梯度，冻结模型；当前LVM同步执行，异步成本优化未做 |
+| studies/policy_generalization/corrector/batch_evaluation.py | make_plan/run_plan/summarize冻结计划、每回合落盘、跳过完整回合 | 中断/程序错误与真实机器人任务失败分开，失败视频及各类成本按协议保留 |
+
+上游参考仓库outputs/source_audit仅供审计，不提交整份复制源码；用户此前完成的transitions、online_practice与四个student步骤仍保留。练习的目的主要是理解和表达，正式模型/Dataset/损失尽量调用固定上游实现。最新Object10公开清单复制至corrector/manifests/libero_object10_8695891.json；数据内容与原临时生成清单逐字节相同，SHA61c9f63f...，不改变已启动远程实验。
+
+**今天的时间安排（预算，不是已测完整GPU耗时）。**
+
+| 阶段 | 当前安排 | 估计依据与限制 |
+| --- | --- | --- |
+| 剩余原始下载 | 约1～2小时 | 最新日志已完成至少26份，近期文件耗时增大；保持3线程及隧道 |
+| 剩余视觉特征 | 先预留约1～2小时 | 初次472帧非下载开销37.7秒，按66984帧粗放大约89分钟；该数还含一次模型初始化/归档，不能当纯GPU基准，完整预下载后需实测更新 |
+| 十任务正式训练 | 临时预留约1～3小时，待全量第一轮修正 | 4090尚无完整数据实测；T4旧5千训练对约65～133秒/轮，仅作历史参考，不按峰值算力比例保证速度。若全量2/5/10分钟一轮，30轮分别约1/2.5/5小时，加启动/保存并考虑早停 |
+| 离线报告、可视化与闭环初筛 | 另留时段，不自动排5000回合 | 当前报告默认CPU；闭环可先10任务×3初始化×1seed×4方法=120回合，若仍约9～13秒/回合纯运行约18～26分钟，跨任务难度/时限/加载/失败视频还会改变耗时 |
+
+因此先把数据→特征→正式训练作为今天余下半天的计算任务，初步预算约3～7小时，首轮真实训练后再决定今晚能否接上初筛；不把下载、GPU处理、评估全部承诺在固定时间内完成。离线每轮验证与少量快照保留；主闭环只选best，后续数据量/训练时长研究再选代表快照。
+
+**等待期学习：求职导向，优先能解释和修改现有项目。**
+
+1. 先30～45分钟依上表走一条真实样本：Parquet episode/frame→z/a→k10标签→一次forward/backward→best→一次LVM到期比较。交付是一页调用图和能独立讲清的训练/评测边界，不重复抄基础语法。
+2. 接着60～90分钟读π0.5：优先本地已缓存LeRobot实现outputs/source_audit/vla-corrector/src/lerobot/policies/pi05/modeling_pi05.py，追forward/sample_actions/denoise_step、图像/语言/状态条件与动作专家、Flow Matching训练目标及去噪积分；再对照[官方OpenPI](https://github.com/Physical-Intelligence/openpi)。交付为SmolVLA/π0.5输入、backbone、动作生成和可接Corrector位置的对照表；不下载大权重，不给当前4090另装依赖。
+3. 再45～60分钟读一个RL后训练闭环：[RLinf具身入口](https://rlinf.readthedocs.io/en/release-v0.2/rst_source/examples/embodied/)选择LIBERO/PPO或GRPO一条线，看rollout、reward、advantage、old/new log probability及policy update如何串起来；与当前监督学习直接给action/latent标签的区别是什么。先写调用/数据流，不同时启动第二个大型复现。Flow Matching策略如何定义可训练的策略概率也是具体要查清的接口，不把普通PPO公式直接套到速度场输出。
+
+阅读和源码导读可以提升面试解释力，但不把“读过π0.5/RL”列为训练/算法改进成果。当前简历主项目优先完成十任务Corrector数据、训练、离线及系统对照的可核验证据，再选择一个有证据支持的小改进。88项Corrector CPU检查已通过；提交前打包/公开清单检查还会一起复核。
+
+**本次提交范围。** 提交当前脚本、测试、公开清单、README/研究报告/本日志；三本Notebook代码单元与HEAD相同，差异仅运行输出/执行信息，保留本地而不上传会话日志。outputs/中的数据、模型、原始日志和部署zip继续忽略；本次沿用之前的GitHub noreply提交身份，不修改全局Git配置或现有历史。推送不会替换正在AutoDL运行的快照，也不自动启动实验。
+
+提交前最终验证：13个Corrector测试模块、89项CPU检查通过（4.407秒），包含worker恢复一致性、完整清单拒绝半成品、预下载认证/磁盘/STOP、固定训练包内容与来源哈希。启动命令bash语法及git diff空白检查通过。没有为提交更改远端正在运行的下载进程。

@@ -14,6 +14,17 @@ stream=importlib.util.module_from_spec(spec);spec.loader.exec_module(stream)
 
 
 class StreamTests(unittest.TestCase):
+    def test_explicit_proxy_is_set_before_clients_and_dead_port_stops_early(self):
+        import os
+        import socket
+        with patch.dict(os.environ,{},clear=True),patch.object(socket,'create_connection') as connect:
+            stream.configure_proxy('http://127.0.0.1:17890')
+            self.assertEqual(os.environ['HTTPS_PROXY'],'http://127.0.0.1:17890')
+            self.assertEqual(os.environ['NO_PROXY'],'localhost,127.0.0.1,::1')
+            connect.assert_called_once_with(('127.0.0.1',17890),timeout=5)
+        with patch.object(socket,'create_connection',side_effect=ConnectionRefusedError()):
+            with self.assertRaises(ConnectionError):stream.configure_proxy('http://127.0.0.1:17890')
+
     def test_verified_template_requires_no_hub_listing(self):
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp)
@@ -53,7 +64,8 @@ class StreamTests(unittest.TestCase):
             manifest={'records':[{'episode':e,'frames':2,'task_id':24,'task':'task','split':s,
                        'files':[{'path':'data/chunk-000/file-213.parquet','bytes':fixture.stat().st_size}]} for e,s in [(813,'train'),(825,'validation')]]}
             (archive/'manifest.json').write_text(json.dumps(manifest))
-            args=SimpleNamespace(workdir=work,archive=archive,source_root=root,max_new_episodes=1,minutes=0,keep_raw=False)
+            args=SimpleNamespace(workdir=work,archive=archive,source_root=root,max_new_episodes=1,
+                                 minutes=0,keep_raw=False,min_free_gib=0.)
             interrupt_next = False
             def download(*a,**kw):
                 p=Path(kw['local_dir'])/a[1];p.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(fixture,p);return str(p)
@@ -78,6 +90,7 @@ class StreamTests(unittest.TestCase):
                 stream.run_stream(args,manifest)
                 self.assertTrue(stream.data.verified(archive/'features/episode_813'))
                 self.assertFalse((work/'raw/episode_813').exists())
+                self.assertTrue((work/'source/data/chunk-000/file-213.parquet').is_file())
                 interrupt_next = True
                 with self.assertRaises(KeyboardInterrupt):
                     stream.run_stream(args,manifest)
@@ -88,8 +101,53 @@ class StreamTests(unittest.TestCase):
                 self.assertFalse((archive/'features/episode_825/COMPLETE.json').exists())
                 stream.run_stream(args,manifest)
             self.assertTrue(stream.data.verified(archive/'features/episode_825'))
+            self.assertFalse((work/'source/data/chunk-000/file-213.parquet').exists())
             report=json.loads((archive/'stream_report.json').read_text())
             self.assertTrue(all(v['completed'] for v in report['episodes'].values()))
+
+    def test_release_only_unreferenced_manifest_files(self):
+        from collections import Counter
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);(root/'data').mkdir()
+            for name in ('shared.parquet','finished.parquet','unrelated.parquet'):
+                (root/'data'/name).write_bytes(b'fixture')
+            released=stream.release_source_files(root,Counter({'data/shared.parquet':1}),
+                                                {'data/shared.parquet','data/finished.parquet'})
+            self.assertEqual(released,len(b'fixture'))
+            self.assertTrue((root/'data/shared.parquet').exists())
+            self.assertTrue((root/'data/unrelated.parquet').exists())
+            with self.assertRaises(ValueError):
+                stream.release_source_files(root,Counter(),{'../unsafe.parquet'})
+
+    def test_stop_file_pauses_before_raw_download(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);work=root/'work';archive=root/'archive'
+            work.mkdir();archive.mkdir();(archive/'STOP').touch()
+            manifest={'records':[{'episode':1,'frames':2,'files':[{'path':'data/a.parquet','bytes':1}]}]}
+            args=SimpleNamespace(workdir=work,archive=archive,source_root=root,
+                                 max_new_episodes=0,minutes=0,keep_raw=False)
+            def extract(options):options.before_episode(1)
+            with patch.object(stream.data,'extract',side_effect=extract),patch('huggingface_hub.hf_hub_download') as download:
+                stream.run_stream(args,manifest)
+                download.assert_not_called()
+            attempt=json.loads((archive/'stream_report.json').read_text())['attempts'][-1]
+            self.assertEqual(attempt['stop_reason'],'operator_stop_file')
+
+    def test_disk_guard_pauses_without_downloading_or_deleting_data(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);work=root/'work';archive=root/'archive'
+            work.mkdir();archive.mkdir()
+            manifest={'records':[{'episode':1,'frames':2,'files':[{'path':'data/a.parquet','bytes':1}]}]}
+            args=SimpleNamespace(workdir=work,archive=archive,source_root=root,
+                                 max_new_episodes=0,minutes=0,keep_raw=False)
+            def extract(options):options.before_episode(1)
+            with patch.object(stream.data,'extract',side_effect=extract), \
+                 patch('huggingface_hub.hf_hub_download') as download, \
+                 patch.object(stream.shutil,'disk_usage',return_value=SimpleNamespace(free=1024)):
+                stream.run_stream(args,manifest)
+                download.assert_not_called()
+            attempt=json.loads((archive/'stream_report.json').read_text())['attempts'][-1]
+            self.assertEqual(attempt['stop_reason'],'disk_space')
 
     def test_incomplete_or_wrong_episode_rows_cannot_be_published(self):
         spec={'episode':813,'frames':2,'task_id':24}

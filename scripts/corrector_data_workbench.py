@@ -44,6 +44,76 @@ def load_vlm_compat(loader, *args, **kwargs):
     return loader(*args, **kwargs)
 
 
+def cached_policy_snapshot(allow_network):
+    """完整策略优先使用固定revision缓存；数据下载阶段仍可联网。"""
+    from huggingface_hub import snapshot_download
+    from huggingface_hub.errors import LocalEntryNotFoundError
+    try:
+        snapshot = snapshot_download(POLICY_ID, revision=POLICY_SHA, token=False, local_files_only=True)
+        if not (Path(snapshot) / 'model.safetensors').is_file():
+            raise LocalEntryNotFoundError('本地snapshot尚无完整策略权重')
+        return snapshot
+    except LocalEntryNotFoundError:
+        if not allow_network:
+            raise
+        print('固定策略snapshot未缓存，开始下载完整SmolVLA checkpoint。', flush=True)
+        return snapshot_download(POLICY_ID, revision=POLICY_SHA, token=False)
+
+
+def load_complete_policy(loader, path, cfg, device, **kwargs):
+    """省去原始VLM权重加载；完整checkpoint严格覆盖参数，视觉精度保持上游bf16。"""
+    import torch
+    if not (Path(path) / 'model.safetensors').is_file():
+        raise FileNotFoundError('需要完整本地SmolVLA model.safetensors，不能用随机初始化模型提取特征')
+    cfg.load_vlm_weights = False
+    cfg.device = device
+    kwargs.update(config=cfg, local_files_only=True, strict=True)
+    policy = loader(path, **kwargs)
+    # 上游原路径AutoModel.from_pretrained(torch_dtype=bfloat16)；这里只改初始化来源，
+    # 恢复视觉模块原本精度，不把此修复悄悄变成float32特征协议。
+    policy.model.vlm_with_expert.vlm.to(dtype=torch.bfloat16)
+    return policy
+
+
+def cached_visual_extractor(extractor_cls, snapshot, device, *, allow_network=False):
+    """保留上游Extractor与预处理；局部适配其初始化，不修改安装包/参考源码。"""
+    from unittest.mock import patch
+    from transformers import AutoConfig, AutoProcessor
+    from lerobot.policies.smolvla.configuration_smolvla import SmolVLAConfig
+    from lerobot.policies.smolvla.modeling_smolvla import SmolVLAPolicy
+    cfg = SmolVLAConfig.from_pretrained(snapshot, local_files_only=True)
+    policy_loader = SmolVLAPolicy.from_pretrained
+    config_loader, processor_loader = AutoConfig.from_pretrained, AutoProcessor.from_pretrained
+
+    def policy(*a, **kw):
+        return load_complete_policy(policy_loader, *a, cfg=cfg, device=device, **kw)
+
+    def cached(loader):
+        def call(*a, **kw):
+            kw['local_files_only'] = True
+            try:
+                return loader(*a, **kw)
+            except OSError:
+                if not allow_network:
+                    raise
+                print('配置/processor缓存缺少文件，仅补齐小配置或分词器文件。', flush=True)
+                kw['local_files_only'] = False
+                return loader(*a, **kw)
+        return call
+
+    print('从缓存严格加载完整SmolVLA；只读已有VLM配置/processor，不重复下载原始VLM权重。', flush=True)
+    with patch.object(SmolVLAPolicy, 'from_pretrained', staticmethod(policy)), \
+         patch.object(AutoConfig, 'from_pretrained', staticmethod(cached(config_loader))), \
+         patch.object(AutoProcessor, 'from_pretrained', staticmethod(cached(processor_loader))):
+        try:
+            encoder = extractor_cls(snapshot, device=device, local_files_only=True)
+        except OSError as error:
+            raise RuntimeError('完整策略/配置/processor加载失败，未回退随机权重；'
+                               '请保留前面的完整异常日志。') from error
+    print('完整策略加载成功；视觉模块保持bfloat16，后续开始逐轨迹下载/提取。', flush=True)
+    return encoder
+
+
 def digest(path):
     h = hashlib.sha256()
     with Path(path).open("rb") as f:
@@ -212,20 +282,10 @@ def extract(args):
     sys.path.append(str(args.source_root / "src"))
     from siglip_dynamics.extract import SmolVLAExtractor, _quantize_per_token
     from lerobot.policies.factory import make_pre_post_processors
-    from huggingface_hub import snapshot_download
-    from transformers import AutoModelForImageTextToText
-    from unittest.mock import patch
     # CPU试验默认只复用本机Hub缓存，不自动下载接近GB的权重。
     local_only = device == "cpu" and not args.allow_model_download
-    snapshot = snapshot_download(POLICY_ID, revision=POLICY_SHA, token=False, local_files_only=local_only)
-    original_loader = AutoModelForImageTextToText.from_pretrained
-    def compatible_loader(*a, **kw):
-        if local_only:
-            kw["local_files_only"] = True
-        return load_vlm_compat(original_loader, *a, **kw)
-    with patch.object(AutoModelForImageTextToText, "from_pretrained",
-                      staticmethod(compatible_loader)):
-        encoder = SmolVLAExtractor(snapshot, device=device, local_files_only=local_only)
+    snapshot = cached_policy_snapshot(allow_network=not local_only)
+    encoder = cached_visual_extractor(SmolVLAExtractor, snapshot, device, allow_network=not local_only)
     encoder.policy.requires_grad_(False)
     pre, _ = make_pre_post_processors(policy_cfg=encoder.policy.config, pretrained_path=snapshot,
                                      preprocessor_overrides={"device_processor": {"device": "cpu"}})

@@ -176,5 +176,17 @@ class AutoDLTests(unittest.TestCase):
                 self.assertNotIn(token,z.read('logs/test.log').decode())
                 self.assertEqual(z.read('results/summary.json'),b'{}')
 
+    def test_training_bundle_contains_public_manifest_and_prefetch(self):
+        import zipfile
+        public = ROOT / 'studies/policy_generalization/corrector/manifests/libero_object10_8695891.json'
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp) / 'training.zip'
+            manifest = packer.build(target, training_manifest=public)
+            self.assertIn('corrector_prefetch.py', manifest['files'])
+            with zipfile.ZipFile(target) as archive:
+                selected = json.loads(archive.read('object10_manifest.json'))
+                self.assertEqual(len(selected['records']), 454)
+                self.assertIn('--max-new-files 3', archive.read('START_TRAINING.txt').decode())
+
 
 if __name__=='__main__':unittest.main()

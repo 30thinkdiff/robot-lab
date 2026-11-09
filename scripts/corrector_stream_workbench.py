@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+from collections import Counter
 from datetime import datetime, timezone
 import json
 from pathlib import Path
@@ -9,12 +10,51 @@ import shutil
 import time
 import sys
 
+
+def configure_proxy(url):
+    """在导入Hub/HTTPX前显式配置本次进程；不打印凭据、不改变系统设置。"""
+    if not url:
+        return
+    import os
+    import socket
+    from urllib.parse import urlsplit
+    parsed = urlsplit(url)
+    if parsed.scheme not in {'http', 'https'} or not parsed.hostname:
+        raise ValueError('--proxy-url需要HTTP(S)代理地址')
+    port = parsed.port or (443 if parsed.scheme == 'https' else 80)
+    try:
+        with socket.create_connection((parsed.hostname, port), timeout=5):
+            pass
+    except OSError as error:
+        raise ConnectionError('本次指定的代理端口不可达；先恢复SSH隧道，不进入模型加载。') from error
+    os.environ.update(http_proxy=url, https_proxy=url, HTTP_PROXY=url, HTTPS_PROXY=url,
+                      no_proxy='localhost,127.0.0.1,::1', NO_PROXY='localhost,127.0.0.1,::1')
+    print(f'本次进程代理已显式设置：{parsed.scheme}://{parsed.hostname}:{port}', flush=True)
+
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import corrector_data_workbench as data
 
 
 class BudgetStop(Exception):
     """仅在轨迹边界正常结束，不伪造全部完成。"""
+
+
+def release_source_files(source_root, remaining, known_files):
+    """只删除冻结清单内且再无未完成轨迹使用的分片；失败轨迹仍保留其原始文件。"""
+    source_root = source_root.resolve()
+    released = 0
+    for relative in known_files:
+        if remaining[relative]:
+            continue
+        path = source_root / relative
+        if (Path(relative).is_absolute() or '..' in Path(relative).parts
+                or not Path(relative).parts or Path(relative).parts[0] != 'data'
+                or path.is_symlink() or not path.resolve().is_relative_to(source_root)):
+            raise ValueError('拒绝清理非本次数据分片路径')
+        if path.is_file():
+            released += path.stat().st_size
+            path.unlink()
+    return released
 
 
 def choose_records(rows, task_ids, limit, seed=42):
@@ -175,23 +215,39 @@ def run_stream(args, manifest):
                     or meta['split'] != spec['split'] or meta['num_frames'] != spec['frames']):
                 raise RuntimeError('已完成特征与清单/编码器不一致')
         else: pending.append(ep)
+    # 计数包含下次才处理的轨迹：跨运行仍要用的共享分片不重复删除/下载。
+    remaining = Counter(f['path'] for ep in pending for f in specs[ep]['files'])
+    known_files = {f['path'] for r in manifest['records'] for f in r['files']}
     if args.max_new_episodes: pending = pending[:args.max_new_episodes]
     started = time.perf_counter()
     deadline = started + args.minutes * 60 if args.minutes else float('inf')
     report_path = args.archive / 'stream_report.json'
     report = json.loads(report_path.read_text()) if report_path.exists() else {'episodes': {}, 'attempts': []}
     attempt = {'started_utc': datetime.now(timezone.utc).isoformat(), 'selected': pending, 'downloads': [],
-               'stream_script_sha256':data.digest(Path(__file__)),'extract_script_sha256':data.digest(Path(data.__file__))}
+               'stream_script_sha256':data.digest(Path(__file__)),'extract_script_sha256':data.digest(Path(data.__file__)),
+               'status':'running','phase':'loading_encoder'}
     report['attempts'].append(attempt)
     raw_root = args.workdir / 'raw'; raw_root.mkdir(parents=True, exist_ok=True)
     source_root = args.workdir / 'source'; source_root.mkdir(exist_ok=True)
-    downloaded = set()
+    stop_file = getattr(args, 'stop_file', None) or args.archive / 'STOP'
+    min_free = getattr(args, 'min_free_gib', 5.) * 2**30
+    attempt['released_source_bytes'] = 0
 
     def persist(): data.write_json(report_path, report)
 
     def prepare_episode(ep):
+        if stop_file.exists(): raise BudgetStop('operator_stop_file')
         if time.perf_counter() >= deadline: raise BudgetStop()
         spec = specs[ep]; began = time.perf_counter(); tables = []; origins = []
+        attempt.update(phase='preparing_episode', current_episode=ep)
+        persist()
+        print(f'开始准备episode{ep}原始数据，已完成特征将按SHA跳过。', flush=True)
+        # 单轨迹raw、特征构建/发布的短暂副本也占磁盘，预留空间后才下载。
+        feature_bytes = spec['frames'] * (128 * 960 + 128 * 2 + 7 * 2 + 7 * 4 + 4 + 8 + 8)
+        raw_bytes = sum(f['bytes'] for f in spec['files'])
+        if (shutil.disk_usage(args.workdir).free < min_free + 2 * raw_bytes + 2 * feature_bytes
+                or shutil.disk_usage(args.archive).free < min_free + feature_bytes):
+            raise BudgetStop('disk_space')
         for f in spec['files']:
             if shutil.disk_usage(args.workdir).free < f['bytes'] + 256 * 2**20:
                 raise RuntimeError('临时盘空间不足；不会把GPU显存当作文件存储')
@@ -200,7 +256,7 @@ def run_stream(args, manifest):
                                        local_dir=source_root, token=False))
             attempt['downloads'].append({'file': f['path'], 'bytes': f['bytes'], 'cache_hit': cached,
                                          'seconds': time.perf_counter()-tick})
-            persist(); downloaded.add(local)
+            persist()
             table = pq.read_table(local, filters=[('episode_index','=',ep)])
             if table.num_rows: tables.append(table)
             origins.append({'file': f['path'], 'sha256': data.digest(local)})
@@ -219,6 +275,8 @@ def run_stream(args, manifest):
         persist()
 
     def completed(ep, metrics):
+        if not data.verified(args.archive / 'features' / f'episode_{ep}'):
+            raise RuntimeError('特征尚未校验发布，拒绝清理原始分片')
         report['episodes'][str(ep)].update(metrics, completed=True)
         persist()  # 完成特征及测速记录先在Drive落盘，再清临时原图。
         if args.keep_raw:
@@ -232,23 +290,32 @@ def run_stream(args, manifest):
         for root in [raw_root,args.workdir/'raw_build',args.workdir/'features']:
             p=root/f'episode_{ep}'
             if p.exists():shutil.rmtree(p)
+        for f in specs[ep]['files']:
+            remaining[f['path']] -= 1
+        attempt['released_source_bytes'] += release_source_files(source_root, remaining, known_files)
+        persist()
 
     options = argparse.Namespace(output_root=args.archive,work_root=args.workdir,raw_root=raw_root,
         episodes=pending,device='cuda',allow_cpu_extraction=False,allow_model_download=True,
         source_root=args.source_root,before_episode=prepare_episode,on_complete=completed)
+    # 处理上次“特征已发布、清理前断连”留下的文件；不影响未完成轨迹。
+    attempt['released_source_bytes'] += release_source_files(source_root, remaining, known_files)
     persist()
     try:
+        if stop_file.exists():
+            raise BudgetStop('operator_stop_file')
+        print(f'本次选择{len(pending)}条未完成轨迹；先加载冻结视觉编码器，再下载/提取。', flush=True)
         data.extract(options)
         attempt['status']='finished_selected_batch'
-    except BudgetStop:
+        attempt['phase']='idle'
+    except BudgetStop as error:
         attempt['status']='stopped_at_episode_boundary'
+        attempt['stop_reason']=str(error) or 'time_budget'
     except BaseException as error:
         attempt['status']='interrupted_or_error';attempt['error']=f'{type(error).__name__}: {error}'
         persist();raise
     finally:
         attempt['wall_seconds']=time.perf_counter()-started;persist()
-    # 仅删除本次已下载的公开原始分片；特征及来源哈希已落Drive，模型缓存保留。
-    for path in downloaded:path.unlink(missing_ok=True)
     print(json.dumps(report,ensure_ascii=False,indent=2),flush=True)
 
 
@@ -266,9 +333,15 @@ def main():
     p.add_argument('--max-new-episodes',type=int,default=0)
     p.add_argument('--minutes',type=float,default=45.)
     p.add_argument('--keep-raw',action='store_true')
+    p.add_argument('--stop-file',type=Path,help='默认archive/STOP；完整轨迹边界暂停')
+    p.add_argument('--min-free-gib',type=float,default=5.,help='临时盘及归档盘的磁盘保留量')
+    p.add_argument('--proxy-url',help='显式为本次Python下载设置HTTP(S)代理；不会自动创建SSH隧道')
     args=p.parse_args()
-    if args.limit<0 or args.max_new_episodes<0 or args.minutes<0 or args.feature_budget_gib<=0:
+    import math
+    if (args.limit<0 or args.max_new_episodes<0 or args.minutes<0 or args.feature_budget_gib<=0
+            or not all(math.isfinite(x) and x>=0 for x in (args.minutes,args.min_free_gib,args.feature_budget_gib))):
         p.error('规模/预算参数不合法')
+    configure_proxy(args.proxy_url)
     import os
     if str(args.archive).startswith('/content/drive/') and not os.path.ismount('/content/drive'):
         raise RuntimeError('Drive未挂载')

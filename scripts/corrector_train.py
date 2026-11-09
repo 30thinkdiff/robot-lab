@@ -46,11 +46,12 @@ def student_components(model_cls, cfg, device, lr, weight_decay, epochs):
     return model, optimizer, scheduler
 
 
-def student_loaders(groups, batch_size, generator):
+def student_loaders(groups, batch_size, generator, *, num_workers=0, pin_memory=False):
     """任务B：返回(train_loader, val_loader)，调用DataLoader。
 
     groups已按--split-mode分好；不要在DataLoader里再次random_split。
-    训练shuffle=True并传generator；验证shuffle=False；两者num_workers=0。
+    训练shuffle=True并传generator；验证shuffle=False；CPU练习默认num_workers=0。
+    GPU可显式开启worker和固定内存，不改变样本、模型和损失。
     """
     # groups是{"train": Dataset, "validation": Dataset}，尚未组成batch。
     # generator是有独立随机状态的torch.Generator，控制训练样本打乱顺序。
@@ -60,12 +61,14 @@ def student_loaders(groups, batch_size, generator):
         batch_size=batch_size,
         shuffle=True,
         generator=generator,
-        num_workers=0)
+        num_workers=num_workers,
+        pin_memory=pin_memory)
     val_loader = DataLoader(
         groups["validation"],
         batch_size=batch_size,
         shuffle=False,
-        num_workers=0)
+        num_workers=num_workers,
+        pin_memory=pin_memory)
     return train_loader, val_loader
 
 
@@ -114,9 +117,11 @@ def reference_components(model_cls, cfg, device, lr, weight_decay, epochs):
     return model, optimizer, scheduler
 
 
-def reference_loaders(groups, batch_size, generator):
-    return (DataLoader(groups["train"], batch_size=batch_size, shuffle=True, generator=generator, num_workers=0),
-            DataLoader(groups["validation"], batch_size=batch_size, shuffle=False, num_workers=0))
+def reference_loaders(groups, batch_size, generator, *, num_workers=0, pin_memory=False):
+    return (DataLoader(groups["train"], batch_size=batch_size, shuffle=True, generator=generator,
+                       num_workers=num_workers, pin_memory=pin_memory),
+            DataLoader(groups["validation"], batch_size=batch_size, shuffle=False,
+                       num_workers=num_workers, pin_memory=pin_memory))
 
 
 def reference_forward(model, batch, loss_fn, loss_type, beta):
@@ -273,6 +278,18 @@ def select_split(groups, mode, val_ratio, seed):
     return result, info, indices
 
 
+def validate_manifest(records, path):
+    """缓存可分批制作，但一次训练的输入必须与完整冻结清单一致。"""
+    value = json.loads(path.read_text())
+    if value['dataset'] != archive.DATA_ID or value['revision'] != archive.DATA_SHA:
+        raise ValueError('训练清单数据版本不同')
+    expected = {r['episode']: (r['frames'], r['split']) for r in value['records']}
+    actual = {r['episode']: (r['frames'], r['split']) for r in records}
+    if len(expected) != len(value['records']) or actual != expected:
+        raise ValueError(f'训练特征与清单不完整或不一致：期望{len(expected)}条，实际{len(actual)}条；先完成提取')
+    return archive.digest(path)
+
+
 def atomic_save(path, payload):
     temporary = path.with_name(path.name + ".partial")
     torch.save(payload, temporary)
@@ -322,9 +339,23 @@ def save_history(output, history):
     temporary.replace(output / "metrics.csv")
 
 
+def export_best(output, weights, model_cfg, protocol, history):
+    """best仅供评估；续训始终以完整latest为准。epoch字段对应真正的最佳权重。"""
+    if weights is None:
+        return
+    record = min(history, key=lambda row: row['validation']['loss'])
+    atomic_save(output / 'best_model.pt', {
+        'state_dict': weights, 'model_cfg': model_cfg,
+        'train_cfg': {'model': model_cfg, 'model_type': 'mlp', 'h_window': 1,
+                      'k_step': protocol['k_step'], 'data_fps': protocol['fps'],
+                      'prediction_seconds': protocol['prediction_seconds']},
+        'feature_protocol': protocol, 'epoch': record['epoch'], 'step': record['step'],
+        'validation': record['validation']})
+
+
 def move(batch, device):
     # 不移动上游为兼容历史模型返回的z_hist；MLP只需这三个输入。
-    return {key: batch[key].to(device) for key in ("z_t", "a_t", "delta_z")}
+    return {key: batch[key].to(device, non_blocking=True) for key in ("z_t", "a_t", "delta_z")}
 
 
 @torch.no_grad()
@@ -374,6 +405,10 @@ def log_to(path):
 
 def run(args):
     snapshot_every = getattr(args, "snapshot_every", 0)
+    loader_workers = getattr(args, 'loader_workers', 0)
+    pin_memory = getattr(args, 'pin_memory', False)
+    if loader_workers < 0 or (pin_memory and args.device != 'cuda'):
+        raise ValueError('loader-workers须非负；pin-memory只在CUDA训练时显式启用')
     if snapshot_every < 0:
         raise ValueError("snapshot-every应为非负epoch间隔，0表示不额外保留快照")
     if args.device == "cuda" and not torch.cuda.is_available():
@@ -391,6 +426,8 @@ def run(args):
     config, dataset_cls, model_cls, loss_fn, source_hashes = reference_api(args.source_root)
     groups, records, (tokens, dim, action_dim, fps) = datasets(
         args.features, args.local_cache if args.mode == "fit" else None, dataset_cls, args.k_step)
+    manifest_path = getattr(args, 'manifest', None)
+    manifest_sha = validate_manifest(records, manifest_path) if manifest_path is not None else None
     groups, split_info, split_indices = select_split(groups, args.split_mode, args.val_ratio, args.seed)
     widths = (256, 256) if args.profile == "pilot" else (2048, 2048, 2048, 2048)
     cfg = config.SiglipMLPConfig(token_dim=dim, action_dim=action_dim, action_embed_dim=256,
@@ -405,6 +442,10 @@ def run(args):
                 "accumulate": args.accumulate, "precision": "float32", "implementation": args.implementation,
                 "training_entry_sha256": archive.digest(Path(__file__)), "split": split_info,
                 "snapshot_every": snapshot_every}
+    if loader_workers or pin_memory:
+        protocol['loader'] = {'num_workers': loader_workers, 'pin_memory': pin_memory}
+    if manifest_sha:
+        protocol['data_manifest_sha256'] = manifest_sha
     with torch.device("meta"):
         nparams = sum(p.numel() for p in model_cls(cfg).parameters())
     print(json.dumps({"frames": sum(r["frames"] for r in records),
@@ -435,7 +476,8 @@ def run(args):
     model, optimizer, scheduler = components_fn(model_cls, cfg, device, args.lr, args.weight_decay, args.epochs)
     loss_type = config.LossType(args.loss_type)
     generator = torch.Generator().manual_seed(args.seed)
-    train_loader, val_loader = loaders_fn(groups, args.batch_size, generator)
+    train_loader, val_loader = loaders_fn(groups, args.batch_size, generator,
+                                         num_workers=loader_workers, pin_memory=pin_memory)
     start, step, best, stale, history, best_weights = 0, 0, float("inf"), 0, [], None
     if args.resume:
         state = torch.load(latest, map_location="cpu", weights_only=True)
@@ -452,11 +494,35 @@ def run(args):
     else:
         initial = evaluate(model, val_loader, device, loss_fn, loss_type, args.beta, forward_fn)
         archive.write_json(args.output / "initial_validation.json", initial)
+    if start == 0:
+        initial = json.loads((args.output / 'initial_validation.json').read_text())
+
+    def persist_latest(epoch):
+        atomic_save(latest, {
+            'state_dict': model.state_dict(), 'model_cfg': model_cfg,
+            'train_cfg': {'model': model_cfg, 'model_type': 'mlp', 'h_window': 1, 'k_step': args.k_step},
+            'protocol': protocol, 'optimizer': optimizer.state_dict(), 'scheduler': scheduler.state_dict(),
+            'epoch': epoch, 'step': step, 'best': best, 'stale': stale, 'history': history,
+            'best_state_dict': best_weights, 'rng': torch.get_rng_state(),
+            'loader_rng': generator.get_state(),
+            'cuda_rng': torch.cuda.get_rng_state_all() if device.type == 'cuda' else []})
+
+    if not args.resume:
+        persist_latest(0)  # 第一轮训练被中断，也可以恢复同一初始化/打乱顺序。
+    export_best(args.output, best_weights, model_cfg, protocol, history)
+    stop_file = getattr(args, 'stop_file', None) or args.output / 'STOP'
+    status = {'status': 'running', 'epochs_completed': start, 'optimizer_steps': step,
+              'stop_file': str(stop_file)}
+    archive.write_json(args.output / 'training_status.json', status)
     if snapshot_every and (start == 0 or start % snapshot_every == 0 or start >= args.epochs
                            or stale >= args.patience):
         save_snapshot(args.output, model, model_cfg, protocol, start, step,
                       history[-1]["validation"] if history else initial)
     for epoch in range(start, args.epochs):
+        if stop_file.exists():
+            status.update(status='paused', reason='operator_stop_file')
+            print('在完整epoch边界暂停；保留latest/best，删除STOP后以相同参数加--resume继续。', flush=True)
+            break
         if stale >= args.patience:
             break
         began = time.perf_counter()
@@ -488,29 +554,28 @@ def run(args):
                   "validation": val, "grad_norm_last": float(grad_norm),
                   "seconds": time.perf_counter() - began, "next_lr": scheduler.get_last_lr()[0]}
         history.append(record)
-        state = {"state_dict": model.state_dict(), "model_cfg": model_cfg,
-                 "train_cfg": {"model": model_cfg, "model_type": "mlp", "h_window": 1, "k_step": args.k_step},
-                 "protocol": protocol, "optimizer": optimizer.state_dict(), "scheduler": scheduler.state_dict(),
-                 "epoch": epoch + 1, "step": step, "best": best, "stale": stale, "history": history,
-                 "best_state_dict": best_weights,
-                 "rng": torch.get_rng_state(), "loader_rng": generator.get_state(),
-                 "cuda_rng": torch.cuda.get_rng_state_all() if device.type == "cuda" else []}
-        atomic_save(latest, state)
+        persist_latest(epoch + 1)
+        if improved:
+            export_best(args.output, best_weights, model_cfg, protocol, history)
         save_history(args.output, history)
+        status.update(epochs_completed=epoch + 1, optimizer_steps=step)
+        archive.write_json(args.output / 'training_status.json', status)
         print(json.dumps(record, ensure_ascii=False), flush=True)
         if snapshot_every and ((epoch + 1) % snapshot_every == 0 or epoch + 1 == args.epochs
                                or stale >= args.patience):
             save_snapshot(args.output, model, model_cfg, protocol, epoch + 1, step, val)
         if args.stop_after_epoch and epoch + 1 >= args.stop_after_epoch:
+            status.update(status='paused', reason='stop_after_epoch')
             break
+    if status['status'] == 'running':
+        status.update(status='completed', reason='early_stopping' if stale >= args.patience else 'max_epochs')
+    archive.write_json(args.output / 'training_status.json', status)
     # 用新模型严格加载最佳权重并复查指标，不以“文件存在”冒充重载成功。
     save_history(args.output, history)  # 修复latest已完成、历史导出却中断的情况。
     # 最佳权重随latest一同提交；中断不会造成latest和单独best文件版本不一致。
-    checkpoint = {"state_dict": best_weights, "model_cfg": model_cfg,
-                  "train_cfg": {"model": model_cfg, "model_type": "mlp", "h_window": 1, "k_step": args.k_step,
-                                "data_fps": fps, "prediction_seconds": args.k_step / fps},
-                  "feature_protocol": protocol}
-    atomic_save(args.output / "best_model.pt", checkpoint)
+    if best_weights is None:
+        return  # 首轮之前人工暂停，不导出未训练权重冒充best。
+    export_best(args.output, best_weights, model_cfg, protocol, history)
     checkpoint = torch.load(args.output / "best_model.pt", map_location=device, weights_only=True)
     reloaded = model_cls(cfg).to(device)
     reloaded.load_state_dict(checkpoint["state_dict"], strict=True)
@@ -528,6 +593,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("mode", choices=["inspect", "fit"])
     parser.add_argument("--features", type=Path, required=True)
+    parser.add_argument("--manifest", type=Path, help="核对完整数据范围，拒绝把半成品缓存当全量训练")
     parser.add_argument("--source-root", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--local-cache", type=Path)
@@ -549,7 +615,10 @@ def main():
     parser.add_argument("--beta", type=float, default=1.)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--cpu-threads", type=int, default=2)
+    parser.add_argument("--loader-workers", type=int, default=0, help="先测0或2；不盲目占满CPU")
+    parser.add_argument("--pin-memory", action="store_true", help="CUDA DataLoader固定内存")
     parser.add_argument("--resume", action="store_true")
+    parser.add_argument("--stop-file", type=Path, help="默认output/STOP；完整epoch边界暂停")
     parser.add_argument("--snapshot-every", type=int, default=0,
                         help="每N个完整epoch保留评估权重，另存epoch0及训练结束；0关闭，不影响latest续训")
     parser.add_argument("--stop-after-epoch", type=int, default=0,
