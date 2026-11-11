@@ -1454,3 +1454,27 @@ flowchart TD
 - 新法评分1556/1556=100%，规划884/1795=49.25%，最长空窗0对19步；闭环轨迹不同，分母不作为配对异常召回。事件20对29，不把更多触发当作更好。其余8配对条件两监测均未触发，实际动作序列与对应H50逐值相同，保留成功。
 - 新法平均完整VLA调用4.50，H10 12.75，少64.7%；墙钟11.890秒对8.889秒，慢33.8%，同步监测仍3.709秒/回合。相对H50墙钟也增加43.1%。既有成本收益须一起报告，不能把降低VLA调用写成总体加速。
 - 结果/图/配对CSV/首次干预机制记录存results/20261111/consistency_closed_loop，RESULTS.md说明固定规则来源、局部收益、单状态聚集、探索性p=0.5及无标签/未看视频限制。研究报告、README和当前状态同步更新。没有自动发起更多GPU工作、没有改阈值或进入OGG。
+
+
+### 2026-11-11夜：授权扩展新初始状态与五模型同轨迹预测精度诊断
+
+- 用户希望11-12上午10点前尽量开展有意义的4090任务，并考虑数据盘紧张。新增独立分支experiment/overnight-generalization-20261111；无重训、无新下载，固定此前参数/阈值与只读权重。
+- 有限上限3400：核心600回合为Object10十任务×init10～14×seed1004/1005×H50/H10/规划A10-LVM/已执行A10-LVM/原T-H1 LVM/原T-H1 OGG；后续2800为init15～49和前四主配置。按状态穿插任务、每条件相邻配对，绝对截止北京时间2026-11-12 10:00，完整回合/诊断边界暂停。提前全部完成则正常结束，不为凑时长重复。
+- 五模型固定seed42（MLP/T-H1/T-H3/A10-H1/A10-H3），分别用原SHA匹配工厂加载。每回合真实视觉放CPU RAM，真实命令从底层控制提交捕获；候选动作从当时的动作及队列保存。原始视觉不整批落盘，batch64延后诊断，OOM仅降诊断batch，不改控制。共同编码一次，五模型同轨迹/同窗口比较executed、planned_honored/changed以及planned_shared_honored；H10未来队列不足则如实缺失。
+- 误差输出MSE/cosine/目标能量/相对MSE，固定早期origin4..44（due24..64）与整回合分开，按任务/控制方法/模型/动作条件分层，回合宏平均后分析与成败的相关及回合失败AUC。不能将窗口当独立样本，不伪造异常真值；误差低不等于成功率高，A10有更多动作条件也不能将收益纯归于架构。
+- 两条已有H50/H10轨迹作为另存的技术检查，逐实际动作、首状态/输入/噪声及成败/调用对照旧记录，若新增观测改变动作则停止。真实旧窗口先做五模型shape预检，首6正式回合验证控制接口；install同次SSH最多等3分钟并明确startup_verified。
+- 新结果放系统盘/root/corrector_overnight_20261111；视频最多每task/method两段失败，总上限1.5GiB，其余只处置本轮新生成录像，旧数据/权重/环境/结果不删不搬。5GiB系统盘/3GiB数据盘/6GiB可用RAM门槛在回合边界暂停；启动仍要求系统8GiB/数据5GiB。RAM读cgroup并以120GiB可用上限约束，不再把宿主机近1TB当实例额度。
+- 监督器每30秒记录资源/更新中文报告；NOFILE提高至32768受硬限制约束。子进程137/143明确中断最多恢复2次，确定性错误保留日志并请求边界暂停；同一冻结源码/计划跳过已完成回合，仅显式resume可延长截止。SSH/代理断连不影响后台；整机重启或监督器被杀仍需用户恢复，不承诺自动开机。
+- 199项完整CPU回归通过（含新增5项）；随后补充监督器有限重试/资源边界暂停2项，合计201项覆盖。部署包21个文件约126KiB，SHA/AST/JSON核验通过。完整操作说明corrector/OVERNIGHT_EXPERIMENT_20261111.md；本地一行corrector_overnight_remote.py install/status/pause/resume/fetch。已向用户请求SSH部署回执，当前未确认远程启动，不预写夜间结果或GPU已忙。
+
+- 用户已执行install并回传独立远程分支创建及starting/0回合/0错误；仍在同次SSH自检等待中。尚未收到startup_verified或正式回合结果，不能宣称已通过启动。
+
+
+### 2026-11-11夜：启动前初始状态读取兼容性修复（V2）
+
+- 用户实际启动V1 code1f3a0b4e55bf，parent323634/child323636；系统盘20.519GiB、数据盘8.097GiB、cgroup120GiB/可用81.213GiB，未因容量暂停。pipeline报NumPy GLOBAL _reconstruct的UnpicklingError，正式回合0。初步加载阶段定位不能仅凭GPU采样判断具体文件。
+- 本地审查找到新增suite.get_task_init_states直接落入LIBERO原torch.load无显式weights_only参数；原基准用lerobot.envs.libero.get_task_init_states(...,is_libero_plus=False)，此前已在相同运行环境成功。新V2复用该兼容入口，不改冻结包/权重/torch.load全局参数，不增加任意pickle白名单。
+- repair在远程先读取完整worker栈，必须同时有旧UnpicklingError及LIBERO benchmark.get_task_init_states frame且旧正式回合0；等待旧父/子退出后才重新做空闲/版本/磁盘预检。若栈不符则停止打印原栈，不盲改检查点。新分支experiment/overnight-generalization-20261111-v2，新目录/root/corrector_overnight_20261111_v2；旧源码和/root/corrector_overnight_20261111错误现场保留，不覆盖。
+- 新增委托接口回归，确保旧suite.get_task_init_states绝不调用；新增8项检查全部通过，与原完整回归合计202项覆盖。已请求用户执行corrector_overnight_remote.py repair并回传首组真实确认；此时仍不能声称远程运行正常或已完成扩展。
+
+- V2完整202项CPU回归通过（6.84秒），部署包codecb278f22ffcb、128860字节、SHA9fad94b1e0d38a958003f541d8096ea80251bb79fd9aa5ecda126978ff145d1d；已请求repair实际回执。
