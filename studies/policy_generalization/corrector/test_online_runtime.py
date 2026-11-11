@@ -35,6 +35,26 @@ class FakePolicy:
 
 @unittest.skipUnless((SOURCE/'.git').exists(),'需要固定上游状态机源码')
 class OnlineRuntimeTests(unittest.TestCase):
+    def test_10fps_k10_waits_20_control_steps_at_20hz(self):
+        import json
+        policy = FakePolicy()
+        predictor = VisualDynamicsMLP(CorrectorConfig(token_dim=4, action_dim=7,
+            action_embed_dim=3, widths=(8,8))).eval().requires_grad_(False)
+        with tempfile.TemporaryDirectory() as tmp:
+            runtime = online.OnlineCorrector(policy, predictor,
+                {'fps':10, 'k_step':10, 'prediction_seconds':1., 'h_window':1},
+                'monitor', SOURCE, Path(tmp), fps=20, trace=True)
+            self.assertEqual(runtime.k, 20)
+            z = torch.randn(1,2,4)
+            runtime.encode = lambda batch: z+runtime.step*.01
+            with runtime.installed(), torch.inference_mode():
+                for _ in range(21):
+                    policy.select_action({'dummy':torch.zeros(1)})
+            rows = [json.loads(line) for line in (Path(tmp)/'monitor_steps.jsonl').read_text().splitlines()]
+            self.assertTrue(all(row['score'] is None for row in rows[:20]))
+            self.assertIsNotNone(rows[20]['score'])
+            self.assertEqual(runtime.events, 0)
+
     def test_forced_ogg_exits_outer_inference_mode_and_restores_methods(self):
         torch.manual_seed(7)
         policy=FakePolicy();original=policy.select_action

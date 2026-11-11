@@ -122,6 +122,7 @@ def main():
     plan['protocol']['evaluation_entry_sha256']=wb.digest(Path(__file__))
     if uses_corrector:
         plan['protocol']['runtime_source_sha256']=wb.digest(Path(__file__).parent/'corrector_online_runtime.py')
+        plan['protocol']['model_api_source_sha256']=wb.digest(Path(__file__).parent/'corrector_models.py')
         plan['protocol']['learner_core_sha256']=wb.digest(Path(inspect.getfile(guided_velocity)))
     holder = {}
 
@@ -227,6 +228,13 @@ def main():
                           "video": videos[0] if videos else None, "chunk_wall_s": chunk_times,
                           'monitor_source_sha256':runtime.monitor_sha if runtime else None,
                           'monitor_horizon_steps':runtime.k if runtime else None,
+                          'monitor_history_frames':runtime.h_window if runtime else None,
+                          'monitor_action_steps':runtime.action_steps if runtime else None,
+                          'monitor_action_source':'policy_plan' if runtime and runtime.sequence_actions else 'current_action',
+                          'monitor_action_stride':runtime.history_stride if runtime and runtime.sequence_actions else None,
+                          'monitor_history_frame_steps':runtime.history_stride if runtime else None,
+                          'monitor_warmup_steps':runtime.warmup_steps if runtime else None,
+                          'monitor_first_due_step':runtime.warmup_steps+runtime.k if runtime else None,
                           'predictor_protocol':holder.get('predictor_protocol') if runtime else None})
             success=bool(info['per_episode'][0]['success'])
             retained=list(info.get('video_paths',[]))
@@ -244,6 +252,8 @@ def main():
                     'monitor_s':runtime.monitor_s if runtime else 0.,
                     "event_replans": runtime.events if runtime else 0,
                     'guidance_calls':runtime.guidance_calls if runtime else 0,
+                    'sequence_prediction_skips':runtime.sequence_skips if runtime else 0,
+                    'cancelled_condition_predictions':runtime.cancelled_predictions if runtime else 0,
                     'peak_torch_allocated_gib':torch.cuda.max_memory_allocated()/2**30,
                     "video_paths": retained, "initial_state_id": chosen["initial_state_id"]}
         finally:

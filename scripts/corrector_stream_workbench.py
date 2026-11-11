@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 from collections import Counter
+from contextlib import contextmanager
 from datetime import datetime, timezone
 import json
 from pathlib import Path
@@ -37,6 +38,87 @@ import corrector_data_workbench as data
 
 class BudgetStop(Exception):
     """仅在轨迹边界正常结束，不伪造全部完成。"""
+
+
+@contextmanager
+def feature_writer_lock(archive):
+    """同一归档只允许一个特征消费者；不锁下载器的source目录。"""
+    import fcntl
+    with (archive / '.feature-writer.lock').open('a') as lock:
+        try:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError as error:
+            raise RuntimeError('该归档已有特征提取进程；不启动第二个消费者') from error
+        try:
+            yield
+        finally:
+            fcntl.flock(lock, fcntl.LOCK_UN)
+
+
+def local_shard_ready(root, spec, revision, checked):
+    """只接受Hub已发布文件：大小、固定commit元数据、LFS SHA全部一致。
+
+    SDK的.incomplete不是最终文件；最终文件先改名、元数据随后发布的短窗口继续等待。
+    checked只缓存同inode/大小/mtime的SHA结果，不信任文件名或裸size相等。
+    """
+    import re
+    name = Path(spec['path'])
+    if name.is_absolute() or '..' in name.parts or not name.parts or name.parts[0] != 'data':
+        raise ValueError('非法原始分片路径')
+    root = root.resolve()
+    path = root / name
+    metadata = root / '.cache/huggingface/download' / (str(name) + '.metadata')
+    for candidate in (path, metadata):
+        if candidate.is_symlink() or not candidate.resolve().is_relative_to(root):
+            raise ValueError('本地原始缓存路径越界')
+    if not path.is_file() or path.stat().st_size != spec['bytes'] or not metadata.is_file():
+        return False
+    # HF local_dir下载元数据：commit、etag、timestamp；写入过程中不满三行时等待。
+    lines = metadata.read_text().splitlines()
+    if len(lines) < 3:
+        return False
+    commit, etag, stamp = lines[:3]
+    if commit != revision:
+        raise RuntimeError(f'原始分片缓存revision不同：{name}')
+    if not re.fullmatch('[0-9a-f]{64}', etag):
+        raise RuntimeError(f'本地Parquet元数据未提供SHA256：{name}；不绕过完整性检查')
+    try:
+        float(stamp)
+    except ValueError:
+        return False
+    before = path.stat()
+    signature = (before.st_ino, before.st_size, before.st_mtime_ns, etag)
+    if checked.get(str(name)) != signature:
+        actual = data.digest(path)
+        after = path.stat()
+        if (after.st_ino, after.st_size, after.st_mtime_ns) != signature[:3]:
+            return False
+        if actual != etag:
+            raise RuntimeError(f'本地原始分片SHA256不符：{name}')
+        checked[str(name)] = signature
+    return True
+
+
+def ready_episodes(pending, specs, source, revision, *, check_stop, on_wait,
+                   poll_seconds=15., idle_minutes=30., checked=None):
+    """自动跳过尚缺分片的轨迹，不让队首缺失阻塞后面已就绪的轨迹。"""
+    checked = {} if checked is None else checked
+    waiting = list(pending)
+    idle_since = time.monotonic()
+    while waiting:
+        check_stop()
+        ready = next((ep for ep in waiting if all(
+            local_shard_ready(source, f, revision, checked) for f in specs[ep]['files'])), None)
+        if ready is not None:
+            waiting.remove(ready)
+            yield ready
+            idle_since = time.monotonic()  # 推理/归档时间不计入等待下载的idle预算。
+            continue
+        elapsed = time.monotonic() - idle_since
+        if idle_minutes and elapsed >= idle_minutes * 60:
+            raise BudgetStop('waiting_for_local_source_timeout')
+        on_wait(len(waiting), elapsed)
+        time.sleep(poll_seconds)
 
 
 def release_source_files(source_root, remaining, known_files):
@@ -202,9 +284,15 @@ def validate_rows(rows, spec):
 
 
 def run_stream(args, manifest):
+    with feature_writer_lock(args.archive):
+        return _run_stream(args, manifest)
+
+
+def _run_stream(args, manifest):
     import pyarrow as pa
     import pyarrow.parquet as pq
     from huggingface_hub import hf_hub_download
+    watch_local = getattr(args, 'watch_local', False)
     specs = {r['episode']: r for r in manifest['records']}
     pending = []
     for ep, spec in specs.items():
@@ -226,18 +314,58 @@ def run_stream(args, manifest):
     attempt = {'started_utc': datetime.now(timezone.utc).isoformat(), 'selected': pending, 'downloads': [],
                'stream_script_sha256':data.digest(Path(__file__)),'extract_script_sha256':data.digest(Path(data.__file__)),
                'status':'running','phase':'loading_encoder'}
+    if watch_local:
+        attempt.update(source_mode='verified_local_watch', raw_source_cleanup=False)
     report['attempts'].append(attempt)
     raw_root = args.workdir / 'raw'; raw_root.mkdir(parents=True, exist_ok=True)
     source_root = args.workdir / 'source'; source_root.mkdir(exist_ok=True)
     stop_file = getattr(args, 'stop_file', None) or args.archive / 'STOP'
     min_free = getattr(args, 'min_free_gib', 5.) * 2**30
     attempt['released_source_bytes'] = 0
+    checked = {}
 
     def persist(): data.write_json(report_path, report)
 
-    def prepare_episode(ep):
+    def check_stop():
         if stop_file.exists(): raise BudgetStop('operator_stop_file')
         if time.perf_counter() >= deadline: raise BudgetStop()
+
+    def waiting(count, elapsed):
+        attempt.update(phase='waiting_local_source', waiting_episodes=count,
+                       waiting_seconds=elapsed, verified_source_files=len(checked))
+        persist()
+        print(json.dumps({'phase':'waiting_local_source','waiting_episodes':count,
+                          'verified_source_files':len(checked),'idle_seconds':round(elapsed,1)}), flush=True)
+
+    def episode_source():
+        yield from ready_episodes(pending, specs, source_root, manifest['revision'],
+            check_stop=check_stop, on_wait=waiting, checked=checked,
+            poll_seconds=getattr(args,'poll_seconds',15.), idle_minutes=getattr(args,'idle_minutes',30.))
+
+    def check_watch_storage():
+        # 下载器启动时的预算不包含新特征；消费者额外为两阶段共存预留总量。
+        import os
+        files = {f['path']: f['bytes'] for spec in manifest['records'] for f in spec['files']}
+        missing = sum(size for name, size in files.items()
+                      if not (source_root/name).is_file() or (source_root/name).stat().st_size != size)
+        per_frame = 128*960 + 128*2 + 7*2 + 7*4 + 4 + 8 + 8
+        features = sum(specs[ep]['frames']*per_frame + 2**20 for ep in pending)
+        temporary = 2*max(files.values(), default=0) + 2*max(
+            (specs[ep]['frames']*per_frame + 2**20 for ep in pending), default=0)
+        work_free = shutil.disk_usage(args.workdir).free
+        archive_free = shutil.disk_usage(args.archive).free
+        same_disk = os.stat(args.workdir).st_dev == os.stat(args.archive).st_dev
+        attempt['storage_budget'] = {'remaining_source_bytes':missing,
+                                     'remaining_feature_estimate_bytes':features,
+                                     'temporary_estimate_bytes':temporary,
+                                     'same_filesystem':same_disk}
+        if ((same_disk and work_free < missing+features+temporary+min_free)
+                or (not same_disk and (work_free < missing+temporary+min_free
+                                       or archive_free < features+temporary+min_free))):
+            raise BudgetStop('disk_space_for_download_and_features')
+
+    def prepare_episode(ep):
+        check_stop()
         spec = specs[ep]; began = time.perf_counter(); tables = []; origins = []
         attempt.update(phase='preparing_episode', current_episode=ep)
         persist()
@@ -252,8 +380,13 @@ def run_stream(args, manifest):
             if shutil.disk_usage(args.workdir).free < f['bytes'] + 256 * 2**20:
                 raise RuntimeError('临时盘空间不足；不会把GPU显存当作文件存储')
             cached = (source_root / f['path']).is_file(); tick = time.perf_counter()
-            local = Path(hf_hub_download(data.DATA_ID, f['path'], repo_type='dataset', revision=data.DATA_SHA,
-                                       local_dir=source_root, token=False))
+            if watch_local:
+                if not local_shard_ready(source_root, f, manifest['revision'], checked):
+                    raise RuntimeError('已选择的本地分片发生变化；保留现场，不联网重下')
+                local = source_root / f['path']
+            else:
+                local = Path(hf_hub_download(data.DATA_ID, f['path'], repo_type='dataset', revision=data.DATA_SHA,
+                                           local_dir=source_root, token=False))
             attempt['downloads'].append({'file': f['path'], 'bytes': f['bytes'], 'cache_hit': cached,
                                          'seconds': time.perf_counter()-tick})
             persist()
@@ -292,19 +425,27 @@ def run_stream(args, manifest):
             if p.exists():shutil.rmtree(p)
         for f in specs[ep]['files']:
             remaining[f['path']] -= 1
-        attempt['released_source_bytes'] += release_source_files(source_root, remaining, known_files)
+        if not watch_local:
+            attempt['released_source_bytes'] += release_source_files(source_root, remaining, known_files)
         persist()
 
     options = argparse.Namespace(output_root=args.archive,work_root=args.workdir,raw_root=raw_root,
         episodes=pending,device='cuda',allow_cpu_extraction=False,allow_model_download=True,
         source_root=args.source_root,before_episode=prepare_episode,on_complete=completed)
+    if watch_local:
+        options.episode_source = episode_source
+        options.cache_only = True
     # 处理上次“特征已发布、清理前断连”留下的文件；不影响未完成轨迹。
-    attempt['released_source_bytes'] += release_source_files(source_root, remaining, known_files)
+    if not watch_local:
+        attempt['released_source_bytes'] += release_source_files(source_root, remaining, known_files)
     persist()
     try:
         if stop_file.exists():
             raise BudgetStop('operator_stop_file')
-        print(f'本次选择{len(pending)}条未完成轨迹；先加载冻结视觉编码器，再下载/提取。', flush=True)
+        if watch_local and pending:
+            check_watch_storage()
+        print(f'本次选择{len(pending)}条未完成轨迹；来源模式：'
+              f'{"只读已校验本地缓存、自动等待新数据" if watch_local else "下载/提取"}。', flush=True)
         data.extract(options)
         attempt['status']='finished_selected_batch'
         attempt['phase']='idle'
@@ -336,13 +477,30 @@ def main():
     p.add_argument('--stop-file',type=Path,help='默认archive/STOP；完整轨迹边界暂停')
     p.add_argument('--min-free-gib',type=float,default=5.,help='临时盘及归档盘的磁盘保留量')
     p.add_argument('--proxy-url',help='显式为本次Python下载设置HTTP(S)代理；不会自动创建SSH隧道')
+    p.add_argument('--watch-local',action='store_true',help='与预下载并行：自动提取已完整缓存的轨迹，不联网、不删除source')
+    p.add_argument('--poll-seconds',type=float,default=15.,help='watch模式缺少就绪轨迹时的检查间隔')
+    p.add_argument('--idle-minutes',type=float,default=30.,help='watch模式连续等不到新轨迹时暂停；0为不限')
     args=p.parse_args()
     import math
     if (args.limit<0 or args.max_new_episodes<0 or args.minutes<0 or args.feature_budget_gib<=0
-            or not all(math.isfinite(x) and x>=0 for x in (args.minutes,args.min_free_gib,args.feature_budget_gib))):
+            or args.poll_seconds<=0
+            or not all(math.isfinite(x) and x>=0 for x in (args.minutes,args.min_free_gib,args.feature_budget_gib,
+                                                          args.poll_seconds,args.idle_minutes))):
         p.error('规模/预算参数不合法')
-    configure_proxy(args.proxy_url)
     import os
+    if args.watch_local:
+        if args.mode != 'run' or args.proxy_url:
+            p.error('--watch-local仅用于run且不需要--proxy-url；消费者只读缓存')
+        os.environ.update(HF_HUB_OFFLINE='1', TRANSFORMERS_OFFLINE='1')
+        source = args.source_root
+        if not (source / '.git').exists():
+            p.error('watch模式需要已缓存的固定参考仓库，不会自动联网clone')
+        import subprocess
+        head = subprocess.run(['git','-C',str(source),'rev-parse','--verify','HEAD'],capture_output=True,text=True)
+        if head.returncode or head.stdout.strip()!=data.CORRECTOR_SHA:
+            p.error('watch模式参考仓库HEAD不符；不联网fetch或修改它')
+    else:
+        configure_proxy(args.proxy_url)
     if str(args.archive).startswith('/content/drive/') and not os.path.ismount('/content/drive'):
         raise RuntimeError('Drive未挂载')
     args.archive.mkdir(parents=True,exist_ok=True);args.workdir.mkdir(parents=True,exist_ok=True)

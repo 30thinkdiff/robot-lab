@@ -14,6 +14,58 @@ publish, verified = workbench.publish, workbench.verified
 
 
 class ArchiveTests(unittest.TestCase):
+    def test_dynamic_episode_source_reuses_one_encoder_and_forces_cache_only(self):
+        import json
+        import os
+        import sys
+        from types import ModuleType, SimpleNamespace
+        from unittest.mock import Mock, patch
+        import numpy as np
+        import pyarrow as pa
+        import pyarrow.parquet as pq
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp); raw=root/'raw'; out=root/'archive'; work=root/'work'
+            blob=io.BytesIO();Image=__import__('PIL.Image',fromlist=['Image'])
+            Image.new('RGB',(2,2)).save(blob,format='PNG')
+            for ep,split in [(1,'train'),(2,'validation')]:
+                local=root/f'raw_build_{ep}';local.mkdir()
+                rows=[{'frame_index':i,'episode_index':ep,'timestamp':i/10,'action':[0.]*7,
+                       'observation.state':[0.]*8,
+                       **{key:{'bytes':blob.getvalue()} for key in workbench.IMAGE_KEYS}} for i in range(2)]
+                pq.write_table(pa.Table.from_pylist(rows),local/'frames.parquet')
+                workbench.write_json(local/'provenance.json',{'revision':workbench.DATA_SHA,
+                    'episode':ep,'split':split,'task':'task'})
+                raw.mkdir(exist_ok=True);workbench.publish(local,raw/f'episode_{ep}')
+            encoder=Mock()
+            encoder.policy.config.image_features={'camera1':None,'camera2':None}
+            encoder.encode_item.return_value=np.ones((2,4),dtype=np.float32)
+            encoder.backend_info.return_value={'scope':'constructed encoder test'}
+            helper=ModuleType('siglip_dynamics.extract')
+            helper.SmolVLAExtractor=object
+            helper._quantize_per_token=lambda z:(np.ones_like(z,dtype=np.int8),np.ones(z.shape[0],dtype=np.float16))
+            lerobot=ModuleType('lerobot');lerobot.__file__=str(root/'lerobot/__init__.py')
+            factory=ModuleType('lerobot.policies.factory')
+            factory.make_pre_post_processors=lambda **kw:(lambda batch:{'action':batch['action']},None)
+            completed=[]
+            args=SimpleNamespace(output_root=out,work_root=work,raw_root=raw,episodes=[1,2],
+                source_root=root/'reference',device='cuda',allow_cpu_extraction=False,
+                allow_model_download=True,cache_only=True,episode_source=lambda:iter([2,1]),
+                on_complete=lambda ep,metrics:completed.append(ep))
+            with patch.dict(sys.modules,{'lerobot':lerobot,'lerobot.policies.factory':factory,
+                                          'siglip_dynamics.extract':helper}), \
+                 patch.dict(os.environ,{}),patch.object(workbench,'ensure_source'), \
+                 patch.object(workbench,'extraction_device',return_value='cuda'), \
+                 patch.object(workbench,'cached_policy_snapshot',return_value=root/'snapshot') as snapshot, \
+                 patch.object(workbench,'cached_visual_extractor',return_value=encoder) as load:
+                workbench.extract(args)
+                snapshot.assert_called_once_with(allow_network=False)
+                self.assertEqual(load.call_count,1)
+                self.assertFalse(load.call_args.kwargs['allow_network'])
+            self.assertEqual(completed,[2,1])
+            self.assertEqual(encoder.encode_item.call_count,4)
+            self.assertTrue(workbench.verified(out/'features/episode_1'))
+            self.assertTrue(workbench.verified(out/'features/episode_2'))
+
     def test_finished_features_do_not_require_deleted_raw_or_loading_encoder(self):
         import json
         from types import SimpleNamespace

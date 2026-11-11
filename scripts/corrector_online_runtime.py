@@ -14,6 +14,7 @@ from unittest.mock import patch
 
 import numpy as np
 import torch
+import corrector_models as models
 try:
     from studies.policy_generalization.corrector.online_practice import guided_velocity, visual_mismatch
 except ModuleNotFoundError as error:
@@ -72,13 +73,13 @@ def load_predictor(checkpoint,source_root,device):
     config,_,cls,_,hashes=train.reference_api(source_root)
     saved=torch.load(checkpoint,map_location='cpu',weights_only=True)
     protocol=saved.get('feature_protocol')
-    if not protocol or protocol['source_files']!=hashes:raise RuntimeError('需要带完整来源协议的best_model或评估快照')
+    if not protocol or protocol['source_files']!=models.source_hashes(hashes,source_root,protocol.get('model_type','mlp'),train.archive.digest):raise RuntimeError('需要带完整来源协议的best_model或评估快照')
     if protocol.get('encoder_policy_revision',train.archive.POLICY_SHA)!=train.archive.POLICY_SHA:
         raise RuntimeError('预测器视觉编码器与当前冻结VLA版本不一致')
     if 'encoder_policy_revision' not in protocol:
         protocol={**protocol,'encoder_policy_revision':train.archive.POLICY_SHA,'legacy_encoder_revision_inferred':True}
-    cfg=dict(saved['model_cfg']);cfg['scale']=config.ModelScale(cfg['scale']);cfg['custom_widths']=tuple(cfg['custom_widths'])
-    model=cls(config.SiglipMLPConfig(**cfg)).to(device)
+    cls,cfg=models.from_protocol(protocol,config,cls,source_root)
+    model=cls(cfg).to(device)
     model.load_state_dict(saved['state_dict'],strict=True);model.eval().requires_grad_(False)
     return model,protocol
 
@@ -99,12 +100,26 @@ class OnlineCorrector:
         self.k=int(round(physical_steps));self.stride=stride
         if self.k<1 or stride<1 or self.k%stride:raise ValueError('跨度须为monitor-stride的正整数倍')
         if getattr(policy.config,'rtc_config',None) is not None:raise ValueError('首版不支持RTC异步动作拼接')
-        if protocol['h_window']!=1 or predictor.cfg.action_dim!=7:raise ValueError('当前接入仅支持h1/7维动作')
+        self.h_window=int(protocol['h_window'])
+        if self.h_window<1 or predictor.cfg.action_dim!=7:raise ValueError('需要正历史长度/7维动作')
+        if self.h_window>1 and not getattr(predictor,'uses_history',False):raise ValueError('多帧历史需Transformer预测器')
+        ratio=fps/float(protocol.get('fps',fps))
+        if not np.isclose(ratio,round(ratio)) or ratio<1:raise ValueError('历史帧间距不能对应整数控制步')
+        self.history_stride=int(round(ratio))
+        self.action_steps=int(protocol.get('action_steps',1))
+        self.sequence_actions=bool(getattr(predictor,'uses_action_sequence',False))
+        if self.sequence_actions and (self.action_steps!=predictor.cfg.action_steps or self.action_steps>protocol['k_step']):
+            raise ValueError('动作序列协议与预测器不同或越过预测终点')
+        self.warmup_steps=(max(self.h_window,int(protocol.get('anchor_history',1)))-1)*self.history_stride
+        if self.history_stride%stride and self.h_window>1:raise ValueError('监测stride必须整除训练历史帧间距')
+        self.history=deque(maxlen=(self.h_window-1)*self.history_stride+1)
+        self.context_now=None
         self.eta,self.every=eta,guidance_every
         if self.every<1 or (method=='ogg' and eta<=0):raise ValueError('OGG需要正eta和引导间隔')
         self.trace,self.event_tensors,self.force_step=trace,event_tensors,force_step
         if force_step>=0 and (force_step<self.k or force_step%stride):raise ValueError('强制事件须在预测到期后并对齐monitor-stride')
         self.pending=deque();self.step=0;self.monitor_s=0.;self.events=0;self.guidance_calls=0
+        self.sequence_skips=0;self.cancelled_predictions=0
         self.active=False;self.z_now=None;self.target_now=None;self.denoise_index=0
         self.original_select=policy.select_action;self.original_denoise=policy.model.denoise_step
 
@@ -131,6 +146,8 @@ class OnlineCorrector:
             started=time.perf_counter();z=None;row={'step':self.step,'score':None,'threshold':None,'trigger':False}
             if self.step%self.stride==0:
                 z=self.encode(batch);self.z_now=z
+                self.history.append((self.step,z))
+                self.context_now=models.history_at(self.history,self.step,self.h_window,self.history_stride)
                 if self.pending and self.pending[0][0]<self.step:raise RuntimeError('预测到期队列时间错位')
                 if self.pending and self.pending[0][0]==self.step:
                     _,origin,expected=self.pending.popleft();observed=z-origin
@@ -144,6 +161,10 @@ class OnlineCorrector:
                         discarded=len(self.policy._queues['action'])
                         self.policy._queues['action'].clear()  # 缓存只在本实例；不reset监控历史。
                         self.events+=1;row.update(interrupted=True,discarded_actions=discarded)
+                        if self.sequence_actions:
+                            row['cancelled_predictions']=len(self.pending)
+                            self.cancelled_predictions+=len(self.pending)
+                            self.pending.clear()  # 条件动作块已废弃，旧条件的预测不再用于触发。
                         self.target_now=self.target(expected,observed).detach()
                         self.active=self.method=='ogg';self.denoise_index=0
                         if self.event_tensors:
@@ -152,13 +173,26 @@ class OnlineCorrector:
                 if self.step==self.force_step and row['score'] is None:raise ValueError('强制事件时尚无到期预测，请增大force-step并对齐stride')
             if z is not None and z.is_cuda:torch.cuda.synchronize(z.device)
             self.monitor_s+=time.perf_counter()-started
+            queue_was_empty=not bool(self.policy._queues['action'])
             try:action=self.original_select(batch,*args,**kwargs)
             finally:self.active=False  # OGG只对事件后本次查询生效，不泄漏到后续普通块。
-            if z is not None:
+            if self.sequence_actions and queue_was_empty:
+                row['cancelled_on_new_plan']=len(self.pending)
+                self.cancelled_predictions+=len(self.pending)
+                self.pending.clear()
+            if z is not None and self.context_now is not None and self.step>=self.warmup_steps:
                 tick=time.perf_counter()
-                predicted=self.predictor(z,action[:,:self.predictor.cfg.action_dim].float()).detach()
-                if not torch.isfinite(predicted).all():raise FloatingPointError('预测器输出非有限')
-                self.pending.append((self.step+self.k,z,predicted))
+                context=self.context_now if getattr(self.predictor,'uses_history',False) else z
+                condition=(models.planned_actions(action,self.policy._queues['action'],self.action_steps,self.history_stride)
+                           if self.sequence_actions else action[:,:self.predictor.cfg.action_dim].float())
+                if condition is None:
+                    row['prediction_skipped']='insufficient_planned_actions'
+                    self.sequence_skips+=1
+                else:
+                    predicted=self.predictor(context,condition).detach()
+                    if not torch.isfinite(predicted).all():raise FloatingPointError('预测器输出非有限')
+                    self.pending.append((self.step+self.k,z,predicted))
+                    if self.sequence_actions: row['condition_action_offsets']=[i*self.history_stride for i in range(self.action_steps)]
                 if z.is_cuda:torch.cuda.synchronize(z.device)
                 self.monitor_s+=time.perf_counter()-tick
             self.log(row);self.step+=1
@@ -167,7 +201,13 @@ class OnlineCorrector:
     def denoise_step(self,prefix_pad_masks,past_key_values,x_t,timestep):
         v=self.original_denoise(prefix_pad_masks,past_key_values,x_t,timestep)
         if self.active and self.denoise_index%self.every==0:
-            v,loss=guided_velocity(self.predictor,self.z_now,x_t,v,timestep,self.target_now,eta=self.eta)
+            if self.sequence_actions:
+                v,loss=models.guided_sequence_velocity(self.predictor,self.context_now,x_t,v,timestep,self.target_now,
+                                                      self.history_stride,eta=self.eta)
+            elif getattr(self.predictor,'uses_history',False):
+                v,loss=models.guided_history_velocity(self.predictor,self.context_now,x_t,v,timestep,self.target_now,eta=self.eta)
+            else:
+                v,loss=guided_velocity(self.predictor,self.z_now,x_t,v,timestep,self.target_now,eta=self.eta)
             self.guidance_calls+=1;self.log({'step':self.step,'denoise':self.denoise_index,'guidance_loss':loss})
         self.denoise_index+=1
         return v

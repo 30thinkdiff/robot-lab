@@ -28,6 +28,7 @@ from torch.utils.data import ConcatDataset, DataLoader, Subset, random_split
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import corrector_data_workbench as archive
+import corrector_models as models
 
 
 def student_components(model_cls, cfg, device, lr, weight_decay, epochs):
@@ -79,8 +80,8 @@ def student_forward(model, batch, loss_fn, loss_type, beta):
     loss_fn接收(pred,target,loss_type,beta)；不要item/detach，训练还要反向。
     验证也调用本方法；train/eval模式与no_grad由外围管理。
     """
-    z_t = batch["z_t"]
-    a_t = batch["a_t"]
+    z_t = models.model_input(model, batch)
+    a_t = models.action_input(model, batch)
     delta_z = batch["delta_z"]
 
     pred = model(z_t, a_t)  # 上游forward先接收[B,L,D]视觉，再接收[B,A]动作。
@@ -125,7 +126,7 @@ def reference_loaders(groups, batch_size, generator, *, num_workers=0, pin_memor
 
 
 def reference_forward(model, batch, loss_fn, loss_type, beta):
-    pred = model(batch["z_t"], batch["a_t"])
+    pred = model(models.model_input(model, batch), models.action_input(model, batch))
     total, mse, cos = loss_fn(pred, batch["delta_z"], loss_type, beta)
     return pred, total, mse, cos
 
@@ -183,7 +184,7 @@ def reference_api(source_root):
     return config, dataset.SiglipDynamicsDataset, model.SiglipResidualMLP, namespace["_combined_loss"], hashes
 
 
-def datasets(root, local, dataset_cls, k_step):
+def datasets(root, local, dataset_cls, k_step, h_window=1, anchor_history=1, action_steps=1):
     """校验原归档，逐episode调用上游Dataset；最终划分由select_split显式决定。"""
     groups, episodes, records, dimensions = {"train": [], "validation": []}, set(), [], set()
     for source in sorted(root.glob("episode_*")):
@@ -238,7 +239,15 @@ def datasets(root, local, dataset_cls, k_step):
                 or not np.isfinite(scales).all() or (scales <= 0).any()):
             raise ValueError("缓存维度/scale/动作有误")
         dimensions.add((shape[1], shape[2], actions.shape[1], float(meta["fps"])))
-        ds = dataset_cls(str(directory), k_step=k_step, h_window=1)
+        if h_window > 1 or anchor_history > 1 or action_steps > 1:
+            timestamps = np.load(directory/'timestamp.npy', mmap_mode='r')
+            if timestamps.shape != ep.shape or not np.allclose(np.diff(timestamps), 1/float(meta['fps']), atol=1e-4, rtol=1e-4):
+                raise ValueError('历史输入要求与声明FPS一致的逐帧时间戳')
+        ds = dataset_cls(str(directory), k_step=k_step, h_window=h_window)
+        ds.pairs = [(t, future) for t, future in ds.pairs if t >= anchor_history-1]
+        if not ds.pairs:
+            raise ValueError('共同历史锚点筛选后无有效样本')
+        if action_steps > 1: ds = models.ActionSequenceDataset(ds, action_steps)
         groups[split].append(ds)
         records.append({"episode": episode, "split": split, "frames": len(ep), "pairs": len(ds),
                         "files": json.loads((source / "COMPLETE.json").read_text())["files"]})
@@ -315,7 +324,7 @@ def save_snapshot(output, model, model_cfg, protocol, epoch, step, validation):
             raise RuntimeError("已有快照与本次训练状态不一致")
     else:
         atomic_save(path, {"state_dict": model.state_dict(), "model_cfg": model_cfg,
-            "train_cfg": {"model": model_cfg, "model_type": "mlp", "h_window": 1,
+            "train_cfg": {"model": model_cfg, "model_type": protocol.get('model_type', 'mlp'), "h_window": protocol['h_window'],
                           "k_step": protocol["k_step"], "data_fps": protocol["fps"],
                           "prediction_seconds": protocol["prediction_seconds"]},
             "feature_protocol": protocol, "epoch": epoch, "step": step, "validation": validation})
@@ -346,16 +355,17 @@ def export_best(output, weights, model_cfg, protocol, history):
     record = min(history, key=lambda row: row['validation']['loss'])
     atomic_save(output / 'best_model.pt', {
         'state_dict': weights, 'model_cfg': model_cfg,
-        'train_cfg': {'model': model_cfg, 'model_type': 'mlp', 'h_window': 1,
+        'train_cfg': {'model': model_cfg, 'model_type': protocol.get('model_type', 'mlp'), 'h_window': protocol['h_window'],
                       'k_step': protocol['k_step'], 'data_fps': protocol['fps'],
                       'prediction_seconds': protocol['prediction_seconds']},
         'feature_protocol': protocol, 'epoch': record['epoch'], 'step': record['step'],
         'validation': record['validation']})
 
 
-def move(batch, device):
-    # 不移动上游为兼容历史模型返回的z_hist；MLP只需这三个输入。
-    return {key: batch[key].to(device, non_blocking=True) for key in ("z_t", "a_t", "delta_z")}
+def move(batch, device, history=False):
+    keys = ('z_hist', 'z_t', 'a_t', 'delta_z') if history else ('z_t','a_t','delta_z')
+    if 'a_seq' in batch: keys = (*keys, 'a_seq')
+    return {key: batch[key].to(device, non_blocking=True) for key in keys}
 
 
 @torch.no_grad()
@@ -364,7 +374,7 @@ def evaluate(model, loader, device, loss_fn, loss_type, beta, forward_fn=referen
     sums = np.zeros(5, dtype=np.float64)
     count, zero_targets = 0, 0
     for batch in loader:
-        batch = move(batch, device)
+        batch = move(batch, device, getattr(model,'uses_history',False))
         pred, total, mse, cos = forward_fn(model, batch, loss_fn, loss_type, beta)
         target = batch["delta_z"]
         values = [total.item(), mse.item(), cos.item(), target.square().mean().item(),
@@ -404,6 +414,17 @@ def log_to(path):
 
 
 def run(args):
+    kind = getattr(args, 'model_type', 'mlp')
+    h_window, anchor_history = getattr(args, 'h_window', 1), getattr(args, 'anchor_history', 1)
+    if kind not in {'mlp', 'transformer', 'transformer-action'} or not 1 <= h_window <= 512 or anchor_history < h_window:
+        raise ValueError('模型类型/历史长度无效；共同锚点历史须不小于模型历史')
+    if kind == 'mlp' and h_window != 1:
+        raise ValueError('MLP只接收单帧；历史输入请选择transformer')
+    action_steps = getattr(args,'action_steps',1)
+    if action_steps < 1 or (kind!='transformer-action' and action_steps!=1) or action_steps>args.k_step:
+        raise ValueError('动作条件长度须在[1,k_step]，序列输入需transformer-action')
+    if kind=='transformer-action' and action_steps==1:
+        raise ValueError('动作序列对照至少2个动作；单动作请用transformer')
     snapshot_every = getattr(args, "snapshot_every", 0)
     loader_workers = getattr(args, 'loader_workers', 0)
     pin_memory = getattr(args, 'pin_memory', False)
@@ -425,23 +446,47 @@ def run(args):
           ensure_ascii=False), flush=True)
     config, dataset_cls, model_cls, loss_fn, source_hashes = reference_api(args.source_root)
     groups, records, (tokens, dim, action_dim, fps) = datasets(
-        args.features, args.local_cache if args.mode == "fit" else None, dataset_cls, args.k_step)
+        args.features, args.local_cache if args.mode == "fit" else None, dataset_cls, args.k_step,
+        h_window, anchor_history, action_steps)
     manifest_path = getattr(args, 'manifest', None)
     manifest_sha = validate_manifest(records, manifest_path) if manifest_path is not None else None
     groups, split_info, split_indices = select_split(groups, args.split_mode, args.val_ratio, args.seed)
     widths = (256, 256) if args.profile == "pilot" else (2048, 2048, 2048, 2048)
-    cfg = config.SiglipMLPConfig(token_dim=dim, action_dim=action_dim, action_embed_dim=256,
-                                scale=config.ModelScale.CUSTOM, custom_widths=widths)
+    if kind == 'mlp':
+        cfg = config.SiglipMLPConfig(token_dim=dim, action_dim=action_dim, action_embed_dim=256,
+                                    scale=config.ModelScale.CUSTOM, custom_widths=widths)
+    else:
+        cfg = models.TransformerConfig(token_dim=dim, action_dim=action_dim,
+            d_model=getattr(args, 'transformer_dim', 768), n_heads=getattr(args, 'transformer_heads', 12),
+            n_layers=getattr(args, 'transformer_layers', 5))
+        if cfg.d_model < 1 or cfg.n_heads < 1 or cfg.n_layers < 1 or cfg.d_model % cfg.n_heads:
+            raise ValueError('Transformer维度/层数无效或不能均分heads')
+        if kind=='transformer-action':
+            cfg=models.ActionSequenceConfig(**asdict(cfg), action_steps=action_steps)
+            model_cls=models.action_transformer_class(args.source_root)
+        else:
+            model_cls = models.transformer_class(args.source_root)
+    source_hashes = models.source_hashes(source_hashes, args.source_root, kind, archive.digest)
+    precision=getattr(args,'predictor_precision','float32')
+    model_cls=models.precision_class(model_cls,precision)
     model_cfg = json.loads(json.dumps(asdict(cfg)))
     protocol = {"source_sha": archive.CORRECTOR_SHA, "source_files": source_hashes, "records": records,
                 "encoder_policy_revision": archive.POLICY_SHA,
-                "model": model_cfg, "h_window": 1, "k_step": args.k_step, "fps": fps,
+                "model": model_cfg, "model_type": kind, "h_window": h_window, "anchor_history": anchor_history,
+                "k_step": args.k_step, "fps": fps,
                 "prediction_seconds": args.k_step / fps, "loss_type": args.loss_type, "beta": args.beta,
                 "lr": args.lr, "weight_decay": args.weight_decay, "epochs": args.epochs,
                 "patience": args.patience, "seed": args.seed, "batch_size": args.batch_size,
-                "accumulate": args.accumulate, "precision": "float32", "implementation": args.implementation,
+                "accumulate": args.accumulate, "precision": precision, "implementation": args.implementation,
                 "training_entry_sha256": archive.digest(Path(__file__)), "split": split_info,
+                "model_factory_sha256": archive.digest(Path(models.__file__)),
                 "snapshot_every": snapshot_every}
+    if kind=='transformer-action':
+        protocol['action_steps']=action_steps
+        protocol['action_conditioning']={'training':'demonstration executed actions [t,t+K)',
+            'online':'current policy planned actions sampled at dataset intervals',
+            'distribution_shift':'executed demonstration vs proposed policy actions; not oracle future observations',
+            'insufficient_queue':'skip prediction', 'discard_pending_on_interrupt':True}
     if loader_workers or pin_memory:
         protocol['loader'] = {'num_workers': loader_workers, 'pin_memory': pin_memory}
     if manifest_sha:
@@ -451,8 +496,40 @@ def run(args):
     print(json.dumps({"frames": sum(r["frames"] for r in records),
                       "pairs": {k: len(v) for k, v in groups.items()}, "visual_shape": [tokens, dim],
                       "parameters": nparams, "checkpoint_payload_mib_approx": 16 * nparams / 2**20,
-                      "protocol": protocol}, ensure_ascii=False, indent=2), flush=True)
+                      "protocol": {k:v for k,v in protocol.items() if k not in {'records','split'}},
+                      "split_samples": split_info['samples']}, ensure_ascii=False, indent=2), flush=True)
     if args.mode == "inspect":
+        return
+    if args.mode == 'probe':
+        random.seed(args.seed); np.random.seed(args.seed); torch.manual_seed(args.seed)
+        model, optimizer, _ = reference_components(model_cls, cfg, args.device, args.lr, args.weight_decay, args.epochs)
+        loss_type = config.LossType(args.loss_type)
+        loader = DataLoader(groups['train'], batch_size=args.batch_size, shuffle=False, num_workers=0)
+        model.train(); began = time.perf_counter()
+        for i, batch in enumerate(loader):
+            optimizer.zero_grad(set_to_none=True)
+            batch=move(batch,args.device,getattr(model,'uses_history',False))
+            _, loss, _, _ = reference_forward(model, batch, loss_fn, loss_type, args.beta)
+            norm = reference_update(model, optimizer, loss, True)
+            if not torch.isfinite(loss) or not torch.isfinite(norm):
+                raise FloatingPointError('GPU预检损失/梯度非有限')
+            if i >= 2: break
+        if args.device == 'cuda': torch.cuda.synchronize()
+        model.eval().requires_grad_(False)
+        context=models.model_input(model,batch)[:1]
+        x=torch.randn(1,50,32,device=args.device);v=torch.zeros_like(x)
+        if getattr(model,'uses_action_sequence',False):
+            models.guided_sequence_velocity(model,context,x,v,torch.tensor([.5],device=args.device),
+                                           batch['delta_z'][:1],stride=2)
+        else:
+            models.guided_history_velocity(model,context,x,v,torch.tensor([.5],device=args.device),
+                                           batch['delta_z'][:1])
+        if args.device == 'cuda': torch.cuda.synchronize()
+        archive.write_json(args.output/'probe.json', {'model_type':kind, 'h_window':h_window,
+            'batch_size':args.batch_size, 'parameters':nparams, 'loss':loss.item(), 'grad_norm':float(norm),
+            'seconds':time.perf_counter()-began, 'peak_cuda_gib':torch.cuda.max_memory_allocated()/2**30 if args.device=='cuda' else None,
+            'precision':precision,'ogg_gradient_checked':True,
+            'scope':'up to three optimizer steps on real training cache; discarded model; not the official fit'})
         return
     components_fn, loaders_fn, forward_fn, update_fn = training_functions(args.implementation)
     latest = args.output / "latest.pt"
@@ -467,7 +544,7 @@ def run(args):
         archive.write_json(args.output / "protocol.json", protocol)
         np.savez_compressed(args.output / "split_indices.npz", **split_indices)
         archive.write_json(args.output / "config.json", {
-            "model": model_cfg, "model_type": "mlp", "h_window": 1, "k_step": args.k_step,
+            "model": model_cfg, "model_type": kind, "h_window": h_window, "k_step": args.k_step,
             "data_fps": fps, "prediction_seconds": args.k_step / fps})
     random.seed(args.seed); np.random.seed(args.seed); torch.manual_seed(args.seed)
     if torch.cuda.is_available():
@@ -500,7 +577,7 @@ def run(args):
     def persist_latest(epoch):
         atomic_save(latest, {
             'state_dict': model.state_dict(), 'model_cfg': model_cfg,
-            'train_cfg': {'model': model_cfg, 'model_type': 'mlp', 'h_window': 1, 'k_step': args.k_step},
+            'train_cfg': {'model': model_cfg, 'model_type': kind, 'h_window': h_window, 'k_step': args.k_step},
             'protocol': protocol, 'optimizer': optimizer.state_dict(), 'scheduler': scheduler.state_dict(),
             'epoch': epoch, 'step': step, 'best': best, 'stale': stale, 'history': history,
             'best_state_dict': best_weights, 'rng': torch.get_rng_state(),
@@ -529,7 +606,7 @@ def run(args):
         model.train(); optimizer.zero_grad(set_to_none=True)
         totals, count = np.zeros(3), 0
         for i, batch in enumerate(train_loader):
-            batch = move(batch, device)
+            batch = move(batch, device, getattr(model,'uses_history',False))
             pred, total, mse, cos = forward_fn(model, batch, loss_fn, loss_type, args.beta)
             if not torch.isfinite(total):
                 raise FloatingPointError("训练loss出现NaN/Inf")
@@ -591,7 +668,7 @@ def run(args):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("mode", choices=["inspect", "fit"])
+    parser.add_argument("mode", choices=["inspect", "fit", "probe"])
     parser.add_argument("--features", type=Path, required=True)
     parser.add_argument("--manifest", type=Path, help="核对完整数据范围，拒绝把半成品缓存当全量训练")
     parser.add_argument("--source-root", type=Path, required=True)
@@ -599,6 +676,14 @@ def main():
     parser.add_argument("--local-cache", type=Path)
     parser.add_argument("--device", choices=["cpu", "cuda"], default="cpu")
     parser.add_argument("--profile", choices=["pilot", "paper-width"], default="pilot")
+    parser.add_argument('--model-type', choices=['mlp','transformer','transformer-action'], default='mlp')
+    parser.add_argument('--action-steps', type=int, default=1, help='已执行示范动作[t,t+K)，仅transformer-action；不得超过k-step')
+    parser.add_argument('--h-window', type=int, default=1)
+    parser.add_argument('--anchor-history', type=int, default=1, help='共同有效时间锚点；比较H1/H3时全部指定3')
+    parser.add_argument('--transformer-dim', type=int, default=768)
+    parser.add_argument('--transformer-heads', type=int, default=12)
+    parser.add_argument('--transformer-layers', type=int, default=5)
+    parser.add_argument('--predictor-precision',choices=['float32','amp-bfloat16'],default='float32')
     parser.add_argument("--implementation", choices=["student", "reference"], default="student",
                         help="默认执行四个用户任务；reference是显式选择的已验证对照，不会自动回退")
     parser.add_argument("--split-mode", choices=["upstream-random", "episode"], default="upstream-random",

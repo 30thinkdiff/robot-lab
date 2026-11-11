@@ -195,7 +195,7 @@ def summarize(records, output, plan=None):
             group["errors"] += 1
         csv_rows.append({"id": case["id"], "condition": case["condition"], "method": case["method"],
                          "seed": case["seed"], "status": status, "success": result.get("success") if status == "completed" else None,
-                         **{k: result.get(k) for k in ["env_steps", "chunk_calls", "policy_s", "monitor_s", "event_replans", "guidance_calls"]},
+                         **{k: result.get(k) for k in ["env_steps", "chunk_calls", "policy_s", "monitor_s", "event_replans", "guidance_calls", "sequence_prediction_skips", "cancelled_condition_predictions"]},
                          "video_paths": json.dumps(result.get("video_paths", []))})
     rows = [{"method": key[0], "condition": key[1], **g,
              "success_rate": g["successes"] / g["completed"] if g["completed"] else None,
@@ -216,7 +216,7 @@ def summarize(records, output, plan=None):
                  "success_rate": successes / completed if completed else None,
                  "completion_rate": completed / planned if planned else None}
         completed_records = [r["result"] for r in records if r["status"] == "completed" and r["case"]["method"] == method]
-        for metric in ["env_steps", "chunk_calls", "policy_s", "monitor_s", "event_replans", "guidance_calls", "peak_torch_allocated_gib"]:
+        for metric in ["env_steps", "chunk_calls", "policy_s", "monitor_s", "event_replans", "guidance_calls", "sequence_prediction_skips", "cancelled_condition_predictions", "peak_torch_allocated_gib"]:
             values = [r[metric] for r in completed_records if type(r.get(metric)) in (int, float)]
             total[f"mean_{metric}"] = sum(values) / len(values) if values else None
             total[f"observed_{metric}_n"] = len(values)

@@ -63,3 +63,51 @@ python scripts/check_corrector_practice.py --stage step
 本次58项CPU检查通过，其中含五阶段计算检查、逐样本余弦回归，以及同权重的等宽(8,8)/变宽(8,6,4)上游输出与各参数梯度对齐。这里是小构造数据的实现验证，不计作真实缓存训练或Corrector成功率提升。
 
 用户后续明确：本轮重实现的主要目的为理解与语法补足，不要求将其作为生产分支。已据此调整正式调用链，见[真实训练运行说明](../corrector_training_runbook.md)。
+
+
+## 2026-11-09：历史输入与Transformer设计练习（新任务，尚待用户实现）
+
+本轮读`outputs/source_audit/vla-corrector/src/siglip_dynamics/transformer.py`与`dataset.py`，写`temporal_practice.py`。上游已有Transformer和history支持，本轮目标是亲手掌握设计与张量流，不把启用现成架构写成原创方法。当前已完成的MLP训练和300回合评测不导入此练习文件。
+
+先说明建模问题：已有MLP输入当前视觉z_t与动作a_t，预测delta=z_(t+k)-z_t。单帧对运动方向和遮挡状态的信息可能不足，所以尝试增加过去H帧。未来z_(t+k)只进入监督标签，不能混进输入历史。k决定预测多久之后，H决定看多少过去，两者独立。
+
+层与输入检查已经搭好，只留三个方法：
+
+| 核心方法 | 用户需要写什么 | 验收重点 |
+| --- | --- | --- |
+| history_window（T1） | 计算截至t的H帧切片，检查同episode，返回[H,L,D] | 无未来帧、无负下标绕回、无跨轨迹 |
+| TemporalPredictor.pack_tokens（T2） | 视觉线性投影、时间embedding、合并历史/token轴、在首部拼动作token | 不合并batch，保持顺序，层在__init__注册 |
+| TemporalPredictor.last_frame_tokens（T3） | 去掉动作token，恢复[H,L]轴，只选最后一帧的L个输出 | 输出[B,L,C]，不直接对所有token求均值 |
+
+实际形状（B=2,H=3,L=128,D=960,C=768）：
+
+```text
+视觉历史 [2,3,128,960]
+  → 视觉投影与时间embedding [2,3,128,768]
+  → 合并H和L [2,384,768]
+动作 [2,7] → 线性投影并增加token轴 [2,1,768]
+  → 拼接 [2,385,768]
+  → TransformerEncoder [2,385,768]
+  → 去动作token并取最后一帧 [2,128,768]
+  → LayerNorm与输出投影 [2,128,960]
+```
+
+设计问题先自己回答：为什么768能分成12个head（每头64维）？为什么要保留时间embedding？为什么动作只投影为一个条件token？为什么保留最后一帧的128个位置，而不是平均成一个向量？这里输入全是过去，允许历史token彼此注意不等于使用未来信息；是否需要因果mask由预测任务决定，不能机械照搬自回归语言模型。
+
+H=3在10FPS数据中覆盖过去0.2秒，在线20Hz应取t-4、t-2、t而非最近三个连续控制帧。扩大H会增加序列长度和注意力开销，不保证越多越好。当前框架支持的是单动作条件，不把它误称为完整动作序列条件预测器。
+
+先显式运行上游小CPU示范（只用小张量，无下载/训练）：
+
+```bash
+python scripts/check_temporal_corrector.py --implementation reference --stage all
+```
+
+第一步只写T1，然后用学生实现验收：
+
+```bash
+python scripts/check_temporal_corrector.py --implementation student --stage history
+```
+
+再写T2/T3，用`--stage model`检查H1/H3的形状、动作梯度和上游同权重前向/反向一致性。未填写方法明确返回退出码2，不会悄悄调用reference补答案。测试默认D8/C16/L4/H3，避免本地CPU直接承受真实尺寸；真实960维/128token架构与训练吞吐要另做远端预检。
+
+当前`corrector_train.py`正式入口仍固定MLP/H1。练习通过后再补模型工厂、历史Dataset、checkpoint模型类型和在线历史队列，不是给旧入口增加一个参数即可完成接入；对照固定共同有效时间锚点、数据划分、未来跨度和计算预算。

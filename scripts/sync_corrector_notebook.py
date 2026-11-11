@@ -10,6 +10,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCES = {
+    "MODEL_API_SOURCE": "scripts/corrector_models.py",
     "WORKBENCH_SOURCE": "scripts/smolvla_training_workbench.py",
     "DATA_SOURCE": "scripts/corrector_data_workbench.py",
     "SIM_SOURCE": "scripts/smolvla_libero_tools.py",

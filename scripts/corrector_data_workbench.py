@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import argparse
 from datetime import datetime, timezone
+import itertools
 import hashlib
 import io
 import json
@@ -273,6 +274,14 @@ def extract(args):
     if not todo:
         print("全部特征缓存已完成并校验；未加载模型")
         return
+    episode_source = getattr(args, 'episode_source', None)
+    # watch消费者先等第一条完整原始轨迹，再加载一次编码器；之后复用同一对象。
+    sequence = iter(episode_source()) if episode_source is not None else iter(todo)
+    first = next(sequence, None)
+    if first is None:
+        return
+    if first not in todo:
+        raise RuntimeError('动态轨迹来源不在本次清单中')
     device = extraction_device(args.device, args.allow_cpu_extraction)
     setup_started = time.perf_counter()
     ensure_source(args.source_root)
@@ -282,8 +291,8 @@ def extract(args):
     sys.path.append(str(args.source_root / "src"))
     from siglip_dynamics.extract import SmolVLAExtractor, _quantize_per_token
     from lerobot.policies.factory import make_pre_post_processors
-    # CPU试验默认只复用本机Hub缓存，不自动下载接近GB的权重。
-    local_only = device == "cpu" and not args.allow_model_download
+    # CPU试验默认只复用缓存；watch消费者即使使用CUDA也强制缓存，不竞争下载链路。
+    local_only = getattr(args, 'cache_only', False) or (device == "cpu" and not args.allow_model_download)
     snapshot = cached_policy_snapshot(allow_network=not local_only)
     encoder = cached_visual_extractor(SmolVLAExtractor, snapshot, device, allow_network=not local_only)
     encoder.policy.requires_grad_(False)
@@ -293,7 +302,12 @@ def extract(args):
     if len(camera_keys) != 2:
         raise RuntimeError(f"本协议要求两路真实相机，实际为{camera_keys}")
     setup_seconds = time.perf_counter() - setup_started
-    for ep in todo:
+    allowed = set(todo)
+    seen = set()
+    for ep in itertools.chain([first], sequence):
+        if ep not in allowed or ep in seen:
+            raise RuntimeError('动态轨迹来源包含重复或不在本次清单中的episode')
+        seen.add(ep)
         if before_episode is not None:
             before_episode(ep)
         raw = raw_root / f"episode_{ep}"
