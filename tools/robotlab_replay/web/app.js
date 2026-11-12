@@ -1,9 +1,10 @@
+import {drawMatrix,drawEvidence} from './diagnostics.js';
 const $=id=>document.getElementById(id);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const number=v=>typeof v==='number'&&Number.isFinite(v);
 const fmt=(v,n=3)=>number(v)?v.toFixed(n):'未记录';
 const pct=v=>number(v)?(v*100).toFixed(1)+'%':'未确定';
-const state={catalog:[],a:null,b:null,step:0,playing:false,compare:false,speed:1,limit:65,request:0,pairs:[],baselinePreset:false};
+const state={catalog:[],a:null,b:null,step:0,playing:false,compare:false,speed:1,limit:65,request:0,pairs:[],baselinePreset:false,alignment:null,pairRequest:0};
 async function api(path,body){const r=await fetch(path,body?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}:{});const data=await r.json();if(!r.ok)throw Error(data.error||r.statusText);return data;}
 function toast(message){$('toast').textContent=message;$('toast').classList.remove('hidden');clearTimeout(toast.timer);toast.timer=setTimeout(()=>$('toast').classList.add('hidden'),4500);}
 function fail(message){$('errorBanner').textContent=message;$('errorBanner').classList.remove('hidden');}
@@ -24,7 +25,9 @@ function renderList(){const rows=filtered();$('filterCount').textContent=`${rows
  $('runList').innerHTML=rows.slice(0,state.limit).map(r=>`<button class="run-item ${state.a?.run.id===r.id?'active':''}" data-id="${r.id}" title="${esc(runLabel(r))}"><div class="line1"><span><i class="dot ${r.success?'success':'failure'}"></i>${esc(r.method)} <span class="muted">${esc(r.model)}</span></span>${r.video_available?'▣':''}</div><div class="line2">task_${esc(r.task)} · init_${esc(r.init)} · seed ${esc(r.seed)}</div><div class="line3"><span class="mini-tag">${r.steps??'—'} steps</span><span>${esc(statusName(r))}</span>${r.forced?'<span>接口检查</span>':''}</div></button>`).join('')||'<p class="empty-detail">没有符合筛选条件的回合。</p>';
  $('runList').querySelectorAll('button[data-id]').forEach(b=>b.onclick=()=>selectRun(b.dataset.id));
 }
-function maxSteps(){return Math.max(1,state.a?.steps.length||0,state.b?.steps.length||0);}
+function pairOffset(){return state.compare&&state.b&&state.alignment?state.alignment.b-state.alignment.a:0;}
+function laneStep(side){return state.step+(side==='B'?pairOffset():0);}
+function maxSteps(){return Math.max(1,state.a?.steps.length||0,(state.b?.steps.length||0)-pairOffset());}
 function pause(){state.playing=false;$('play').textContent='▶';$('videoA').pause();$('videoB').pause();}
 function setVideo(side,detail){const v=$('video'+side),missing=$('missing'+side);v.pause();v.removeAttribute('src');
  if(detail?.video.available){v.controls=detail.video.alignment!=='recording_verified';v.src=detail.video.url;v.load();missing.classList.add('hidden');v.classList.remove('hidden');v.onloadedmetadata=()=>syncVideo(side,detail,true);}
@@ -34,27 +37,28 @@ function setVideo(side,detail){const v=$('video'+side),missing=$('missing'+side)
 }
 async function selectRun(id){pause();const ticket=++state.request;$('errorBanner').classList.add('hidden');
  try{const [detail,pairs]=await Promise.all([api('/api/run?id='+id),api('/api/pairs?id='+id)]);if(ticket!==state.request)return;
-  state.a=detail;state.b=null;state.step=0;state.pairs=pairs;$('note').value='';setVideo('A',detail);renderHeader();renderList();
+  state.a=detail;state.b=null;state.alignment=null;state.pairRequest++;state.step=0;state.pairs=pairs;$('note').value='';setVideo('A',detail);renderHeader();renderList();
   $('pairSelect').innerHTML=pairs.map(r=>`<option value="${r.id}">${esc(r.method+' / '+r.model+' · '+statusName(r))}</option>`).join('');
   if(state.compare){const best=pairs.find(r=>r.method==='A'&&r.experiment==='混合 Corrector')||pairs.find(r=>r.success!==detail.run.success)||pairs[0];
     if(best){$('pairSelect').value=best.id;await selectPair(best.id);}else{state.compare=false;toast('没有同任务、初始状态与种子的可用配对。');}}
   applyMode();drawAll();
  }catch(e){fail('打开回合失败：'+e.message);}
 }
-async function selectPair(id){pause();try{const d=await api('/api/run?id='+id);if(!state.a)return;
+async function selectPair(id){pause();const ticket=++state.pairRequest,primary=state.a?.run.id;try{const d=await api('/api/run?id='+id);if(ticket!==state.pairRequest||state.a?.run.id!==primary)return;
  if(d.run.condition!==state.a.run.condition||d.run.seed!==state.a.run.seed)throw Error('配对条件不一致');
- state.b=d;setVideo('B',d);applyMode();drawAll();}catch(e){fail('配对读取失败：'+e.message);}}
+ state.b=d;state.alignment=null;setVideo('B',d);applyMode();drawAll();}catch(e){fail('配对读取失败：'+e.message);}}
 function applyMode(){const paired=state.compare&&!!state.b;$('paneB').classList.toggle('hidden',!paired);$('plotB').classList.toggle('hidden',!paired);$('players').classList.toggle('paired',paired);
  renderSyncBadge();
  $('pairSummary').classList.toggle('hidden',!paired);$('inspectLane').classList.toggle('hidden',!paired);if(!paired)$('inspectLane').value='a';
+ $('anchorTools').classList.toggle('hidden',!paired);$('alignmentNotice').textContent=state.alignment?`人工锚点「${state.alignment.label}」：主选${state.alignment.a} ↔ 对照${state.alignment.b}；仅固定步偏移，非自动阶段对齐。`:'默认按相同环境步定位；不同方法可能处于不同操作阶段。';
  $('comparePicker').classList.toggle('hidden',!state.compare);$('pairNotice').classList.toggle('hidden',!paired);$('singleTab').classList.toggle('active',!state.compare);$('compareTab').classList.toggle('active',state.compare);
  if(paired){const a=state.a.metrics,b=state.b.metrics;let sa=a.initial_signature||[a.initial_state_sha256,a.first_input_sha256,a.first_noise_sha256],sb=b.initial_signature||[b.initial_state_sha256,b.first_input_sha256,b.first_noise_sha256];
-  const known=sa.length===3&&sb.length===3&&sa.every(Boolean)&&sb.every(Boolean);$('pairNotice').textContent='按相同环境步定位，不代表相同操作阶段；已结束回合显示冻结末帧。'+(known?(JSON.stringify(sa)===JSON.stringify(sb)?' 初始状态 / 输入 / 首噪声SHA一致。':' 注意：初始签名不同，不能作为严格控制变量对照。'):' 原日志缺少完整初始签名，配对仅按任务 / init / seed。');
+  const known=sa.length===3&&sb.length===3&&sa.every(Boolean)&&sb.every(Boolean);$('pairNotice').textContent=(state.alignment?`人工事件偏移：主选${state.alignment.a} ↔ 对照${state.alignment.b}；两条曲线仍为各自原始环境步，不代表自动操作阶段识别。`:'按相同环境步定位，不代表相同操作阶段；已结束回合显示冻结末帧。')+(known?(JSON.stringify(sa)===JSON.stringify(sb)?' 初始状态 / 输入 / 首噪声SHA一致。':' 注意：初始签名不同，不能作为严格控制变量对照。'):' 原日志缺少完整初始签名，配对仅按任务 / init / seed。');
   const firstEvent=d=>d.events.find(e=>e.kind==='replan')?.step??'未记录';
   const fields=[['任务结果',d=>statusName(d.run)],['执行步数',d=>d.metrics.env_steps],['VLA块调用',d=>d.metrics.chunk_calls],['重规划事件',d=>d.metrics.event_replans],['OGG引导调用',d=>d.metrics.guidance_calls],['VLA累计推理',d=>fmt(d.metrics.policy_s)+' s'],['监测累计耗时',d=>fmt(d.metrics.monitor_s)+' s'],['回合总耗时',d=>fmt(d.metrics.episode_wall_s)+' s'],['监测覆盖',d=>/^H[0-9]+$/.test(d.run.method)?'不适用':pct(d.coverage?.fraction)],['最长空窗',d=>(d.coverage?.max_gap_steps??'未记录')+' steps'],['首次中断',d=>firstEvent(d)],['GPU峰值分配',d=>fmt(d.metrics.peak_torch_allocated_gib)+' GiB']];
   $('pairTable').innerHTML='<table><thead><tr><th>指标</th><th>主选 · '+esc(state.a.run.method+' / '+state.a.run.model)+'</th><th>对照 · '+esc(state.b.run.method+' / '+state.b.run.model)+'</th></tr></thead><tbody>'+fields.map(([name,get])=>`<tr><td>${name}</td><td>${esc(get(state.a)??'未记录')}</td><td>${esc(get(state.b)??'未记录')}</td></tr>`).join('')+'</tbody></table>';}
 }
-async function mode(compare){if(!state.a)return;pause();state.compare=compare;if(!compare){state.b=null;applyMode();drawAll();return;}
+async function mode(compare){if(!state.a)return;pause();state.compare=compare;if(!compare){state.b=null;state.alignment=null;state.pairRequest++;applyMode();drawAll();return;}
  if(!state.pairs.length){state.compare=false;toast('此回合没有同条件配对。');return;}
  const best=state.pairs.find(r=>r.method==='A'&&r.experiment==='混合 Corrector')||state.pairs.find(r=>r.success!==state.a.run.success)||state.pairs[0];$('pairSelect').value=best.id;await selectPair(best.id);}
 function renderHeader(){const d=state.a,r=d.run,m=d.metrics;$('eyebrow').textContent=r.experiment.toUpperCase()+' / LIBERO OBJECT';
@@ -81,7 +85,7 @@ function renderSyncBadge(){if(!state.a)return;const label=d=>d.video.alignment==
 function gaps(detail){const result=[];let start=null;for(const row of detail.steps){const gap=detail.first_due!==null&&row.step>=detail.first_due&&!number(row.score)&&row.monitor_state!=='未记录';
  if(gap&&start===null)start=row.step;if(!gap&&start!==null){result.push([start,row.step-1]);start=null;}}
  if(start!==null)result.push([start,detail.steps.length-1]);return result;}
-function drawPlot(id,d,label){const svgWidth=1000,H=208,left=44,right=16,top=22,bottom=40,W=svgWidth-left-right,plotH=H-top-bottom,total=Math.max(1,maxSteps()-1);const X=n=>left+n/total*W;
+function drawPlot(id,d,label){const side=id==='plotB'?'B':'A',selected=laneStep(side);const svgWidth=1000,H=208,left=44,right=16,top=22,bottom=40,W=svgWidth-left-right,plotH=H-top-bottom,total=Math.max(1,state.alignment?d.steps.length-1:maxSteps()-1);const X=n=>left+n/total*W;
  const scores=d.steps.flatMap(s=>[s.score,s.executed_score]).filter(number);const thresholds=d.steps.map(s=>s.threshold).filter(v=>number(v)&&v<=2);
  const ymax=Math.max(1,...scores,...thresholds)*1.1;const Y=v=>top+plotH*(1-v/ymax);let svg=`<svg viewBox="0 0 ${svgWidth} ${H}" preserveAspectRatio="none" role="img" aria-label="${esc(label)} LVM时间轴"><rect x="${left}" y="${top}" width="${W}" height="${plotH}" fill="#fcfdfe"/>`;
  if(d.first_due!==null)svg+=`<rect x="${left}" y="${top}" width="${Math.min(W,X(d.first_due)-left)}" height="${plotH}" fill="#f0f3f7"/>`;
@@ -95,12 +99,26 @@ function drawPlot(id,d,label){const svgWidth=1000,H=208,left=44,right=16,top=22,
  const clipped=d.steps.filter(r=>number(r.threshold)&&r.threshold>ymax);if(clipped.length)svg+=`<text x="${svgWidth-right-3}" y="12" text-anchor="end" fill="#bf8e4c" font-size="8">初始Threshold ${Math.max(...clipped.map(r=>r.threshold)).toFixed(1)} 超出图范围，未改写数值</text>`;
  const seen=new Set();for(const e of d.events){if(!['replan','ogg','target'].includes(e.kind))continue;const key=e.step+e.kind;if(seen.has(key))continue;seen.add(key);const color=e.kind==='ogg'?'#8f76c5':e.kind==='target'?'#189a90':'#d69232';const y=H-29+(e.kind==='ogg'?6:0);svg+=`<circle cx="${X(e.step)}" cy="${y}" r="3" fill="${color}"><title>step ${e.step} · ${esc(e.label)}</title></circle>`;}
  for(const row of d.steps)if(row.block_start_derived)svg+=`<path d="M${X(row.step)} ${top+plotH+1} v4" stroke="#89a4b8"/>`;
- svg+=`<text x="${left+6}" y="13" font-size="9" fill="#7d8c9c">${esc(label)}</text><path d="M${X(state.step)} ${top-3} V${H-21}" stroke="#304f6b" stroke-width="1"/><circle cx="${X(state.step)}" cy="${top-3}" r="2.8" fill="#304f6b"/></svg>`;
- $(id).innerHTML=svg;$(id).onclick=e=>{$('inspectLane').value=id==='plotB'?'b':'a';const rect=$(id).querySelector('svg').getBoundingClientRect();setStep(Math.round(((e.clientX-rect.left)/rect.width*svgWidth-left)/W*total),true);};
+ const cursor=Math.max(0,Math.min(total,selected));svg+=`<text x="${left+6}" y="13" font-size="9" fill="#7d8c9c">${esc(label)}${state.alignment?' · 本回合原始环境步':''}</text><path d="M${X(cursor)} ${top-3} V${H-21}" stroke="#304f6b" stroke-width="1"/><circle cx="${X(cursor)}" cy="${top-3}" r="2.8" fill="#304f6b"/></svg>`;
+ $(id).innerHTML=svg;$(id).onclick=e=>{$('inspectLane').value=id==='plotB'?'b':'a';const rect=$(id).querySelector('svg').getBoundingClientRect();setStep(Math.round(((e.clientX-rect.left)/rect.width*svgWidth-left)/W*total)-(side==='B'?pairOffset():0),true);};
 }
-function inspect(){const d=$('inspectLane').value==='b'&&state.b?state.b:state.a,s=d.steps[state.step];$('inspectStep').textContent=String(state.step).padStart(3,'0');$('rawStep').textContent=JSON.stringify(s?.raw??[],null,2);
- $('stepContext').innerHTML='<table><thead><tr><th>步</th><th>Score</th><th>阈值</th><th>事件</th></tr></thead><tbody>'+d.steps.slice(Math.max(0,state.step-5),state.step+6).map(r=>`<tr ${r.step===state.step?'class="current-context"':''}><td>${r.step}</td><td>${number(r.score)?fmt(r.score,3):'—'}</td><td>${number(r.threshold)?fmt(r.threshold,3):'—'}</td><td>${r.events.length||'—'}</td></tr>`).join('')+'</tbody></table>';
- if(!s){$('readout').innerHTML='<div class="inspect-status missing">当前回合已结束，不沿用末次评分</div>';$('actions').innerHTML='<div class="empty-detail">超出此回合记录范围</div>';$('stepEvents').innerHTML='<div class="empty-detail">没有该步数据</div>';return;}
+const evidenceCache=new Map();let evidenceTimer,evidenceTicket=0;
+function inspectEvidence(d,step){const ticket=++evidenceTicket;clearTimeout(evidenceTimer);
+ $('evidencePosition').textContent=`${d.run.method} / ${d.run.model} · 原始step ${step}`;
+ if(!$('evidenceDetails').open)return;
+ if(step<0||step>=d.steps.length){$('evidenceCards').textContent='所选位置超出本回合；不沿用末次数据。';$('commandHeatmap').textContent=$('updateHeatmap').textContent='没有该步数据';return;}
+ const key=d.run.id+':'+step;
+ const display=result=>{if(ticket!==evidenceTicket)return;const side=d===state.b?'B':'A';const jump=n=>setStep(n-(side==='B'?pairOffset():0),true);
+  drawEvidence($('evidenceCards'),result.summary,jump);drawMatrix($('commandHeatmap'),result.heatmaps.commands,'commands',jump);drawMatrix($('updateHeatmap'),result.heatmaps.updates,'updates',jump);
+  $('heatmapUnits').textContent=result.heatmaps.command_units+'。'+result.heatmaps.update_units+'。'+result.heatmaps.notes.join('；');};
+ if(evidenceCache.has(key)){display(evidenceCache.get(key));return;}
+ $('evidenceCards').textContent='读取当前回合的证据摘要…';$('commandHeatmap').textContent=$('updateHeatmap').textContent='读取已记录数组…';
+ evidenceTimer=setTimeout(async()=>{try{const result=await api('/api/diagnostics?id='+d.run.id+'&step='+step);evidenceCache.set(key,result);if(evidenceCache.size>80)evidenceCache.delete(evidenceCache.keys().next().value);display(result);}catch(e){if(ticket===evidenceTicket)$('evidenceCards').textContent='诊断读取失败：'+e.message;}},120);
+}
+function inspect(){const side=$('inspectLane').value==='b'&&state.b?'B':'A',d=side==='B'?state.b:state.a,step=laneStep(side),s=d.steps[step];$('inspectStep').textContent=String(step).padStart(3,'0');$('rawStep').textContent=JSON.stringify(s?.raw??[],null,2);
+ inspectEvidence(d,step);
+ $('stepContext').innerHTML='<table><thead><tr><th>步</th><th>Score</th><th>阈值</th><th>事件</th></tr></thead><tbody>'+d.steps.slice(Math.max(0,step-5),Math.max(0,step+6)).map(r=>`<tr ${r.step===step?'class="current-context"':''}><td>${r.step}</td><td>${number(r.score)?fmt(r.score,3):'—'}</td><td>${number(r.threshold)?fmt(r.threshold,3):'—'}</td><td>${r.events.length||'—'}</td></tr>`).join('')+'</tbody></table>';
+ if(!s){$('readout').innerHTML=`<div class="inspect-status missing">${step<0?'尚未到达本回合起点':'当前回合已结束，不沿用末次评分'}</div>`;$('actions').innerHTML='<div class="empty-detail">超出此回合记录范围</div>';$('stepEvents').innerHTML='<div class="empty-detail">没有该步数据</div>';return;}
  const row=(label,value,cls='')=>`<div class="read-row"><span>${label}</span><strong class="${cls}">${esc(value)}</strong></div>`;
  $('readout').innerHTML=`<div class="inspect-status ${s.monitor_state==='无到期评分'?'gap':['未记录','未启用Corrector'].includes(s.monitor_state)?'missing':''}">${esc(s.monitor_state)}</div>`+
   row('LVM Score',fmt(s.score,4),'blue-text')+row('Threshold',fmt(s.threshold,4))+row('已执行条件Score',fmt(s.executed_score,4))+
@@ -124,25 +142,26 @@ function renderEvents(){if(!state.a)return;const filter=$('eventFilter').value;c
  $('events').innerHTML=grouped.map(e=>`<button class="event-row ${e.step===state.step?'selected':''}" data-step="${e.step}"><span class="event-step">${String(e.step).padStart(3,'0')}</span><span><i class="event-kind ${e.kind}"></i>${esc(e.label)}${e.count>1?' × '+e.count:''}<small>${e.kind==='gap'?'由缺失评分推导，非原始异常标签':state.a.control_fps?(e.step/state.a.control_fps).toFixed(2)+' s 仿真控制时间':'没有记录控制频率'}</small></span><span class="muted">↗</span></button>`).join('')||'<p class="empty-detail" style="padding:0 18px 16px">该筛选下没有记录的事件。</p>';
  $('events').querySelectorAll('button[data-step]').forEach(b=>b.onclick=()=>setStep(Number(b.dataset.step),true));
 }
-function syncVideo(side,d,force=false){if(!d)return;const v=$('video'+side),valid=d.video.alignment==='recording_verified',end=state.step>=d.steps.length;
- $('step'+side).textContent=valid?(end?`已结束 · ${d.steps.length}步`:`视频 step ${state.step}`):(end?'数据已结束':`数据 step ${state.step}`)+(d.video.available?' · 视频独立':' · 无视频');
- $('ended'+side).classList.toggle('hidden',!end||!valid);$('ended'+side).textContent=`已结束，冻结末帧 ${Math.max(0,d.steps.length-1)}`;
- if(!valid||!v.src)return;const pts=d.video.pts,index=Math.min(state.step,pts.length-1),time=pts[index]+.001;
- if(force||Math.abs(v.currentTime-time)>.085||(end&&Math.abs(v.currentTime-time)>.004)){v.currentTime=Math.min(time,Math.max(0,(v.duration||Infinity)-.002));}
- if(end)v.pause();
+function syncVideo(side,d,force=false){if(!d)return;const v=$('video'+side),valid=d.video.alignment==='recording_verified';
+ const step=laneStep(side),outside=step<0||step>=d.steps.length;
+ $('step'+side).textContent=valid?(outside?(step<0?'尚未开始':`已结束 · ${d.steps.length}步`):`视频 step ${step}`):(outside?'数据范围外':`数据 step ${step}`)+(d.video.available?' · 视频独立':' · 无视频');
+ $('ended'+side).classList.toggle('hidden',!outside||!valid);$('ended'+side).textContent=step<0?'尚未到达对照起点；首帧仅作占位':`已结束，冻结末帧 ${Math.max(0,d.steps.length-1)}`;
+ if(!valid||!v.src)return;const pts=d.video.pts,index=Math.max(0,Math.min(step,pts.length-1)),time=pts[index]+.001;
+ if(force||state.alignment||Math.abs(v.currentTime-time)>.085||(outside&&Math.abs(v.currentTime-time)>.004)){v.currentTime=Math.min(time,Math.max(0,(v.duration||Infinity)-.002));}
+ if(outside||state.alignment)v.pause();
 }
 function stepFromTime(d,time){const pts=d.video.pts;let lo=0,hi=pts.length-1;while(lo<=hi){const mid=(lo+hi)>>1;if(pts[mid]<=time+.0001)lo=mid+1;else hi=mid-1;}return Math.max(0,hi);}
 function setStep(value,manual=false){if(!state.a)return;if(manual)pause();state.step=Math.max(0,Math.min(maxSteps()-1,Math.round(value)||0));drawAll(true);}
 function drawAll(forceSeek=false){if(!state.a)return;const n=maxSteps();state.step=Math.min(state.step,n-1);$('seek').max=n-1;$('seek').value=state.step;$('stepInput').max=n-1;$('stepInput').value=state.step;
  $('clockStep').textContent=String(state.step).padStart(3,'0');$('clockTotal').textContent='/ '+String(n).padStart(3,'0')+' 步';$('rangeEnd').textContent='step '+(n-1);
- const fps=state.a.control_fps,pts=state.a.video.pts;const videoTime=state.a.video.alignment==='recording_verified'?pts?.[state.step]:null;$('clockTime').textContent=`控制 ${fps?(state.step/fps).toFixed(2)+' s':'频率未记录'} · 视频PTS ${number(videoTime)?videoTime.toFixed(3)+' s':'无经核验映射'}`;
+ const fps=state.a.control_fps,pts=state.a.video.pts;const videoTime=state.a.video.alignment==='recording_verified'?pts?.[state.step]:null;$('clockTime').textContent=`控制 ${fps?(state.step/fps).toFixed(2)+' s':'频率未记录'} · 视频PTS ${number(videoTime)?videoTime.toFixed(3)+' s':'无经核验映射'}`+(state.alignment?` · 对照原始step ${laneStep('B')}`:'');
  syncVideo('A',state.a,forceSeek);if(state.b)syncVideo('B',state.b,forceSeek);
  drawPlot('plot',state.a,'A · '+state.a.run.method);if(state.b)drawPlot('plotB',state.b,'B · '+state.b.run.method);
  const a=state.a.coverage,b=state.b?.coverage;$('coverageLabel').textContent=(/^H[0-9]+$/.test(state.a.run.method)?'A：纯VLA，监测覆盖不适用':`A覆盖 ${pct(a?.fraction)} · 最长空窗 ${a?.max_gap_steps??'—'}步`)+(state.b?(/^H[0-9]+$/.test(state.b.run.method)?' / B：纯VLA，不适用':` / B覆盖 ${pct(b?.fraction)} · 空窗 ${b?.max_gap_steps??'—'}步`):'');
  inspect();renderEvents();
 }
 function play(){if(!state.a)return;if(state.playing){pause();return;}if(state.step>=maxSteps()-1)setStep(0,true);state.playing=true;$('play').textContent='Ⅱ';
- const details=[['A',state.a],['B',state.b]].filter(([,d])=>d&&d.video.alignment==='recording_verified');
+ const details=[['A',state.a],['B',state.b]].filter(([,d])=>!state.alignment&&d&&d.video.alignment==='recording_verified');
  const master=details.sort((a,b)=>b[1].steps.length-a[1].steps.length)[0];
  for(const [side,d]of details){const v=$('video'+side);v.playbackRate=state.speed;if(state.step<d.steps.length)v.play().catch(e=>{pause();toast('浏览器尚未准备好视频，请稍后再播放。');});}
  const start=performance.now(),origin=state.step;
@@ -155,6 +174,11 @@ function play(){if(!state.a)return;if(state.playing){pause();return;}if(state.st
 $('singleTab').onclick=()=>mode(false);$('compareTab').onclick=()=>mode(true);$('pairSelect').onchange=()=>selectPair($('pairSelect').value);
 $('focusBtn').onclick=()=>{const focus=document.body.classList.toggle('focus-mode');$('focusBtn').textContent=focus?'显示概览':'专注回放';$('focusBtn').setAttribute('aria-pressed',String(focus));};
 $('inspectLane').onchange=inspect;
+$('evidenceDetails').ontoggle=()=>{if(state.a)inspect();};
+$('applyAnchor').onclick=()=>{if(!state.b)return;const a=Number($('anchorA').value),b=Number($('anchorB').value),label=$('anchorLabel').value.trim();
+ if(!number(state.a.control_fps)||!number(state.b.control_fps)||Math.abs(state.a.control_fps-state.b.control_fps)>1e-8){toast('两侧控制频率未知或不一致，不用固定步差强行对齐。');return;}
+ if(!Number.isInteger(a)||!Number.isInteger(b)||a<0||b<0||a>=state.a.steps.length||b>=state.b.steps.length||!label||label.length>120){toast('请填写两侧范围内的整数环境步及1～120字锚点说明。');return;}pause();state.alignment={a,b,label};applyMode();setStep(a,true);};
+$('clearAnchor').onclick=()=>{pause();state.alignment=null;applyMode();setStep(state.step,true);};
 $('play').onclick=play;$('prev').onclick=()=>setStep(state.step-1,true);$('next').onclick=()=>setStep(state.step+1,true);$('seek').oninput=e=>setStep(Number(e.target.value),true);$('stepInput').onchange=e=>setStep(Number(e.target.value),true);
 $('speed').onchange=e=>{const was=state.playing;pause();state.speed=Number(e.target.value);if(was)play();};$('eventFilter').onchange=renderEvents;
 document.addEventListener('keydown',e=>{if(['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)||$('exportDialog').open)return;if(e.code==='Space'){e.preventDefault();play();}if(e.code==='ArrowLeft'){e.preventDefault();setStep(state.step-1,true);}if(e.code==='ArrowRight'){e.preventDefault();setStep(state.step+1,true);}});
@@ -162,7 +186,7 @@ for(const id of ['experimentFilter','modelFilter','methodFilter','taskFilter','i
 $('search').oninput=()=>{state.limit=65;renderList();};$('clearFilters').onclick=()=>{for(const id of ['experimentFilter','modelFilter','methodFilter','taskFilter','initFilter','seedFilter','outcomeFilter','search'])$(id).value='';$('videoOnly').checked=$('includeForced').checked=false;state.baselinePreset=false;$('baselinePreset').setAttribute('aria-pressed','false');renderList();};
 $('baselinePreset').onclick=()=>{$('clearFilters').click();state.baselinePreset=true;$('baselinePreset').setAttribute('aria-pressed','true');renderList();const first=filtered().find(r=>r.method==='H50');if(first)selectRun(first.id);toast('原始对照：task2/9、init2、seed1000，H50 / H20 / MLP+OGG；未导入的视频仍明确标缺失。');};
 $('loadMore').onclick=()=>{state.limit+=100;renderList();};$('closeExport').onclick=()=>$('exportDialog').close();
-$('exportBtn').onclick=async()=>{if(!state.a)return;pause();$('exportBtn').disabled=true;try{const ids=[state.a.run.id,...(state.b?[state.b.run.id]:[])];const result=await api('/api/export',{ids,step:state.step,note:$('note').value});$('exportDir').textContent=result.directory;$('exportFiles').innerHTML=result.files.map(name=>`<a download="${esc(name)}" href="/api/export-file/${result.export}/${esc(name)}">${esc(name)}</a>`).join('');$('exportDialog').showModal();}catch(e){toast('导出失败：'+e.message);}finally{$('exportBtn').disabled=false;}};
+$('exportBtn').onclick=async()=>{if(!state.a)return;pause();$('exportBtn').disabled=true;try{const ids=[state.a.run.id,...(state.b?[state.b.run.id]:[])];const result=await api('/api/export',{ids,step:state.step,alignment:state.alignment,note:$('note').value});$('exportDir').textContent=result.directory;$('exportFiles').innerHTML=result.files.map(name=>`<a download="${esc(name)}" href="/api/export-file/${result.export}/${esc(name)}">${esc(name)}</a>`).join('');$('exportDialog').showModal();}catch(e){toast('导出失败：'+e.message);}finally{$('exportBtn').disabled=false;}};
 window.addEventListener('pagehide',pause);
 async function boot(){try{const catalog=await api('/api/catalog');state.catalog=catalog.runs;$('catalogCount').textContent=state.catalog.length+' 条';
  for(const [id,field,label]of[['experimentFilter','experiment','全部实验'],['modelFilter','model','全部模型'],['methodFilter','method','全部方法'],['taskFilter','task','全部任务'],['initFilter','init','全部init'],['seedFilter','seed','全部seed']])options(id,field,label);

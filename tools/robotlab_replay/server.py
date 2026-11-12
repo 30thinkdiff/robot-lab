@@ -16,6 +16,7 @@ import webbrowser
 import zipfile
 
 from data import Catalog,HERE,clean,finite
+from diagnostics import summarize,heatmaps,alignment_steps
 
 
 def parse_range(value,size):
@@ -56,28 +57,32 @@ def chart_svg(detail,step):
         elements.append(f'<path d="{path}" fill="none" stroke="{color}" stroke-width="2"/>')
     high=[r['threshold'] for r in detail['steps'] if finite(r.get('threshold')) and r['threshold']>maximum]
     if high:elements.append(f'<text x="45" y="33" font-size="10" fill="#c18a31">Initial threshold {max(high):.3g} exceeds displayed axis; original values preserved in source.</text>')
-    x=pad+(width-2*pad)*min(step,n)/n;elements.append(f'<path d="M{x} 25 V225" stroke="#17243c" stroke-dasharray="4 4"/>')
-    suffix=f" · run already ended at {len(detail['steps'])} steps" if step>=len(detail['steps']) else ''
+    x=pad+(width-2*pad)*max(0,min(step,n))/n;elements.append(f'<path d="M{x} 25 V225" stroke="#17243c" stroke-dasharray="4 4"/>')
+    suffix=f" · run already ended at {len(detail['steps'])} steps" if step>=len(detail['steps']) else ' · before run start on manual offset' if step<0 else ''
     label=html.escape(f"{detail['run']['model']} · {detail['run']['method']} · {detail['run']['condition']} · seed{detail['run']['seed']} · requested step{step}"+suffix)
     return f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}"><rect width="100%" height="100%" fill="white"/><g font-family="sans-serif" fill="#334155"><text x="45" y="18" font-size="13">{label}</text>'+''.join(elements)+'<text x="45" y="250" font-size="12">Environment step · score blue / threshold amber / executed score teal · missing values are gaps</text></g></svg>'
 
 
-def export_report(catalog,uids,step,note=''):
+def export_report(catalog,uids,step,note='',alignment=None):
     if len(uids) not in (1,2):raise ValueError('仅支持单回合或两回合导出')
     details=[catalog.details(uid) for uid in uids]
     if len(details)==2 and (details[0]['run']['condition'],details[0]['run']['seed'])!=(details[1]['run']['condition'],details[1]['run']['seed']):
         raise ValueError('只能导出相同条件/种子的配对')
-    if step<0 or step>=max(len(d['steps']) for d in details):raise ValueError('step越界')
+    local_steps,anchor=alignment_steps(details,step,alignment)
     folder=catalog.state/'exports'/(datetime.now().strftime('%Y%m%d_%H%M%S')+'_'+uuid.uuid4().hex[:6]);folder.mkdir(parents=True,exist_ok=False)
     manifest={'created_utc':datetime.now(timezone.utc).isoformat(),'environment_step':step,'note':note[:4000],
-        'alignment_basis':'environment step, not manipulation phase','sources':[],'files':[]}
+        'alignment_basis':'manual event offset; not automatic phase alignment' if anchor else 'environment step, not manipulation phase',
+        'manual_alignment':anchor,'environment_steps':local_steps,'sources':[],'files':[]}
     report=['# RobotLab Replay · 事件复盘','',f'环境步：{step}','',note[:4000],'']
+    if anchor:report+=['人工事件锚点：'+json.dumps(anchor,ensure_ascii=False),'']
     for i,d in enumerate(details):
+        step=local_steps[i]
         label='AB'[i];r=d['run'];metrics=d['metrics'];source={'run_id':r['id'],'model':r['model'],'method':r['method'],
             'condition':r['condition'],'seed':r['seed'],'success':r['success'],'env_steps':r['steps'],
             'provenance':d['source'],'policy_revision':d['protocol'].get('policy_revision'),
             'video_sha256_verified':d['video'].get('sha256_verified',False),'video_alignment':d['video']['alignment'],
-            'sync_message':d['video']['message'],'coverage':d['coverage'],'step_available':step<len(d['steps'])}
+            'sync_message':d['video']['message'],'coverage':d['coverage'],'step_available':0<=step<len(d['steps']),
+            'selected_environment_step':step,'diagnostic_summary':summarize(d)}
         manifest['sources'].append(source)
         protocol=d['protocol']
         source['frozen_configuration']={k:protocol[k] for k in ['policy_id','policy_revision','fps','control_fps','data_fps',
@@ -93,7 +98,7 @@ def export_report(catalog,uids,step,note=''):
         (folder/f'{label}_lvm.svg').write_text(chart_svg(d,step))
         # Exports contain selected numeric fields, no private absolute filesystem paths.
         selected={k:metrics.get(k) for k in ['success','env_steps','chunk_calls','event_replans','guidance_calls','policy_s','monitor_s']}
-        report += [f'## {label} · {r["model"]} / {r["method"]}',f'条件：{r["condition"]}；seed={r["seed"]}',
+        report += [f'## {label} · {r["model"]} / {r["method"]}',f'条件：{r["condition"]}；seed={r["seed"]}；当前原始环境步={step}',
             f'指标：{json.dumps(selected,ensure_ascii=False)}',f'同步：{d["video"]["message"]}','']
         with (folder/f'{label}_events.csv').open('w',newline='') as f:
             fields=['environment_step','type','label','step_score','step_threshold','denoise','ogg_loss','guidance_loss',
@@ -104,7 +109,9 @@ def export_report(catalog,uids,step,note=''):
                      'step_score':d['steps'][e['step']].get('score'),'step_threshold':d['steps'][e['step']].get('threshold')}
                 row.update({key:e['data'].get(key) for key in fields[5:]});w.writerow(row)
         path=catalog.video_path(catalog.runs[r['id']])
-        if path and d['video']['alignment']=='recording_verified' and step<len(d['steps']):
+        if 0<=step<len(d['steps']):
+            (folder/f'{label}_heatmaps.json').write_text(json.dumps(heatmaps(d,step),ensure_ascii=False,indent=2)+'\n')
+        if path and d['video']['alignment']=='recording_verified' and 0<=step<len(d['steps']):
             target=folder/f'{label}_step_{step:04d}.png'
             try:
                 subprocess.run(['ffmpeg','-v','error','-threads','1','-i',str(path),'-vf',f'select=eq(n\\,{step})',
@@ -159,6 +166,8 @@ class Handler(BaseHTTPRequestHandler):
             if parsed.path=='/api/catalog':self.send(catalog.public());return
             if parsed.path=='/api/run':self.send(catalog.details(query['id'][0]));return
             if parsed.path=='/api/pairs':self.send(catalog.pairs(query['id'][0]));return
+            if parsed.path=='/api/diagnostics':
+                detail=catalog.details(query['id'][0]);self.send({'summary':summarize(detail),'heatmaps':heatmaps(detail,int(query['step'][0]))});return
             if parsed.path.startswith('/api/video/'):
                 uid=parsed.path.rsplit('/',1)[-1];path=catalog.video_path(catalog.runs[uid])
                 if path is None:self.send({'error':'未导入视频'},404);return
@@ -170,9 +179,9 @@ class Handler(BaseHTTPRequestHandler):
                 if not path.is_file():raise KeyError('文件不存在')
                 mime={'.png':'image/png','.svg':'image/svg+xml','.json':'application/json','.csv':'text/csv','.md':'text/plain'}.get(path.suffix,'application/octet-stream')
                 self.file(path,mime);return
-            static={'/':'index.html','/app.js':'app.js','/style.css':'style.css'}
+            static={'/':'index.html','/app.js':'app.js','/diagnostics.js':'diagnostics.js','/style.css':'style.css'}
             if parsed.path not in static:self.send({'error':'不存在的地址'},404);return
-            self.file(HERE/'web'/static[parsed.path],{'/':'text/html; charset=utf-8','/app.js':'text/javascript; charset=utf-8','/style.css':'text/css; charset=utf-8'}[parsed.path])
+            self.file(HERE/'web'/static[parsed.path],{'/':'text/html; charset=utf-8','/app.js':'text/javascript; charset=utf-8','/diagnostics.js':'text/javascript; charset=utf-8','/style.css':'text/css; charset=utf-8'}[parsed.path])
         except (ValueError,KeyError,TypeError) as e:self.send({'error':str(e)},400)
         except (BrokenPipeError,ConnectionResetError):pass
         except (OSError,zipfile.BadZipFile) as e:self.send({'error':'数据读取失败：'+str(e)},422)
@@ -183,7 +192,7 @@ class Handler(BaseHTTPRequestHandler):
             if self.path!='/api/export':raise ValueError('只允许写入独立派生导出')
             size=int(self.headers.get('Content-Length','0'))
             if not 0<size<16000:raise ValueError('请求体过大/为空')
-            body=json.loads(self.rfile.read(size));self.send(export_report(self.server.catalog,body['ids'],int(body['step']),str(body.get('note',''))))
+            body=json.loads(self.rfile.read(size));self.send(export_report(self.server.catalog,body['ids'],body['step'],str(body.get('note','')),body.get('alignment')))
         except (ValueError,KeyError,TypeError) as e:self.send({'error':str(e)},400)
         except (BrokenPipeError,ConnectionResetError):pass
         except OSError as e:self.send({'error':'独立导出目录不可写或空间不足：'+str(e)},422)

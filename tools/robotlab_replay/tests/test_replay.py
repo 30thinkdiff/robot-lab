@@ -13,9 +13,32 @@ import zipfile
 HERE=Path(__file__).resolve().parents[1];sys.path.insert(0,str(HERE))
 from data import Catalog,Source,recording_evidence,REPO
 from server import parse_range,export_report,chart_svg
+from diagnostics import summarize,heatmaps,alignment_steps
 
 
 class UnitTests(unittest.TestCase):
+    def test_missing_outcome_and_arrays_remain_missing(self):
+        d={'run':{'status':'completed','success':None,'method':'lvm'},'steps':[{'step':0,'events':[]}],
+           'coverage':None,'events':[],'video':{'alignment':'unavailable','message':'视频未记录'},'source':{}}
+        summary=summarize(d)
+        self.assertTrue(any(c['title']=='任务结局未记录' for c in summary['cards']))
+        self.assertFalse(any(c['title']=='任务结果：成功' for c in summary['cards']))
+        self.assertTrue(heatmaps(d,0)['missing_commands']);self.assertTrue(heatmaps(d,0)['missing_updates'])
+        with self.assertRaises(ValueError):heatmaps(d,-1)
+
+    def test_manual_alignment_rejects_invalid_anchors_and_retains_offset(self):
+        details=[{'steps':[{}]*100,'control_fps':20},{'steps':[{}]*120,'control_fps':20}]
+        steps,anchor=alignment_steps(details,30,{'a':30,'b':40,'label':'人工事件位置'})
+        self.assertEqual(steps,[30,40]);self.assertEqual(anchor['mode'],'manual_event_offset')
+        self.assertEqual(alignment_steps(details,0,{'a':30,'b':10,'label':'测试'})[0],[0,-20])
+        self.assertEqual(alignment_steps(details,130,{'a':30,'b':10,'label':'测试'})[0],[130,110])
+        with self.assertRaises(ValueError):alignment_steps([details[0],{**details[1],'control_fps':10}],0,{'a':30,'b':40,'label':'不同频率'})
+        for bad in [{'a':True,'b':1,'label':'x'},{'a':-1,'b':1,'label':'x'},
+                    {'a':100,'b':1,'label':'x'},{'a':1,'b':120,'label':'x'},
+                    {'a':1,'b':2,'label':''},{'a':1,'b':2,'label':'x'*121},
+                    {'a':1,'b':2,'label':'x','path':'/etc/passwd'}]:
+            with self.assertRaises(ValueError):alignment_steps(details,0,bad)
+
     def test_range_request_semantics(self):
         self.assertEqual(parse_range(None,100),(0,99,False))
         self.assertEqual(parse_range('bytes=4-9',100),(4,9,True))
@@ -110,6 +133,40 @@ class RealExperimentTests(unittest.TestCase):
         self.assertEqual(a['score'],row['score'])
         target=lambda s:next(e['data']['target_sha256'] for e in s['events'] if e['kind']=='target')
         self.assertEqual(target(a),target(row))
+
+    def test_real_heatmaps_use_saved_commands_and_recorded_action_support(self):
+        for method,support in [('A',{0}),('B',set(range(0,20,2)))]:
+            d=self.catalog.details(self.hybrid(method)['id']);h=heatmaps(d,61)
+            self.assertEqual(len(h['commands']),25)
+            for row in h['commands']:self.assertEqual(row['values'],d['steps'][row['step']]['submitted_action'])
+            self.assertEqual(len(h['updates']),4)
+            for row in h['updates']:
+                self.assertEqual(len(row['values']),50)
+                self.assertEqual({i for i,v in enumerate(row['values']) if v!=0},support)
+            self.assertIn('不是实际执行位移',h['update_units'])
+
+    def test_diagnostic_summary_states_evidence_without_inventing_cause(self):
+        c=self.catalog.details(self.hybrid('C')['id']);cards=summarize(c)['cards']
+        gap=next(v for v in cards if v['title']=='存在监测空窗')
+        self.assertEqual(gap['step'],51);self.assertIn('155/256',gap['text'])
+        failure=next(v for v in cards if v['title']=='任务结果：失败')
+        self.assertIn('不能自动认定',failure['text']);self.assertFalse(summarize(c)['full_visual_tensor_available'])
+        r=next(r for r in self.catalog.runs.values() if r['model']=='MLP' and r['method']=='ogg' and not r['forced'])
+        old=self.catalog.details(r['id']);self.assertTrue(heatmaps(old,61)['missing_updates'])
+
+    @unittest.skipUnless((HERE/'.local/imported_video/manifest.json').exists(),'需真实视频')
+    def test_manual_anchor_export_retains_each_real_frame_and_handles_before_start(self):
+        with tempfile.TemporaryDirectory() as tmp,patch.object(self.catalog,'state',Path(tmp)):
+            a,b=self.hybrid('B')['id'],self.hybrid('A')['id']
+            export=export_report(self.catalog,[a,b],61,alignment={'a':61,'b':85,'label':'测试不同位置，不是阶段真值'})
+            folder=Path(export['directory']);m=json.loads((folder/'provenance.json').read_text())
+            self.assertEqual(m['environment_steps'],[61,85]);self.assertIn('manual',m['alignment_basis'])
+            self.assertAlmostEqual(m['sources'][1]['frame_export']['pts_seconds'],4.25)
+            self.assertTrue((folder/'B_step_0085.png').is_file());self.assertTrue((folder/'B_heatmaps.json').is_file())
+            missing=export_report(self.catalog,[a,b],0,alignment={'a':61,'b':10,'label':'测试负偏移'})
+            m=json.loads((Path(missing['directory'])/'provenance.json').read_text())
+            self.assertEqual(m['environment_steps'],[0,-51]);self.assertFalse(m['sources'][1]['step_available'])
+            self.assertNotIn('frame_export',m['sources'][1]);self.assertFalse(any(n.startswith('B_step_') for n in missing['files']))
 
     def test_exported_gap_chart_labels_clipped_threshold_without_filling_gaps(self):
         d=self.catalog.details(self.hybrid('C')['id']);svg=chart_svg(d,61)
