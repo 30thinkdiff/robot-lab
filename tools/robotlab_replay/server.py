@@ -179,9 +179,11 @@ class Handler(BaseHTTPRequestHandler):
                 if not path.is_file():raise KeyError('文件不存在')
                 mime={'.png':'image/png','.svg':'image/svg+xml','.json':'application/json','.csv':'text/csv','.md':'text/plain'}.get(path.suffix,'application/octet-stream')
                 self.file(path,mime);return
-            static={'/':'index.html','/app.js':'app.js','/diagnostics.js':'diagnostics.js','/style.css':'style.css'}
+            static={'/':'index.html','/app.js':'app.js','/diagnostics.js':'diagnostics.js','/style.css':'style.css',
+                '/workspace.js':'workspace.js','/workspace_model.mjs':'workspace_model.mjs','/workspace.css':'workspace.css'}
             if parsed.path not in static:self.send({'error':'不存在的地址'},404);return
-            self.file(HERE/'web'/static[parsed.path],{'/':'text/html; charset=utf-8','/app.js':'text/javascript; charset=utf-8','/diagnostics.js':'text/javascript; charset=utf-8','/style.css':'text/css; charset=utf-8'}[parsed.path])
+            mime='text/html; charset=utf-8' if parsed.path=='/' else 'text/css; charset=utf-8' if parsed.path.endswith('.css') else 'text/javascript; charset=utf-8'
+            self.file(HERE/'web'/static[parsed.path],mime)
         except (ValueError,KeyError,TypeError) as e:self.send({'error':str(e)},400)
         except (BrokenPipeError,ConnectionResetError):pass
         except (OSError,zipfile.BadZipFile) as e:self.send({'error':'数据读取失败：'+str(e)},422)

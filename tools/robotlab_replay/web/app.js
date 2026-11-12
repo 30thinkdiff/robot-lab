@@ -1,4 +1,5 @@
 import {drawMatrix,drawEvidence} from './diagnostics.js';
+import {createWorkspace} from './workspace.js';
 const $=id=>document.getElementById(id);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const number=v=>typeof v==='number'&&Number.isFinite(v);
@@ -181,7 +182,7 @@ $('applyAnchor').onclick=()=>{if(!state.b)return;const a=Number($('anchorA').val
 $('clearAnchor').onclick=()=>{pause();state.alignment=null;applyMode();setStep(state.step,true);};
 $('play').onclick=play;$('prev').onclick=()=>setStep(state.step-1,true);$('next').onclick=()=>setStep(state.step+1,true);$('seek').oninput=e=>setStep(Number(e.target.value),true);$('stepInput').onchange=e=>setStep(Number(e.target.value),true);
 $('speed').onchange=e=>{const was=state.playing;pause();state.speed=Number(e.target.value);if(was)play();};$('eventFilter').onchange=renderEvents;
-document.addEventListener('keydown',e=>{if(['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)||$('exportDialog').open)return;if(e.code==='Space'){e.preventDefault();play();}if(e.code==='ArrowLeft'){e.preventDefault();setStep(state.step-1,true);}if(e.code==='ArrowRight'){e.preventDefault();setStep(state.step+1,true);}});
+document.addEventListener('keydown',e=>{if(e.defaultPrevented||document.activeElement.closest('.workspace-ui')||['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)||document.querySelector('dialog[open]'))return;if(e.code==='Space'){e.preventDefault();play();}if(e.code==='ArrowLeft'){e.preventDefault();setStep(state.step-1,true);}if(e.code==='ArrowRight'){e.preventDefault();setStep(state.step+1,true);}});
 for(const id of ['experimentFilter','modelFilter','methodFilter','taskFilter','initFilter','seedFilter','outcomeFilter','videoOnly','includeForced'])$(id).onchange=()=>{state.limit=65;renderList();};
 $('search').oninput=()=>{state.limit=65;renderList();};$('clearFilters').onclick=()=>{for(const id of ['experimentFilter','modelFilter','methodFilter','taskFilter','initFilter','seedFilter','outcomeFilter','search'])$(id).value='';$('videoOnly').checked=$('includeForced').checked=false;state.baselinePreset=false;$('baselinePreset').setAttribute('aria-pressed','false');renderList();};
 $('baselinePreset').onclick=()=>{$('clearFilters').click();state.baselinePreset=true;$('baselinePreset').setAttribute('aria-pressed','true');renderList();const first=filtered().find(r=>r.method==='H50');if(first)selectRun(first.id);toast('原始对照：task2/9、init2、seed1000，H50 / H20 / MLP+OGG；未导入的视频仍明确标缺失。');};
@@ -194,4 +195,5 @@ async function boot(){try{const catalog=await api('/api/catalog');state.catalog=
  if(first)await selectRun(first.id);else fail('没有发现可读取的实验。使用 --source 指定只读评测目录或结果ZIP。');
  if(catalog.warnings.length)toast('部分来源无法读取；其他回合仍可用。详见服务日志/来源说明。');
 }catch(e){fail('索引加载失败：'+e.message);}}
+createWorkspace({pause,notify:toast});
 boot();
