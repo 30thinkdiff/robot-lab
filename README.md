@@ -1,6 +1,20 @@
 # Robot-Lab
 
-**2026-11-08：统一入口为[按任务与日期维护的工作日志](studies/policy_generalization/work_log.md)和[研究报告](studies/policy_generalization/research_report.md)。**
+**更新：2026-11-12。** 统一入口为[工作日志](studies/policy_generalization/work_log.md)、[研究报告](studies/policy_generalization/research_report.md)和[RobotLab Replay回放工作台](tools/robotlab_replay/README.md)。
+
+已完成Object10的454条示范特征准备、MLP/T-H1/T-H3/A10-H1/A10-H3各3个训练seed共15组训练，以及冻结模型的闭环、混合检测/引导、已执行动作监测实验。Corrector预测视觉特征变化，OGG利用该预测器引导SmolVLA动作生成；不把冻结基座能力当作新训练成果。
+
+最新夜间扩展在截止时间正常暂停，**2486/3400回合、错误0**，核心600回合全部完成。四方法共同571组条件中，H50/H10/规划LVM/已执行LVM分别成功393/529/436/477次；H10仍是成功率更强的参照。已执行监测提高覆盖并呈现闭环收益，但未证明覆盖率是唯一原因。详见[匹配条件结果、成本与五模型同轨迹预测准度](studies/policy_generalization/results/20261112/overnight_review/RESULTS.md)。
+
+Replay支持真实视频、LVM/OGG事件与环境步时间轴、配对比较和可溯源导出。Ubuntu启动：
+
+```bash
+python3 -X utf8 tools/robotlab_replay/server.py --open
+```
+
+运行只需Python标准库及浏览器；精确视频核验/关键帧导出使用ffprobe/ffmpeg。真实实验需本机已有归档或按说明只读取回，公共仓库不携带视频、权重或原始Tensor。后续采集约定见[数据保留规范](tools/robotlab_replay/DATA_CONTRACT.md)。
+
+## 历史进展（2026-11-08及以前）
 
 已完成472帧双相机视觉缓存、原始LIBERO/H50两回合冒烟（2/2成功）、上游算法接入及CPU保存恢复检查。CPU pilot完成三轮；上游约38M预测器完成一个完整epoch、独立episode验证、权重重载与预测可视化。尚无跨视角泛化或在线恢复收益证据。
 用户已完成四个student_*训练步骤，审查后真实CPU运行通过；环境、归档、日志和对照路径由助手辅助。学习重实现不冒充正式算法贡献。
