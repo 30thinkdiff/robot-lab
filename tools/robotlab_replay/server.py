@@ -17,6 +17,7 @@ import zipfile
 
 from data import Catalog,HERE,clean,finite
 from diagnostics import summarize,heatmaps,alignment_steps
+from casebank import inventory as casebank_inventory
 
 
 def parse_range(value,size):
@@ -93,7 +94,7 @@ def export_report(catalog,uids,step,note='',alignment=None):
         source['checkpoint_hashes']={name:{k:v for k,v in meta.items() if k.endswith('sha256')} for name,meta in weights.items() if isinstance(meta,dict)}
         if isinstance(protocol.get('checkpoint'),dict):source['checkpoint_hashes']['predictor']={k:v for k,v in protocol['checkpoint'].items() if k.endswith('sha256')}
         config=catalog.runs[r['id']]['_record']['case'].get('config',{})
-        source['method_configuration']={k:config[k] for k in ['detector','guide','n_action_steps','action_steps','uses_corrector','corrector_sha256'] if k in config}
+        source['method_configuration']={k:config[k] for k in ['detector','guide','model','mode','family','phase','anchor_pattern','n_action_steps','action_steps','uses_corrector','corrector_sha256'] if k in config}
         if isinstance(protocol.get('calibration'),dict):source['frozen_configuration']['trigger_rule']=protocol['calibration'].get('rule')
         (folder/f'{label}_lvm.svg').write_text(chart_svg(d,step))
         # Exports contain selected numeric fields, no private absolute filesystem paths.
@@ -164,6 +165,7 @@ class Handler(BaseHTTPRequestHandler):
             if parsed.path=='/favicon.ico':
                 self.send_response(204);self.send_header('Content-Length','0');self.end_headers();return
             if parsed.path=='/api/catalog':self.send(catalog.public());return
+            if parsed.path=='/api/casebank':self.send(casebank_inventory(catalog));return
             if parsed.path=='/api/run':self.send(catalog.details(query['id'][0]));return
             if parsed.path=='/api/pairs':self.send(catalog.pairs(query['id'][0]));return
             if parsed.path=='/api/diagnostics':
@@ -181,6 +183,7 @@ class Handler(BaseHTTPRequestHandler):
                 self.file(path,mime);return
             static={'/':'index.html','/app.js':'app.js','/diagnostics.js':'diagnostics.js','/style.css':'style.css',
                 '/workspace.js':'workspace.js','/workspace_model.mjs':'workspace_model.mjs','/workspace.css':'workspace.css'}
+            static['/casebank.js']='casebank.js'
             if parsed.path not in static:self.send({'error':'不存在的地址'},404);return
             mime='text/html; charset=utf-8' if parsed.path=='/' else 'text/css; charset=utf-8' if parsed.path.endswith('.css') else 'text/javascript; charset=utf-8'
             self.file(HERE/'web'/static[parsed.path],mime)

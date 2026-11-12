@@ -1,0 +1,282 @@
+{
+  "scope": "进行中的补测首批真实回放快照；按旧结局筛选，不是无偏成功率评测",
+  "study_id": "replay_casebank_20261112_001",
+  "snapshot_completed": 27,
+  "planned_trials": 660,
+  "snapshot_archive_sha256": "0da2464178cf4d19fa26a526be3b2ddea9c49d350b8d8a9bfe89df02b2c9eccf",
+  "videos": 27,
+  "numeric_npz_count": 399,
+  "legacy_inventory": [
+    {
+      "pattern": "001",
+      "matched_cases": 3,
+      "physical_states": 3,
+      "video_complete_triples": 0
+    },
+    {
+      "pattern": "000",
+      "matched_cases": 4,
+      "physical_states": 3,
+      "video_complete_triples": 4
+    },
+    {
+      "pattern": "011",
+      "matched_cases": 8,
+      "physical_states": 5,
+      "video_complete_triples": 0
+    },
+    {
+      "pattern": "111",
+      "matched_cases": 42,
+      "physical_states": 22,
+      "video_complete_triples": 0
+    },
+    {
+      "pattern": "010",
+      "matched_cases": 1,
+      "physical_states": 1,
+      "video_complete_triples": 0
+    },
+    {
+      "pattern": "101",
+      "matched_cases": 2,
+      "physical_states": 2,
+      "video_complete_triples": 0
+    },
+    {
+      "pattern": "100",
+      "matched_cases": 0,
+      "physical_states": 0,
+      "video_complete_triples": 0
+    },
+    {
+      "pattern": "110",
+      "matched_cases": 0,
+      "physical_states": 0,
+      "video_complete_triples": 0
+    }
+  ],
+  "requested_triples": [
+    {
+      "condition": "libero_object/task_0/init_0",
+      "seed": 1000,
+      "H50": {
+        "success": true,
+        "steps": 125
+      },
+      "mlp_ogg": {
+        "success": true,
+        "steps": 123
+      },
+      "H20": {
+        "success": true,
+        "steps": 138
+      }
+    },
+    {
+      "condition": "libero_object/task_1/init_0",
+      "seed": 1000,
+      "H20": {
+        "success": true,
+        "steps": 118
+      },
+      "H50": {
+        "success": false,
+        "steps": 280
+      },
+      "mlp_ogg": {
+        "success": true,
+        "steps": 178
+      }
+    },
+    {
+      "condition": "libero_object/task_1/init_2",
+      "seed": 1001,
+      "H50": {
+        "success": false,
+        "steps": 280
+      },
+      "mlp_ogg": {
+        "success": true,
+        "steps": 149
+      },
+      "H20": {
+        "success": false,
+        "steps": 280
+      }
+    },
+    {
+      "condition": "libero_object/task_2/init_2",
+      "seed": 1000,
+      "mlp_ogg": {
+        "success": false,
+        "steps": 280
+      },
+      "H50": {
+        "success": false,
+        "steps": 280
+      },
+      "H20": {
+        "success": false,
+        "steps": 280
+      }
+    }
+  ],
+  "weights": {
+    "mlp": {
+      "checkpoint_sha256": "05d55ba9452142be66840b3bef6fad10226480b6115be4bbbcf0842116732fad",
+      "factory_sha256": "811386798aa491d8c0b43c08cd400bf00f397ad380484693689a1912976c4201"
+    },
+    "transformer-h1": {
+      "checkpoint_sha256": "db5f037acb24a2f0954bd9f7e5debd6974a43117411ebf157ec23fe68a02c7b3",
+      "factory_sha256": "811386798aa491d8c0b43c08cd400bf00f397ad380484693689a1912976c4201"
+    },
+    "transformer-h3": {
+      "checkpoint_sha256": "2b9eb4142f49b0ffb0640e9d442baa76d5ec8fb008a7e6134e81f7dd120824d0",
+      "factory_sha256": "811386798aa491d8c0b43c08cd400bf00f397ad380484693689a1912976c4201"
+    },
+    "transformer-a10-h1": {
+      "checkpoint_sha256": "c7185ff584d2ed224249fce506cb11c9069cc8446010010de78dcac284f5336f",
+      "factory_sha256": "fa491d421b581425320279403a8d7dcbb970d8a0a3a2d32b4ab674a0ae2db168"
+    },
+    "transformer-a10-h3": {
+      "checkpoint_sha256": "c872498119c625ae97f1e4c6df4d9bbd1acf1cf857aeeb8c6c6978ce48db30e1",
+      "factory_sha256": "fa491d421b581425320279403a8d7dcbb970d8a0a3a2d32b4ab674a0ae2db168"
+    }
+  },
+  "control_parity": {
+    "exact_executed_actions_equal": true,
+    "max_abs_command_difference": 0.0,
+    "rtol": 1e-06,
+    "atol": 1e-07,
+    "condition": "libero_object/task_1/init_0",
+    "seed": 1000,
+    "steps": 168,
+    "same_outcome": true,
+    "excluded_from_formal_trials": true
+  },
+  "shape_gradient_probes": [
+    {
+      "model": "mlp",
+      "visual_shape": [
+        1,
+        1,
+        128,
+        960
+      ],
+      "action_shape": [
+        1,
+        7
+      ],
+      "output_shape": [
+        1,
+        128,
+        960
+      ],
+      "recording_output_exact_equal": true,
+      "max_abs_output_difference": 0.0,
+      "same_call_original_update_exact_equal": true,
+      "original_guidance_function_reused": true,
+      "limit": "separate AMP-BF16 backward calls may vary; gate uses captured same-call original gradient, no precision/parameter changes"
+    },
+    {
+      "model": "transformer-h1",
+      "visual_shape": [
+        1,
+        1,
+        128,
+        960
+      ],
+      "action_shape": [
+        1,
+        7
+      ],
+      "output_shape": [
+        1,
+        128,
+        960
+      ],
+      "recording_output_exact_equal": true,
+      "max_abs_output_difference": 0.0,
+      "same_call_original_update_exact_equal": true,
+      "original_guidance_function_reused": true,
+      "limit": "separate AMP-BF16 backward calls may vary; gate uses captured same-call original gradient, no precision/parameter changes"
+    },
+    {
+      "model": "transformer-h3",
+      "visual_shape": [
+        1,
+        3,
+        128,
+        960
+      ],
+      "action_shape": [
+        1,
+        7
+      ],
+      "output_shape": [
+        1,
+        128,
+        960
+      ],
+      "recording_output_exact_equal": false,
+      "max_abs_output_difference": 3.814697265625e-06,
+      "same_call_original_update_exact_equal": true,
+      "original_guidance_function_reused": true,
+      "limit": "separate AMP-BF16 backward calls may vary; gate uses captured same-call original gradient, no precision/parameter changes"
+    },
+    {
+      "model": "transformer-a10-h1",
+      "visual_shape": [
+        1,
+        1,
+        128,
+        960
+      ],
+      "action_shape": [
+        1,
+        10,
+        7
+      ],
+      "output_shape": [
+        1,
+        128,
+        960
+      ],
+      "recording_output_exact_equal": true,
+      "max_abs_output_difference": 0.0,
+      "same_call_original_update_exact_equal": true,
+      "original_guidance_function_reused": true,
+      "limit": "separate AMP-BF16 backward calls may vary; gate uses captured same-call original gradient, no precision/parameter changes"
+    },
+    {
+      "model": "transformer-a10-h3",
+      "visual_shape": [
+        1,
+        3,
+        128,
+        960
+      ],
+      "action_shape": [
+        1,
+        10,
+        7
+      ],
+      "output_shape": [
+        1,
+        128,
+        960
+      ],
+      "recording_output_exact_equal": false,
+      "max_abs_output_difference": 1.9073486328125e-06,
+      "same_call_original_update_exact_equal": true,
+      "original_guidance_function_reused": true,
+      "limit": "separate AMP-BF16 backward calls may vary; gate uses captured same-call original gradient, no precision/parameter changes"
+    }
+  ],
+  "control_fps": 20,
+  "data_fps": 10,
+  "prediction_seconds": 1,
+  "recording_schema": "replay_casebank_v1",
+  "followup": "远程队列仍在执行；不能将计划660写成已完成。最终包导入后重启Replay索引最新完整批次。"
+}

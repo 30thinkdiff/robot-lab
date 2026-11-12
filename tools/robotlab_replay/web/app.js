@@ -1,5 +1,6 @@
 import {drawMatrix,drawEvidence} from './diagnostics.js';
 import {createWorkspace} from './workspace.js';
+import {setupCasebank} from './casebank.js';
 const $=id=>document.getElementById(id);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const number=v=>typeof v==='number'&&Number.isFinite(v);
@@ -79,7 +80,9 @@ function configurationDescription(r){
  if(/^H[0-9]+$/.test(r.method))return `纯SmolVLA：每次仍生成50步动作块，只执行前${r.method.slice(1)}步后清空剩余动作，用新观测重新推理。${r.model}是归档对照组标签，本回合未使用该Corrector。`;
  const method={monitor:'只监测，不中断、不引导',lvm:'LVM检测触发普通重规划，无OGG',ogg:'LVM检测 + 中断重规划 + OGG引导',planned_lvm:'A10规划动作条件监测 + 普通重规划，无OGG',executed_lvm:'A10已执行动作历史到期评分 + 普通重规划，无OGG',single_lvm:'单动作T-H1原监测规则 + 普通重规划，无OGG',single_ogg:'单动作T-H1原监测规则 + 单动作OGG'};
  if(['A','B','C'].includes(r.method))return ({A:'混合配置A：T-H1检测 → T-H1引导',B:'混合配置B：T-H1检测 → A10-H1引导',C:'混合配置C：A10-H1检测 → A10-H1引导'})[r.method]+'。箭头表示检测器 → 引导器；视频面板的主选/对照位置与配置字母无关。';
- return `${visual[r.model]||r.model}；${method[r.method]||r.method}。输出是未来视觉特征变化，不是未来动作。具体权重、阈值和时间跨度以本回合冻结协议为准。`;
+ if(r.method==='hybrid_t1_a10_ogg')return '混合OGG：T-H1负责LVM检测并生成纠偏目标，触发时由A10-H1引导候选动作。两个冻结预测器不重新训练。';
+ const mode=method[r.method]||(/_(lvm|ogg)$/.test(r.method)?method[r.method.endsWith('_ogg')?'ogg':'lvm']:r.method);
+ return `${visual[r.model]||r.model}；${mode}。输出是未来视觉特征变化，不是未来动作。具体权重、阈值和时间跨度以本回合冻结协议为准。`;
 }
 function renderSyncBadge(){if(!state.a)return;const label=d=>d.video.alignment==='recording_verified'?'已同步':d.video.available?'视频独立':'无视频';
  $('syncBadge').textContent=state.compare&&state.b?`主选${label(state.a)} · 对照${label(state.b)}`:label(state.a)==='已同步'?'录制协议 + PTS已核验':label(state.a)==='视频独立'?'仅数据时间轴 · 视频独立':'视频缺失 · trace可用';}
@@ -99,7 +102,7 @@ function drawPlot(id,d,label){const side=id==='plotB'?'B':'A',selected=laneStep(
   svg+=`<path d="${path}" fill="none" stroke="${color}" stroke-width="1.8" ${key==='threshold'?'stroke-dasharray="4 3"':''}/>`;}
  const clipped=d.steps.filter(r=>number(r.threshold)&&r.threshold>ymax);if(clipped.length)svg+=`<text x="${svgWidth-right-3}" y="12" text-anchor="end" fill="#bf8e4c" font-size="8">初始Threshold ${Math.max(...clipped.map(r=>r.threshold)).toFixed(1)} 超出图范围，未改写数值</text>`;
  const seen=new Set();for(const e of d.events){if(!['replan','ogg','target'].includes(e.kind))continue;const key=e.step+e.kind;if(seen.has(key))continue;seen.add(key);const color=e.kind==='ogg'?'#8f76c5':e.kind==='target'?'#189a90':'#d69232';const y=H-29+(e.kind==='ogg'?6:0);svg+=`<circle cx="${X(e.step)}" cy="${y}" r="3" fill="${color}"><title>step ${e.step} · ${esc(e.label)}</title></circle>`;}
- for(const row of d.steps)if(row.block_start_derived)svg+=`<path d="M${X(row.step)} ${top+plotH+1} v4" stroke="#89a4b8"/>`;
+ for(const row of d.steps)if(row.block_start_actual||row.block_start_derived)svg+=`<path d="M${X(row.step)} ${top+plotH+1} v4" stroke="#89a4b8"/>`;
  const cursor=Math.max(0,Math.min(total,selected));svg+=`<text x="${left+6}" y="13" font-size="9" fill="#7d8c9c">${esc(label)}${state.alignment?' · 本回合原始环境步':''}</text><path d="M${X(cursor)} ${top-3} V${H-21}" stroke="#304f6b" stroke-width="1"/><circle cx="${X(cursor)}" cy="${top-3}" r="2.8" fill="#304f6b"/></svg>`;
  $(id).innerHTML=svg;$(id).onclick=e=>{$('inspectLane').value=id==='plotB'?'b':'a';const rect=$(id).querySelector('svg').getBoundingClientRect();setStep(Math.round(((e.clientX-rect.left)/rect.width*svgWidth-left)/W*total)-(side==='B'?pairOffset():0),true);};
 }
@@ -123,14 +126,14 @@ function inspect(){const side=$('inspectLane').value==='b'&&state.b?'B':'A',d=si
  const row=(label,value,cls='')=>`<div class="read-row"><span>${label}</span><strong class="${cls}">${esc(value)}</strong></div>`;
  $('readout').innerHTML=`<div class="inspect-status ${s.monitor_state==='无到期评分'?'gap':['未记录','未启用Corrector'].includes(s.monitor_state)?'missing':''}">${esc(s.monitor_state)}</div>`+
   row('LVM Score',fmt(s.score,4),'blue-text')+row('Threshold',fmt(s.threshold,4))+row('已执行条件Score',fmt(s.executed_score,4))+
-  row('动作块号（推导）',s.block_derived??'未记录')+row('剩余队列（推导）',s.queue_remaining_derived??'未记录')+
+  row(s.block_actual!==undefined?'动作块号（实测）':'动作块号（推导）',s.block_actual??s.block_derived??'未记录')+row(s.queue_remaining_actual!==undefined?'剩余队列（实测）':'剩余队列（推导）',s.queue_remaining_actual??s.queue_remaining_derived??'未记录')+
   (number(s.expected_norm)?row('预测变化范数',fmt(s.expected_norm,2)):'')+(number(s.observed_norm)?row('实测变化范数',fmt(s.observed_norm,2)):'')+
   (number(s.derived_mse)?row('残差MSE（推导）',fmt(s.derived_mse,3)):'');
  const guides=s.events.filter(e=>e.kind==='ogg'),targets=s.events.filter(e=>e.kind==='target'),interrupt=s.events.find(e=>e.kind==='replan');let content='';
  if(interrupt)content+=`<div class="event-detail"><strong>队列中断 / 立即重规划</strong><p>丢弃动作 ${esc(interrupt.data.discarded_actions??'未记录')} 条；本步记录的Score ${fmt(s.score,4)}。</p></div>`;
  if(guides.length){const loss=guides.map(e=>e.data.ogg_loss??e.data.guidance_loss).filter(number),grad=guides.map(e=>e.data.gradient_l2).filter(number),update=guides.map(e=>e.data.clean_action_update_l2).filter(number);
   content+=`<div class="event-detail"><strong>OGG · ${guides.length}次已记录引导</strong><p>Loss ${loss.length?loss.map(v=>fmt(v,4)).join(' → '):'当前实验未记录'}<br>梯度范数 ${grad.length?grad.map(v=>fmt(v,5)).join(' / '):'当前实验未记录'}<br>动作更新L2 ${update.length?update.map(v=>fmt(v,5)).join(' / '):'当前实验未记录'}</p><p>更新量为候选归一化动作变化，不是机器人测量位移。</p></div>`;}
- if(targets.length){const t=targets[0].data;content+=`<div class="event-detail"><strong>纠偏目标 · ${esc(t.target_shape?.join(' × ')||'shape未记录')}</strong><p>origin step ${esc(t.prediction_origin_step??'未记录')}<br>目标范数 ${fmt(t.target_norm,2)}<br>原始Tensor未导入，不反序列化.pt。</p></div>`;}
+ if(targets.length){const t=targets[0].data;content+=`<div class="event-detail"><strong>纠偏目标 · ${esc(t.target_shape?.join(' × ')||'shape未记录')}</strong><p>origin step ${esc(t.prediction_origin_step??'未记录')}<br>目标范数 ${fmt(t.target_norm,2)}<br>${t.tensor_format==='npz_numeric_no_pickle'?'原始数值数组已随补测导入；本视图未展开完整Tensor。':'本回合原始Tensor未导入；不反序列化.pt。'}</p></div>`;}
  $('stepEvents').innerHTML=content||'<div class="empty-detail">本步未记录中断或OGG调用。<br>完整预测Tensor / 候选动作Tensor：当前实验未记录或未导入。</div>';
  const action=s.submitted_action||s.controller_command?.raw_controller_action;
  if(Array.isArray(action)){const scale=Math.max(.001,...action.map(Math.abs));$('actions').innerHTML=`<p class="empty-detail">uₜ：提交给环境的控制命令<br>非机器人测量状态；条形按当前幅值缩放。</p><div class="action-vector">`+action.map((v,i)=>{const w=Math.abs(v)/scale*46;return `<div class="action-component"><span>a${i}</span><div class="action-track"><i style="left:${v>=0?50:50-w}%;width:${w}%"></i></div><code>${fmt(v,3)}</code></div>`;}).join('')+'</div>';}
@@ -196,4 +199,5 @@ async function boot(){try{const catalog=await api('/api/catalog');state.catalog=
  if(catalog.warnings.length)toast('部分来源无法读取；其他回合仍可用。详见服务日志/来源说明。');
 }catch(e){fail('索引加载失败：'+e.message);}}
 createWorkspace({pause,notify:toast});
+setupCasebank({api,notify:toast,openPair:async(a,b)=>{await selectRun(a);state.compare=true;$('pairSelect').value=b;await selectPair(b);}});
 boot();

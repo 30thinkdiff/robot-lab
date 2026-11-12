@@ -14,7 +14,7 @@ const out=path.resolve(__dirname,'../.local/review');fs.mkdirSync(out,{recursive
   page.on('pageerror',e=>results.errors.push(e.message));page.on('console',m=>{if(m.type()==='error')results.errors.push(m.text())});
   await page.goto(base);await page.waitForFunction(()=>document.querySelector('#videoA').readyState>=2);
   const catalog=await (await context.request.get(base+'/api/catalog')).json();assert(catalog.runs.length>=1200);
-  assert((await page.locator('#title').innerText()).includes('T-H1 → A10-H1'));results.checks.push('1306 real records indexed; default is genuine hybrid B failure');
+  assert((await page.locator('#title').innerText()).includes('T-H1 → A10-H1'));results.checks.push(`${catalog.runs.length} real records indexed; default is genuine hybrid B failure`);
   const b=catalog.runs.find(r=>r.method==='B'&&r.task===1&&r.init===0&&!r.forced&&r.experiment==='混合 Corrector');
   const detail=await (await context.request.get(base+'/api/run?id='+b.id)).json();assert.equal(detail.metrics.success,false);
   const jump=async n=>{await page.locator('#stepInput').fill(String(n));await page.locator('#stepInput').press('Tab');await page.waitForFunction(n=>Number(document.querySelector('#clockStep').textContent)===n,n);};
@@ -73,7 +73,7 @@ const out=path.resolve(__dirname,'../.local/review');fs.mkdirSync(out,{recursive
    const unbound=catalog.runs.find(r=>r.model==='T-H1'&&r.method==='H20'&&r.task===9&&r.init===2&&r.seed===1000&&!r.forced);
    await page.locator(`.run-item[data-id="${unbound.id}"]`).click();await page.waitForFunction(()=>document.querySelector('#labelA').textContent==='H20 / T-H1'&&document.querySelector('#videoA').readyState>=2);
    await jump(65);assert.equal(await page.locator('#videoA').evaluate(v=>v.controls),true);
-   assert((await page.locator('#stepA').textContent()).includes('数据 step 65 · 视频独立'));
+   await page.waitForFunction(()=>document.querySelector('#stepA').textContent.includes('数据 step 65 · 视频独立'));
    assert(await page.locator('#videoA').evaluate(v=>v.currentTime<.01));
    const verifiedPair=catalog.runs.find(r=>r.model==='MLP'&&r.method==='H20'&&r.task===9&&r.init===2&&r.seed===1000&&!r.forced);
    await page.locator('#pairSelect').selectOption(verifiedPair.id);await page.waitForFunction(()=>document.querySelector('#labelB').textContent==='H20 / MLP'&&document.querySelector('#videoB').readyState>=2);

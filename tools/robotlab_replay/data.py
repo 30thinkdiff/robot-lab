@@ -94,6 +94,16 @@ class Catalog:
         self.state=Path(state or HERE/'.local').resolve();self.sources=[];self.runs={};self.errors=[]
         defaults=[REPO/'outputs'/p for p in ['hybrid_pilot_20261111/results.zip','corrector_audit_20261111/results_bundle.zip',
             'executed_consistency_pilot_20261111_v2/results.zip','consistency_closed_loop_20261111/results.zip','smolvla_horizon_pilot_20261111/results.zip']]
+        # 多次取回快照只索引每个study最完整的新批次，避免重复计数/旧快照覆盖新回合。
+        banks={}
+        for folder in sorted((self.state/'import_batches').glob('casebank_*/results')):
+            if not (folder.parent/'manifest.json').is_file():continue
+            try:
+                plan=json.loads((folder/'plan.json').read_text());execution=json.loads((folder/'execution.json').read_text())
+                study=plan['protocol']['study_id'];rank=(int(execution['completed']),folder.stat().st_mtime_ns)
+                if study not in banks or rank>banks[study][0]:banks[study]=(rank,folder)
+            except (OSError,ValueError,KeyError):continue
+        defaults += [entry[1] for entry in banks.values()]
         for path in sources if sources is not None else defaults:
             if not Path(path).exists():continue
             try:self.add(Source(path))
@@ -160,9 +170,11 @@ class Catalog:
                     model=model_match[1].split('_s')[0] if model_match else ('SmolVLA' if 'horizon' in source.path.parent.name else 'A10-H1')
                     if 'hybrid' in source.path.parent.name:model={'A':'T-H1 → T-H1','B':'T-H1 → A10-H1','C':'A10-H1 → A10-H1'}.get(case['method'],'Hybrid')
                     variant={'mlp':'MLP','transformer-h1':'T-H1','transformer-h3':'T-H3','transformer-a10-h1':'A10-H1','transformer-a10-h3':'A10-H3'}.get(model,model)
+                    variant=case.get('config',{}).get('model_label',variant)
                     if case['method'] in ['single_lvm','single_ogg']:variant='T-H1'
                     forced='forced_check' in prefix or bool(protocol.get('debug_forced_event'))
                     group='混合 Corrector' if 'hybrid' in source.path.parent.name else ('Object10 五模型' if 'corrector_audit' in str(source.path) else source.path.parent.name.replace('_20261111',''))
+                    group=protocol.get('experiment_label',group)
                     self.runs[uid]={'id':uid,'model':variant,'method':case['method'],'task':int(match[1]) if match else None,
                         'init':int(match[2]) if match else None,'seed':case.get('seed'),'condition':case.get('condition'),
                         'success':result.get('success'),'status':record['status'],'steps':result.get('env_steps'),
@@ -260,6 +272,12 @@ class Catalog:
         elif actions is not None:warnings.append('动作数量与环境步数不符，未强行对齐')
         if commands and len(commands)==n:
             for s,a in zip(steps,commands):s['controller_command']=a
+        queue_trace=source.json(base+'queue_trace.json')
+        if (isinstance(queue_trace,list) and len(queue_trace)==n and all(isinstance(q,dict) and q.get('step')==i
+                and type(q.get('plan_id')) is int and type(q.get('queue_after')) is int
+                and type(q.get('chunk_calls_before')) is int and type(q.get('chunk_calls_after')) is int for i,q in enumerate(queue_trace))):
+            for s,q in zip(steps,queue_trace):
+                s['block_actual']=q['plan_id'];s['queue_remaining_actual']=q['queue_after'];s['block_start_actual']=q['chunk_calls_after']>q['chunk_calls_before']
         video_path=self.video_path(r);video={'available':False,'alignment':'unavailable','message':'当前实验视频未取回；trace和事件仍可分析','pts':[]}
         if video_path:
             expected=next((v.get('sha256') for v in record.get('video_artifacts',[]) if v.get('sha256') and (self.video_index.get(v['sha256'])==video_path or not source.zip)),None)
@@ -282,7 +300,7 @@ class Catalog:
                 'message':message,
                 'recorder':self.recorder}
             if not matched:video['pts']=[]
-        targets=source.json(base+'targets.json');queue_trace=source.json(base+'queue_trace.json')
+        targets=source.json(base+'targets.json')
         public={k:v for k,v in r.items() if not k.startswith('_')}
         return clean({'run':public,'metrics':result,'coverage':coverage,'first_due':first,'horizon_steps':horizon,
             'control_fps':fps,'steps':steps,'events':events,'video':video,'warnings':list(dict.fromkeys(warnings)),
