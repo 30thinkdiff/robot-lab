@@ -1,0 +1,561 @@
+{
+  "schema": "multilayer_visual_v1",
+  "purpose": "predict action-conditioned per-layer future visual change; not task failure classification",
+  "policy_revision": "a24f1f380461b665158d52acd140152c79e8b36d",
+  "weight_sha256": "9a9f6413e42c0f332fccbce9a0dc796af2790f82cf002f791cdbf7e01e1afca8",
+  "weight_sha_unchanged": true,
+  "source_parquet_sha256": "badabde0650deb7b356aa99d5cf98cd62a5a3a354b874acb4a081a6c4669990d",
+  "data_revision": "86958911c0f959db2bbbdb107eb3e17c5f9c798e",
+  "episode": 813,
+  "layer_indices_zero_based": [
+    2,
+    5,
+    11
+  ],
+  "vision_layer_count": 12,
+  "vision_class": "SmolVLMVisionTransformer",
+  "connector_class": "SmolVLMConnector",
+  "camera_keys": [
+    "observation.images.camera1",
+    "observation.images.camera2"
+  ],
+  "native_shapes": {
+    "observation.images.camera1": {
+      "block_02": [
+        1,
+        1024,
+        768
+      ],
+      "block_05": [
+        1,
+        1024,
+        768
+      ],
+      "block_11": [
+        1,
+        1024,
+        768
+      ],
+      "vision_postnorm": [
+        1,
+        1024,
+        768
+      ],
+      "connector": [
+        1,
+        64,
+        960
+      ]
+    },
+    "observation.images.camera2": {
+      "block_02": [
+        1,
+        1024,
+        768
+      ],
+      "block_05": [
+        1,
+        1024,
+        768
+      ],
+      "block_11": [
+        1,
+        1024,
+        768
+      ],
+      "vision_postnorm": [
+        1,
+        1024,
+        768
+      ],
+      "connector": [
+        1,
+        64,
+        960
+      ]
+    }
+  },
+  "records": [
+    {
+      "episode": 813,
+      "frame_index": 0,
+      "timestamp": 0.0,
+      "data_fps": 10.0,
+      "camera_keys": [
+        "observation.images.camera1",
+        "observation.images.camera2"
+      ],
+      "file": "episode_813_frame_000000.npz",
+      "sha256": "22d4670c538c40e3ce2faad3d194cde17421dc83540e22f8efba8a2ab6a103e5",
+      "raw_shapes": {
+        "block_02": [
+          [
+            1,
+            1024,
+            768
+          ],
+          [
+            1,
+            1024,
+            768
+          ]
+        ],
+        "block_05": [
+          [
+            1,
+            1024,
+            768
+          ],
+          [
+            1,
+            1024,
+            768
+          ]
+        ],
+        "block_11": [
+          [
+            1,
+            1024,
+            768
+          ],
+          [
+            1,
+            1024,
+            768
+          ]
+        ],
+        "connector": [
+          [
+            1,
+            64,
+            960
+          ],
+          [
+            1,
+            64,
+            960
+          ]
+        ]
+      },
+      "stored_shapes": {
+        "block_02": [
+          2,
+          64,
+          768
+        ],
+        "block_05": [
+          2,
+          64,
+          768
+        ],
+        "block_11": [
+          2,
+          64,
+          768
+        ],
+        "connector": [
+          2,
+          64,
+          960
+        ]
+      },
+      "uncompressed_bytes": 835584,
+      "file_bytes": 650771,
+      "dtype": "float16",
+      "pooling": {
+        "type": "nonoverlapping_spatial_mean",
+        "grid": 8
+      },
+      "feature_sites": "block outputs before vision final LayerNorm; connector after final LayerNorm",
+      "target": "same episode: feature[t+k]-feature[t], per layer and per camera; no failure labels"
+    },
+    {
+      "episode": 813,
+      "frame_index": 10,
+      "timestamp": 1.0,
+      "data_fps": 10.0,
+      "camera_keys": [
+        "observation.images.camera1",
+        "observation.images.camera2"
+      ],
+      "file": "episode_813_frame_000010.npz",
+      "sha256": "3c3367fe67cb82b819dfeadcd3b01d740bf312411714276135acd5bf4008c609",
+      "raw_shapes": {
+        "block_02": [
+          [
+            1,
+            1024,
+            768
+          ],
+          [
+            1,
+            1024,
+            768
+          ]
+        ],
+        "block_05": [
+          [
+            1,
+            1024,
+            768
+          ],
+          [
+            1,
+            1024,
+            768
+          ]
+        ],
+        "block_11": [
+          [
+            1,
+            1024,
+            768
+          ],
+          [
+            1,
+            1024,
+            768
+          ]
+        ],
+        "connector": [
+          [
+            1,
+            64,
+            960
+          ],
+          [
+            1,
+            64,
+            960
+          ]
+        ]
+      },
+      "stored_shapes": {
+        "block_02": [
+          2,
+          64,
+          768
+        ],
+        "block_05": [
+          2,
+          64,
+          768
+        ],
+        "block_11": [
+          2,
+          64,
+          768
+        ],
+        "connector": [
+          2,
+          64,
+          960
+        ]
+      },
+      "uncompressed_bytes": 835584,
+      "file_bytes": 651111,
+      "dtype": "float16",
+      "pooling": {
+        "type": "nonoverlapping_spatial_mean",
+        "grid": 8
+      },
+      "feature_sites": "block outputs before vision final LayerNorm; connector after final LayerNorm",
+      "target": "same episode: feature[t+k]-feature[t], per layer and per camera; no failure labels"
+    },
+    {
+      "episode": 813,
+      "frame_index": 20,
+      "timestamp": 2.0,
+      "data_fps": 10.0,
+      "camera_keys": [
+        "observation.images.camera1",
+        "observation.images.camera2"
+      ],
+      "file": "episode_813_frame_000020.npz",
+      "sha256": "0985e482a1604bf17f02caf5c3932c49bbb85e44686dc2b47ba46e8441600e6e",
+      "raw_shapes": {
+        "block_02": [
+          [
+            1,
+            1024,
+            768
+          ],
+          [
+            1,
+            1024,
+            768
+          ]
+        ],
+        "block_05": [
+          [
+            1,
+            1024,
+            768
+          ],
+          [
+            1,
+            1024,
+            768
+          ]
+        ],
+        "block_11": [
+          [
+            1,
+            1024,
+            768
+          ],
+          [
+            1,
+            1024,
+            768
+          ]
+        ],
+        "connector": [
+          [
+            1,
+            64,
+            960
+          ],
+          [
+            1,
+            64,
+            960
+          ]
+        ]
+      },
+      "stored_shapes": {
+        "block_02": [
+          2,
+          64,
+          768
+        ],
+        "block_05": [
+          2,
+          64,
+          768
+        ],
+        "block_11": [
+          2,
+          64,
+          768
+        ],
+        "connector": [
+          2,
+          64,
+          960
+        ]
+      },
+      "uncompressed_bytes": 835584,
+      "file_bytes": 651037,
+      "dtype": "float16",
+      "pooling": {
+        "type": "nonoverlapping_spatial_mean",
+        "grid": 8
+      },
+      "feature_sites": "block outputs before vision final LayerNorm; connector after final LayerNorm",
+      "target": "same episode: feature[t+k]-feature[t], per layer and per camera; no failure labels"
+    }
+  ],
+  "pairs_k10": [
+    [
+      0,
+      1
+    ],
+    [
+      1,
+      2
+    ]
+  ],
+  "prediction_seconds": 1.0,
+  "data_fps": 10.0,
+  "online_control_hz": 20.0,
+  "timings": [
+    {
+      "frame": 0,
+      "camera": "observation.images.camera1",
+      "repeat": 0,
+      "plain_s": 0.004715602844953537,
+      "hook_s": 0.004598015919327736,
+      "exact_equal": true
+    },
+    {
+      "frame": 0,
+      "camera": "observation.images.camera1",
+      "repeat": 1,
+      "plain_s": 0.0057665202766656876,
+      "hook_s": 0.00464276410639286,
+      "exact_equal": true
+    },
+    {
+      "frame": 0,
+      "camera": "observation.images.camera1",
+      "repeat": 2,
+      "plain_s": 0.004161430522799492,
+      "hook_s": 0.004305243492126465,
+      "exact_equal": true
+    },
+    {
+      "frame": 0,
+      "camera": "observation.images.camera2",
+      "repeat": 0,
+      "plain_s": 0.004085823893547058,
+      "hook_s": 0.004316994920372963,
+      "exact_equal": true
+    },
+    {
+      "frame": 0,
+      "camera": "observation.images.camera2",
+      "repeat": 1,
+      "plain_s": 0.004099184647202492,
+      "hook_s": 0.004321912303566933,
+      "exact_equal": true
+    },
+    {
+      "frame": 0,
+      "camera": "observation.images.camera2",
+      "repeat": 2,
+      "plain_s": 0.004097532480955124,
+      "hook_s": 0.004314666613936424,
+      "exact_equal": true
+    },
+    {
+      "frame": 10,
+      "camera": "observation.images.camera1",
+      "repeat": 0,
+      "plain_s": 0.004366403445601463,
+      "hook_s": 0.00443570502102375,
+      "exact_equal": true
+    },
+    {
+      "frame": 10,
+      "camera": "observation.images.camera1",
+      "repeat": 1,
+      "plain_s": 0.004179650917649269,
+      "hook_s": 0.0044022854417562485,
+      "exact_equal": true
+    },
+    {
+      "frame": 10,
+      "camera": "observation.images.camera1",
+      "repeat": 2,
+      "plain_s": 0.004132872447371483,
+      "hook_s": 0.004406053572893143,
+      "exact_equal": true
+    },
+    {
+      "frame": 10,
+      "camera": "observation.images.camera2",
+      "repeat": 0,
+      "plain_s": 0.004104103893041611,
+      "hook_s": 0.004433805122971535,
+      "exact_equal": true
+    },
+    {
+      "frame": 10,
+      "camera": "observation.images.camera2",
+      "repeat": 1,
+      "plain_s": 0.004112293943762779,
+      "hook_s": 0.004297632724046707,
+      "exact_equal": true
+    },
+    {
+      "frame": 10,
+      "camera": "observation.images.camera2",
+      "repeat": 2,
+      "plain_s": 0.005302555859088898,
+      "hook_s": 0.00464770570397377,
+      "exact_equal": true
+    },
+    {
+      "frame": 20,
+      "camera": "observation.images.camera1",
+      "repeat": 0,
+      "plain_s": 0.0040870774537324905,
+      "hook_s": 0.004329506307840347,
+      "exact_equal": true
+    },
+    {
+      "frame": 20,
+      "camera": "observation.images.camera1",
+      "repeat": 1,
+      "plain_s": 0.004125310108065605,
+      "hook_s": 0.004322735592722893,
+      "exact_equal": true
+    },
+    {
+      "frame": 20,
+      "camera": "observation.images.camera1",
+      "repeat": 2,
+      "plain_s": 0.004101866856217384,
+      "hook_s": 0.004344997927546501,
+      "exact_equal": true
+    },
+    {
+      "frame": 20,
+      "camera": "observation.images.camera2",
+      "repeat": 0,
+      "plain_s": 0.004074376076459885,
+      "hook_s": 0.004534129053354263,
+      "exact_equal": true
+    },
+    {
+      "frame": 20,
+      "camera": "observation.images.camera2",
+      "repeat": 1,
+      "plain_s": 0.004096420481801033,
+      "hook_s": 0.00585545226931572,
+      "exact_equal": true
+    },
+    {
+      "frame": 20,
+      "camera": "observation.images.camera2",
+      "repeat": 2,
+      "plain_s": 0.0041762590408325195,
+      "hook_s": 0.006815958768129349,
+      "exact_equal": true
+    }
+  ],
+  "mean_plain_ms": 4.321404732763767,
+  "mean_hook_ms": 4.629198047849868,
+  "max_hook_incremental_peak_mib": 26.7509765625,
+  "final_allocated_gib": 0.8757977485656738,
+  "all_original_outputs_exact_equal": true,
+  "finite": {
+    "observation.images.camera1": true,
+    "observation.images.camera2": true
+  },
+  "hooks_removed": true,
+  "cache_uncompressed_bytes": 2506752,
+  "cache_actual_bytes": 1952919,
+  "all_66984_frames_projected_uncompressed_gib": 52.1268310546875,
+  "source_files": {
+    "corrector_multilayer_probe.py": "e556adea46f51f0e986a63a53fdd6ce59d936634d6a415a4d1c6ed51befef26e",
+    "corrector_multilayer.py": "00e5bb3886dac5e1147c71994f6742f045c62106deb6d5acb3638645ebc54b4e"
+  },
+  "limits": [
+    "3 frames from one demonstration, no training or closed-loop claims",
+    "spatial mean pooling creates a new explicit feature protocol",
+    "intermediate blocks are pre-final-LayerNorm; connector is final representation only",
+    "native bfloat16 copied to float16 cache; no normalization rescaling",
+    "timing is a small synchronous microbenchmark, not amortized online control latency",
+    "Case Bank does not contain these multilayer features"
+  ],
+  "vision_config": {
+    "model_type": "smolvlm_vision",
+    "num_hidden_layers": 12,
+    "hidden_size": 768,
+    "num_attention_heads": 12,
+    "image_size": 512,
+    "patch_size": 16,
+    "layer_norm_eps": 1e-06
+  },
+  "final_gpu_processes": "",
+  "cpu_hook_tests": {
+    "passed": 3,
+    "cuda_visible_devices": "",
+    "source": "test_research_review.RealTorchHookTests"
+  },
+  "memory_measurement_limit": "max_hook_incremental_peak_mib is peak growth above allocated memory immediately before hooked call, includes native vision temporaries; plain peak not separately retained, not a pure Hook-vs-plain delta",
+  "derived_bfloat16_capture_copy_mib_per_view": 6.1171875,
+  "scope_of_timing": "embed_image only; preprocessing, model loading and VLA action denoising excluded"
+}

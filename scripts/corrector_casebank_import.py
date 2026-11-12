@@ -77,13 +77,23 @@ def install_bundle(archive,state):
         for name in names:
             if name.endswith('.npz'):validate_numeric_npz(z.read(name))
         state.mkdir(parents=True,exist_ok=True)
-        if shutil.disk_usage(state).free<sum(i.file_size for i in infos)+2**30:raise ValueError('本地空间不足，保留ZIP，不解压')
+        indexed=shutil.disk_usage(state).free<sum(i.file_size for i in infos)+2**30
+        if indexed:
+            # 小盘不复制已经校验的数值数组；仅解出视频，元数据由Source按需读ZIP。
+            relative_archive=archive.resolve().relative_to(state.resolve()).as_posix()
+            materialized={v['file'] for v in videos}|{'results/recording/evidence.json','results/recording/lerobot_eval.py'}
+            if shutil.disk_usage(state).free<sum(i.file_size for i in infos if i.filename in materialized)+512*2**20:
+                raise ValueError('连视频与512MiB保底空间也不足；保留ZIP，不解压，不清理旧资料')
+        else:materialized=names
         target.mkdir(parents=True,exist_ok=False)
         for info in infos:
+            if info.filename not in materialized:continue
             path=target/info.filename;path.parent.mkdir(parents=True,exist_ok=True)
             with z.open(info) as source,path.open('xb') as dest:shutil.copyfileobj(source,dest)
         recording=target/'recording';recording.mkdir()
         for name in ['evidence.json','lerobot_eval.py']:shutil.copyfile(target/'results/recording'/name,recording/name)
+        if indexed:(target/'archive.json').write_text(json.dumps({'archive':relative_archive,'sha256':sha,'storage':'verified_zip_read_only'})+'\n')
         (target/'manifest.json').write_text(json.dumps({'videos':videos,'recording':evidence,'source_sha256':sha},ensure_ascii=False,indent=2)+'\n')
     return {'imported_trials':complete,'videos':len(videos),'output':str(target),'execution_status':execution['status'],
-            'source_sha256':sha,'restart_local_replay_to_index':True}
+            'source_sha256':sha,'storage':'verified_zip_with_video_cache' if indexed else 'extracted',
+            'restart_local_replay_to_index':True}

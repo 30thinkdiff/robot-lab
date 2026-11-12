@@ -96,13 +96,19 @@ class Catalog:
             'executed_consistency_pilot_20261111_v2/results.zip','consistency_closed_loop_20261111/results.zip','smolvla_horizon_pilot_20261111/results.zip']]
         # 多次取回快照只索引每个study最完整的新批次，避免重复计数/旧快照覆盖新回合。
         banks={}
-        for folder in sorted((self.state/'import_batches').glob('casebank_*/results')):
-            if not (folder.parent/'manifest.json').is_file():continue
+        for batch in sorted((self.state/'import_batches').glob('casebank_*')):
+            if not (batch/'manifest.json').is_file():continue
             try:
-                plan=json.loads((folder/'plan.json').read_text());execution=json.loads((folder/'execution.json').read_text())
-                study=plan['protocol']['study_id'];rank=(int(execution['completed']),folder.stat().st_mtime_ns)
+                if (batch/'archive.json').is_file():
+                    entry=json.loads((batch/'archive.json').read_text());folder=(self.state/entry['archive']).resolve();folder.relative_to(self.state)
+                    if folder.suffix!='.zip':raise ValueError('索引归档类型异常')
+                    with zipfile.ZipFile(folder) as z:
+                        plan=json.loads(z.read('results/plan.json'));execution=json.loads(z.read('results/execution.json'))
+                else:
+                    folder=batch/'results';plan=json.loads((folder/'plan.json').read_text());execution=json.loads((folder/'execution.json').read_text())
+                study=plan['protocol']['study_id'];rank=(int(execution['completed']),batch.stat().st_mtime_ns)
                 if study not in banks or rank>banks[study][0]:banks[study]=(rank,folder)
-            except (OSError,ValueError,KeyError):continue
+            except (OSError,ValueError,KeyError,zipfile.BadZipFile):continue
         defaults += [entry[1] for entry in banks.values()]
         for path in sources if sources is not None else defaults:
             if not Path(path).exists():continue

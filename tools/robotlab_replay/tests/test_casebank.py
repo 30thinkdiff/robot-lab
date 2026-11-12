@@ -70,6 +70,16 @@ class CasebankUnitTests(unittest.TestCase):
 
 @unittest.skipUnless((REPO/'outputs/corrector_audit_20261111/results_bundle.zip').exists(),'需真实旧实验')
 class RealCasebankTests(unittest.TestCase):
+    def test_verified_zip_bank_does_not_duplicate_earlier_snapshot(self):
+        c=Catalog()
+        try:
+            current=[r for r in c.runs.values() if r['_protocol'].get('study_id')=='replay_casebank_20261112_001']
+            if not any(r['_source'].zip for r in current):self.skipTest('需真实ZIP直读导入批次')
+            self.assertEqual(len({r['_source'].path for r in current}),1)
+            self.assertEqual(len({r['_record']['case']['id'] for r in current}),len(current))
+            source=current[0]['_source'];self.assertEqual(len(current),source.json('results/execution.json')['completed'])
+            self.assertTrue(all(c.video_path(r) for r in current))
+        finally:c.close()
     def test_imported_real_four_patterns_have_verified_video_and_measured_queue(self):
         c=Catalog()
         try:

@@ -6,7 +6,7 @@
 
 最新夜间扩展在截止时间正常暂停，**2486/3400回合、错误0**，核心600回合全部完成。四方法共同571组条件中，H50/H10/规划LVM/已执行LVM分别成功393/529/436/477次；H10仍是成功率更强的参照。已执行监测提高覆盖并呈现闭环收益，但未证明覆盖率是唯一原因。详见[匹配条件结果、成本与五模型同轨迹预测准度](studies/policy_generalization/results/20261112/overnight_review/RESULTS.md)。
 
-Replay支持真实视频、LVM/OGG事件与环境步时间轴、配对比较、人工事件锚点、已记录动作/更新范数热图、证据摘要和可溯源导出。新增可拖动/缩放、独立滚动和保存组合的自由布局工作台；不自动判定失败原因。Ubuntu启动：
+Replay支持真实视频、LVM/OGG事件与环境步时间轴、配对比较、人工事件锚点、已记录动作/更新范数热图、证据摘要和可溯源导出。新增可拖动/缩放、独立滚动和保存组合的自由布局工作台；不自动判定失败原因。[Case Bank研究审计](studies/policy_generalization/results/20261112/casebank_research_v2/RESULTS.md)已将660计划在119完整回合安全暂停，推荐新增0回合；[多层视觉接口](studies/policy_generalization/corrector/MULTILAYER_DESIGN.md)已完成三帧真实示范核验，尚未训练。Ubuntu启动：
 
 ```bash
 python3 -X utf8 tools/robotlab_replay/server.py --open
