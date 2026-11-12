@@ -9,6 +9,7 @@ const base=process.env.REPLAY_URL||'http://127.0.0.1:8871',out=path.resolve(__di
   await page.goto(base);await page.waitForFunction(()=>document.querySelector('#videoA').readyState>=2);
   const bank=await(await context.request.get(base+'/api/casebank')).json();assert.equal(bank.groups.filter(g=>g.study==='legacy_five_models').length,60);
   await page.locator('#casebankOpen').click();await page.locator('#casebankDialog').waitFor({state:'visible'});await page.locator('#casebankStudy').selectOption('legacy_five_models');
+  await page.locator('#casebankComplete').uncheck();
   await page.locator('#casebankPattern').selectOption('001');assert.equal(await page.locator('#casebankRows tr').count(),3);
   const row=await page.locator('#casebankRows tr').first().innerText();assert(row.includes('失败'));assert(row.includes('成功'));assert(row.includes('视频缺'));
   await page.screenshot({path:path.join(out,'casebank_original_001.png'),fullPage:true});result.checks.push('real 60-condition inventory and three H50-fail/H20-fail/MLP-success cases, missing old success video explicitly labeled');
@@ -20,7 +21,7 @@ const base=process.env.REPLAY_URL||'http://127.0.0.1:8871',out=path.resolve(__di
   const original=bank.groups.filter(g=>g.study==='legacy_five_models');const expected=original.filter(g=>!g.methods.H50.success&&!g.methods.H20.success&&g.methods['transformer-a10-h1_ogg'].success).length;
   assert.equal(Number(await page.locator('#casebankCounts [data-pattern="001"] strong').textContent()),expected);
   result.checks.push('completeness filter excludes incomplete historical data; changing reference recomputes actual A10 outcomes');
-  const newStudy=bank.groups.find(g=>g.study!=='legacy_five_models')?.study;
+  const newStudy=bank.groups.find(g=>g.study.startsWith('replay_casebank_'))?.study;
   if(newStudy){await page.locator('#casebankStudy').selectOption(newStudy);await page.locator('#casebankReference').selectOption('mlp_ogg');await page.locator('#casebankComplete').check();
    const groups=bank.groups.filter(g=>g.study===newStudy&&['H50','H20','mlp_ogg'].every(m=>g.methods[m]?.replay_complete));assert(groups.length>=4);
    const patterns=new Set(groups.map(g=>['H50','H20','mlp_ogg'].map(m=>g.methods[m].success?'1':'0').join('')));for(const p of ['001','000','011','111'])assert(patterns.has(p));

@@ -67,18 +67,29 @@ def chart_svg(detail,step):
 def export_report(catalog,uids,step,note='',alignment=None):
     if len(uids) not in (1,2):raise ValueError('仅支持单回合或两回合导出')
     details=[catalog.details(uid) for uid in uids]
-    if len(details)==2 and (details[0]['run']['condition'],details[0]['run']['seed'])!=(details[1]['run']['condition'],details[1]['run']['seed']):
-        raise ValueError('只能导出相同条件/种子的配对')
+    comparison=None
+    if len(details)==2:
+        a,b=details;ra,rb=a['run'],b['run']
+        same=ra['condition']==rb['condition'] and ra['seed']==rb['seed']
+        comparison={'type':'same_condition' if same else 'exploratory_different_conditions',
+            'same_task_and_init':ra['condition']==rb['condition'],'same_eval_seed':ra['seed']==rb['seed'],
+            'same_experiment_label':ra['experiment']==rb['experiment'],
+            'control_fps':[a.get('control_fps'),b.get('control_fps')],
+            'contains_forced_check':bool(ra['forced'] or rb['forced']),
+            'limit':'Same environment step is not same manipulation phase; arbitrary-condition comparison is exploratory, not a controlled performance comparison.'}
     local_steps,anchor=alignment_steps(details,step,alignment)
     folder=catalog.state/'exports'/(datetime.now().strftime('%Y%m%d_%H%M%S')+'_'+uuid.uuid4().hex[:6]);folder.mkdir(parents=True,exist_ok=False)
     manifest={'created_utc':datetime.now(timezone.utc).isoformat(),'environment_step':step,'note':note[:4000],
         'alignment_basis':'manual event offset; not automatic phase alignment' if anchor else 'environment step, not manipulation phase',
-        'manual_alignment':anchor,'environment_steps':local_steps,'sources':[],'files':[]}
+        'manual_alignment':anchor,'environment_steps':local_steps,'comparison':comparison,'sources':[],'files':[]}
     report=['# RobotLab Replay · 事件复盘','',f'环境步：{step}','',note[:4000],'']
+    if comparison:report+=['比较性质：'+('同条件浏览；仍需核对协议与初始签名。' if same else '不同条件的探索性对照，不是严格控制变量实验。'),
+                           '是否含强制接口检查：'+str(comparison['contains_forced_check']),'']
     if anchor:report+=['人工事件锚点：'+json.dumps(anchor,ensure_ascii=False),'']
     for i,d in enumerate(details):
         step=local_steps[i]
         label='AB'[i];r=d['run'];metrics=d['metrics'];source={'run_id':r['id'],'model':r['model'],'method':r['method'],
+            'experiment':r['experiment'],'forced_interface_check':r['forced'],
             'condition':r['condition'],'seed':r['seed'],'success':r['success'],'env_steps':r['steps'],
             'provenance':d['source'],'policy_revision':d['protocol'].get('policy_revision'),
             'video_sha256_verified':d['video'].get('sha256_verified',False),'video_alignment':d['video']['alignment'],
@@ -184,6 +195,7 @@ class Handler(BaseHTTPRequestHandler):
             static={'/':'index.html','/app.js':'app.js','/diagnostics.js':'diagnostics.js','/style.css':'style.css',
                 '/workspace.js':'workspace.js','/workspace_model.mjs':'workspace_model.mjs','/workspace.css':'workspace.css'}
             static['/casebank.js']='casebank.js'
+            static['/comparison_model.mjs']='comparison_model.mjs'
             if parsed.path not in static:self.send({'error':'不存在的地址'},404);return
             mime='text/html; charset=utf-8' if parsed.path=='/' else 'text/css; charset=utf-8' if parsed.path.endswith('.css') else 'text/javascript; charset=utf-8'
             self.file(HERE/'web'/static[parsed.path],mime)

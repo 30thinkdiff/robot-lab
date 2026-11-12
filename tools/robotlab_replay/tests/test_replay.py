@@ -120,6 +120,19 @@ class RealExperimentTests(unittest.TestCase):
         self.assertIn(a['id'],[r['id'] for r in self.catalog.pairs(b['id'])])
         self.assertTrue(all(r['condition']==b['condition'] and r['seed']==b['seed'] for r in self.catalog.pairs(b['id'])))
 
+    def test_different_condition_export_is_explicitly_exploratory(self):
+        a=self.hybrid('B');b=next((r for r in self.catalog.runs.values() if r['experiment']=='Replay完整成败组合样本库' and r['task']==0 and r['init']==0 and r['method']=='H50'),None)
+        if b is None:self.skipTest('需完整Case Bank真实回合')
+        with tempfile.TemporaryDirectory() as tmp,patch.object(self.catalog,'state',Path(tmp)):
+            export=export_report(self.catalog,[a['id'],b['id']],61)
+            manifest=json.loads((Path(export['directory'])/'provenance.json').read_text())
+            self.assertEqual(manifest['comparison']['type'],'exploratory_different_conditions')
+            self.assertFalse(manifest['comparison']['same_task_and_init'])
+            self.assertEqual(manifest['sources'][0]['condition'],a['condition'])
+            self.assertEqual(manifest['sources'][1]['condition'],b['condition'])
+            self.assertEqual(manifest['sources'][0]['selected_environment_step'],61)
+            self.assertIn('探索性', (Path(export['directory'])/'SUMMARY.md').read_text())
+
     def test_step61_guidance_target_and_source_preserved(self):
         d=self.catalog.details(self.hybrid('B')['id']);row=d['steps'][61]
         self.assertEqual(sum(e['kind']=='ogg' for e in row['events']),4)

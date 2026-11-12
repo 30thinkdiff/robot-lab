@@ -1,16 +1,17 @@
 import {drawMatrix,drawEvidence} from './diagnostics.js';
 import {createWorkspace} from './workspace.js';
 import {setupCasebank} from './casebank.js';
+import {comparisonCandidates} from './comparison_model.mjs';
 const $=id=>document.getElementById(id);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const number=v=>typeof v==='number'&&Number.isFinite(v);
 const fmt=(v,n=3)=>number(v)?v.toFixed(n):'未记录';
 const pct=v=>number(v)?(v*100).toFixed(1)+'%':'未确定';
-const state={catalog:[],a:null,b:null,step:0,playing:false,compare:false,speed:1,limit:65,request:0,pairs:[],baselinePreset:false,alignment:null,pairRequest:0};
+const state={catalog:[],a:null,b:null,step:0,playing:false,playGeneration:0,compare:false,speed:1,limit:65,request:0,pairs:[],baselinePreset:false,alignment:null,pairRequest:0};
 async function api(path,body){const r=await fetch(path,body?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}:{});const data=await r.json();if(!r.ok)throw Error(data.error||r.statusText);return data;}
 function toast(message){$('toast').textContent=message;$('toast').classList.remove('hidden');clearTimeout(toast.timer);toast.timer=setTimeout(()=>$('toast').classList.add('hidden'),4500);}
 function fail(message){$('errorBanner').textContent=message;$('errorBanner').classList.remove('hidden');}
-function statusName(r){return r.status!=='completed'?'程序未完成':r.success?'任务成功':'任务失败';}
+function statusName(r){return r.status!=='completed'?'程序未完成':r.success===true?'任务成功':r.success===false?'任务失败':'结局未记录';}
 function runLabel(r){return `${r.method} · ${r.model} · task_${r.task} / init_${r.init} · seed ${r.seed}`;}
 function options(id,field,label){const values=[...new Set(state.catalog.map(r=>r[field]).filter(v=>v!==null&&v!==undefined))].sort((a,b)=>typeof a==='number'?a-b:String(a).localeCompare(String(b)));$(id).innerHTML='<option value="">'+label+'</option>'+values.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');}
 function filtered(){const text=$('search').value.trim().toLowerCase();return state.catalog.filter(r=>
@@ -27,27 +28,37 @@ function renderList(){const rows=filtered();$('filterCount').textContent=`${rows
  $('runList').innerHTML=rows.slice(0,state.limit).map(r=>`<button class="run-item ${state.a?.run.id===r.id?'active':''}" data-id="${r.id}" title="${esc(runLabel(r))}"><div class="line1"><span><i class="dot ${r.success?'success':'failure'}"></i>${esc(r.method)} <span class="muted">${esc(r.model)}</span></span>${r.video_available?'▣':''}</div><div class="line2">task_${esc(r.task)} · init_${esc(r.init)} · seed ${esc(r.seed)}</div><div class="line3"><span class="mini-tag">${r.steps??'—'} steps</span><span>${esc(statusName(r))}</span>${r.forced?'<span>接口检查</span>':''}</div></button>`).join('')||'<p class="empty-detail">没有符合筛选条件的回合。</p>';
  $('runList').querySelectorAll('button[data-id]').forEach(b=>b.onclick=()=>selectRun(b.dataset.id));
 }
+function sharedFlags(){return {videoOnly:$('videoOnly').checked,includeForced:$('includeForced').checked};}
+function clearPair(){pause();state.b=null;state.alignment=null;state.pairRequest++;state.step=Math.min(state.step,maxSteps()-1);setVideo('B',null);if(state.a){applyMode();drawAll();}}
+function renderPairOptions(){if(!state.a)return;
+ state.pairs=comparisonCandidates(state.catalog,state.a.run,{scope:$('pairScope').value,text:$('pairSearch').value,...sharedFlags()});
+ $('pairSelect').innerHTML='<option value="">选择对照回合…</option>'+state.pairs.map(r=>`<option value="${r.id}">${esc((($('pairScope').value==='all')?runLabel(r)+' · '+r.experiment:r.method+' / '+r.model)+' · '+statusName(r)+(r.forced?' · 强制检查':''))}</option>`).join('');
+ $('pairFilterStatus').textContent=`${state.pairs.length}条可选 · ${$('videoOnly').checked?'仅本地视频':'含无视频记录'} · ${$('includeForced').checked?'含强制检查':'不含强制检查'}；其余左侧筛选只作用于主选列表。`;
+ if(state.b&&state.pairs.some(r=>r.id===state.b.run.id))$('pairSelect').value=state.b.run.id;
+ else if(state.b){clearPair();toast('原对照不符合当前筛选，已清除；请重新选择。');}
+}
 function pairOffset(){return state.compare&&state.b&&state.alignment?state.alignment.b-state.alignment.a:0;}
 function laneStep(side){return state.step+(side==='B'?pairOffset():0);}
 function maxSteps(){return Math.max(1,state.a?.steps.length||0,(state.b?.steps.length||0)-pairOffset());}
-function pause(){state.playing=false;$('play').textContent='▶';$('videoA').pause();$('videoB').pause();}
+function pause(){state.playing=false;state.playGeneration++;$('play').textContent='▶';$('videoA').pause();$('videoB').pause();}
 function setVideo(side,detail){const v=$('video'+side),missing=$('missing'+side);v.pause();v.removeAttribute('src');
  if(detail?.video.available){v.controls=detail.video.alignment!=='recording_verified';v.src=detail.video.url;v.load();missing.classList.add('hidden');v.classList.remove('hidden');v.onloadedmetadata=()=>syncVideo(side,detail,true);}
  else{v.classList.add('hidden');missing.classList.remove('hidden');}
  $('label'+side).textContent=detail?`${detail.run.method} / ${detail.run.model}`:'—';
+ $('context'+side).textContent=detail?`${detail.run.condition.replace('libero_object/','')} · seed ${detail.run.seed} · ${detail.control_fps??'未知'}Hz${detail.run.forced?' · 强制检查':''}`:'';
  $('sync'+side).textContent=(detail?.video.message||'没有对照回合')+(detail?.video.available&&detail.video.alignment!=='recording_verified'?' 可用视频原生控件独立播放；数据联动已禁用。':'');
 }
 async function selectRun(id){pause();const ticket=++state.request;$('errorBanner').classList.add('hidden');
- try{const [detail,pairs]=await Promise.all([api('/api/run?id='+id),api('/api/pairs?id='+id)]);if(ticket!==state.request)return;
-  state.a=detail;state.b=null;state.alignment=null;state.pairRequest++;state.step=0;state.pairs=pairs;$('note').value='';setVideo('A',detail);renderHeader();renderList();
-  $('pairSelect').innerHTML=pairs.map(r=>`<option value="${r.id}">${esc(r.method+' / '+r.model+' · '+statusName(r))}</option>`).join('');
+ try{const detail=await api('/api/run?id='+id);if(ticket!==state.request)return;
+  state.a=detail;state.b=null;state.alignment=null;state.pairRequest++;state.step=0;$('note').value='';setVideo('A',detail);renderHeader();renderList();renderPairOptions();const pairs=state.pairs;
+  applyMode();drawAll(true); // 对照仍在读取时，先提交主选的时钟/输入，避免沿用上一回合的step。
   if(state.compare){const best=pairs.find(r=>r.method==='A'&&r.experiment==='混合 Corrector')||pairs.find(r=>r.success!==detail.run.success)||pairs[0];
-    if(best){$('pairSelect').value=best.id;await selectPair(best.id);}else{state.compare=false;toast('没有同任务、初始状态与种子的可用配对。');}}
+    if(best){$('pairSelect').value=best.id;await selectPair(best.id);}else toast('当前范围和筛选下没有对照；可切换任意回合或调整筛选。');}
   applyMode();drawAll();
  }catch(e){fail('打开回合失败：'+e.message);}
 }
 async function selectPair(id){pause();const ticket=++state.pairRequest,primary=state.a?.run.id;try{const d=await api('/api/run?id='+id);if(ticket!==state.pairRequest||state.a?.run.id!==primary)return;
- if(d.run.condition!==state.a.run.condition||d.run.seed!==state.a.run.seed)throw Error('配对条件不一致');
+ if(!state.pairs.some(r=>r.id===id))throw Error('该回合不符合当前范围或视频/强制检查筛选');
  state.b=d;state.alignment=null;setVideo('B',d);applyMode();drawAll();}catch(e){fail('配对读取失败：'+e.message);}}
 function applyMode(){const paired=state.compare&&!!state.b;$('paneB').classList.toggle('hidden',!paired);$('plotB').classList.toggle('hidden',!paired);$('players').classList.toggle('paired',paired);
  renderSyncBadge();
@@ -56,12 +67,18 @@ function applyMode(){const paired=state.compare&&!!state.b;$('paneB').classList.
  $('comparePicker').classList.toggle('hidden',!state.compare);$('pairNotice').classList.toggle('hidden',!paired);$('singleTab').classList.toggle('active',!state.compare);$('compareTab').classList.toggle('active',state.compare);
  if(paired){const a=state.a.metrics,b=state.b.metrics;let sa=a.initial_signature||[a.initial_state_sha256,a.first_input_sha256,a.first_noise_sha256],sb=b.initial_signature||[b.initial_state_sha256,b.first_input_sha256,b.first_noise_sha256];
   const known=sa.length===3&&sb.length===3&&sa.every(Boolean)&&sb.every(Boolean);$('pairNotice').textContent=(state.alignment?`人工事件偏移：主选${state.alignment.a} ↔ 对照${state.alignment.b}；两条曲线仍为各自原始环境步，不代表自动操作阶段识别。`:'按相同环境步定位，不代表相同操作阶段；已结束回合显示冻结末帧。')+(known?(JSON.stringify(sa)===JSON.stringify(sb)?' 初始状态 / 输入 / 首噪声SHA一致。':' 注意：初始签名不同，不能作为严格控制变量对照。'):' 原日志缺少完整初始签名，配对仅按任务 / init / seed。');
+  const same=state.a.run.condition===state.b.run.condition&&state.a.run.seed===state.b.run.seed;
+  $('pairSummaryTitle').textContent=same?'同条件指标对照':'探索性指标对照 · 不同条件';
+  if(!same)$('pairNotice').textContent='探索性对照：任务 / 初始状态 / seed不同，不能据此严格归因算法性能。'+(state.alignment?' 人工锚点只改变显示偏移。':' 仍按环境步浏览，不代表同一操作阶段。');
+  else if(state.a.run.experiment!==state.b.run.experiment)$('pairNotice').textContent+=' 跨实验来源，请另外核对冻结协议。';
+  if(state.a.control_fps!==state.b.control_fps)$('pairNotice').textContent+=' 两侧控制频率不同，步数相同不代表相同物理时长。';
+  if(state.a.run.forced||state.b.run.forced)$('pairNotice').textContent+=' 包含强制接口检查，不用于自然任务成功率比较。';
   const firstEvent=d=>d.events.find(e=>e.kind==='replan')?.step??'未记录';
   const fields=[['任务结果',d=>statusName(d.run)],['执行步数',d=>d.metrics.env_steps],['VLA块调用',d=>d.metrics.chunk_calls],['重规划事件',d=>d.metrics.event_replans],['OGG引导调用',d=>d.metrics.guidance_calls],['VLA累计推理',d=>fmt(d.metrics.policy_s)+' s'],['监测累计耗时',d=>fmt(d.metrics.monitor_s)+' s'],['回合总耗时',d=>fmt(d.metrics.episode_wall_s)+' s'],['监测覆盖',d=>/^H[0-9]+$/.test(d.run.method)?'不适用':pct(d.coverage?.fraction)],['最长空窗',d=>(d.coverage?.max_gap_steps??'未记录')+' steps'],['首次中断',d=>firstEvent(d)],['GPU峰值分配',d=>fmt(d.metrics.peak_torch_allocated_gib)+' GiB']];
   $('pairTable').innerHTML='<table><thead><tr><th>指标</th><th>主选 · '+esc(state.a.run.method+' / '+state.a.run.model)+'</th><th>对照 · '+esc(state.b.run.method+' / '+state.b.run.model)+'</th></tr></thead><tbody>'+fields.map(([name,get])=>`<tr><td>${name}</td><td>${esc(get(state.a)??'未记录')}</td><td>${esc(get(state.b)??'未记录')}</td></tr>`).join('')+'</tbody></table>';}
 }
 async function mode(compare){if(!state.a)return;pause();state.compare=compare;if(!compare){state.b=null;state.alignment=null;state.pairRequest++;applyMode();drawAll();return;}
- if(!state.pairs.length){state.compare=false;toast('此回合没有同条件配对。');return;}
+ renderPairOptions();if(!state.pairs.length){applyMode();drawAll();toast('当前筛选没有同条件配对；可切换任意回合对照。');return;}
  const best=state.pairs.find(r=>r.method==='A'&&r.experiment==='混合 Corrector')||state.pairs.find(r=>r.success!==state.a.run.success)||state.pairs[0];$('pairSelect').value=best.id;await selectPair(best.id);}
 function renderHeader(){const d=state.a,r=d.run,m=d.metrics;$('eyebrow').textContent=r.experiment.toUpperCase()+' / LIBERO OBJECT';
  const baseline=/^H[0-9]+$/.test(r.method);$('title').textContent=`Task ${r.task} · ${baseline?'SmolVLA':r.model}`;
@@ -156,7 +173,7 @@ function syncVideo(side,d,force=false){if(!d)return;const v=$('video'+side),vali
 }
 function stepFromTime(d,time){const pts=d.video.pts;let lo=0,hi=pts.length-1;while(lo<=hi){const mid=(lo+hi)>>1;if(pts[mid]<=time+.0001)lo=mid+1;else hi=mid-1;}return Math.max(0,hi);}
 function setStep(value,manual=false){if(!state.a)return;if(manual)pause();state.step=Math.max(0,Math.min(maxSteps()-1,Math.round(value)||0));drawAll(true);}
-function drawAll(forceSeek=false){if(!state.a)return;const n=maxSteps();state.step=Math.min(state.step,n-1);$('seek').max=n-1;$('seek').value=state.step;$('stepInput').max=n-1;$('stepInput').value=state.step;
+function drawAll(forceSeek=false){if(!state.a)return;const n=maxSteps();state.step=Math.min(state.step,n-1);$('seek').max=n-1;$('seek').value=state.step;$('stepInput').max=n-1;if(document.activeElement!==$('stepInput'))$('stepInput').value=state.step;
  $('clockStep').textContent=String(state.step).padStart(3,'0');$('clockTotal').textContent='/ '+String(n).padStart(3,'0')+' 步';$('rangeEnd').textContent='step '+(n-1);
  const fps=state.a.control_fps,pts=state.a.video.pts;const videoTime=state.a.video.alignment==='recording_verified'?pts?.[state.step]:null;$('clockTime').textContent=`控制 ${fps?(state.step/fps).toFixed(2)+' s':'频率未记录'} · 视频PTS ${number(videoTime)?videoTime.toFixed(3)+' s':'无经核验映射'}`+(state.alignment?` · 对照原始step ${laneStep('B')}`:'');
  syncVideo('A',state.a,forceSeek);if(state.b)syncVideo('B',state.b,forceSeek);
@@ -165,17 +182,20 @@ function drawAll(forceSeek=false){if(!state.a)return;const n=maxSteps();state.st
  inspect();renderEvents();
 }
 function play(){if(!state.a)return;if(state.playing){pause();return;}if(state.step>=maxSteps()-1)setStep(0,true);state.playing=true;$('play').textContent='Ⅱ';
+ const generation=++state.playGeneration;
  const details=[['A',state.a],['B',state.b]].filter(([,d])=>!state.alignment&&d&&d.video.alignment==='recording_verified');
  const master=details.sort((a,b)=>b[1].steps.length-a[1].steps.length)[0];
- for(const [side,d]of details){const v=$('video'+side);v.playbackRate=state.speed;if(state.step<d.steps.length)v.play().catch(e=>{pause();toast('浏览器尚未准备好视频，请稍后再播放。');});}
+ for(const [side,d]of details){const v=$('video'+side);v.playbackRate=state.speed;if(state.step<d.steps.length)v.play().catch(e=>{if(generation!==state.playGeneration)return;pause();toast('浏览器尚未准备好视频，请稍后再播放。');});}
  const start=performance.now(),origin=state.step;
- function tick(now){if(!state.playing)return;let step;
+ function tick(now){if(!state.playing||generation!==state.playGeneration)return;let step;
   if(master){const v=$('video'+master[0]);step=stepFromTime(master[1],v.currentTime);if(v.ended)step=maxSteps()-1;}
   else step=origin+Math.floor((now-start)/1000*(state.a.control_fps||1)*state.speed);
   if(step!==state.step){state.step=Math.min(maxSteps()-1,step);drawAll();}if(state.step>=maxSteps()-1){pause();return;}requestAnimationFrame(tick);}
  requestAnimationFrame(tick);
 }
-$('singleTab').onclick=()=>mode(false);$('compareTab').onclick=()=>mode(true);$('pairSelect').onchange=()=>selectPair($('pairSelect').value);
+$('singleTab').onclick=()=>mode(false);$('compareTab').onclick=()=>mode(true);$('pairSelect').onchange=()=>{$('pairSelect').value?selectPair($('pairSelect').value):clearPair();};
+$('pairScope').onchange=()=>{pause();$('pairSearch').value='';renderPairOptions();};
+$('pairSearch').oninput=()=>renderPairOptions();
 $('focusBtn').onclick=()=>{const focus=document.body.classList.toggle('focus-mode');$('focusBtn').textContent=focus?'显示概览':'专注回放';$('focusBtn').setAttribute('aria-pressed',String(focus));};
 $('inspectLane').onchange=inspect;
 $('evidenceDetails').ontoggle=()=>{if(state.a)inspect();};
@@ -186,8 +206,8 @@ $('clearAnchor').onclick=()=>{pause();state.alignment=null;applyMode();setStep(s
 $('play').onclick=play;$('prev').onclick=()=>setStep(state.step-1,true);$('next').onclick=()=>setStep(state.step+1,true);$('seek').oninput=e=>setStep(Number(e.target.value),true);$('stepInput').onchange=e=>setStep(Number(e.target.value),true);
 $('speed').onchange=e=>{const was=state.playing;pause();state.speed=Number(e.target.value);if(was)play();};$('eventFilter').onchange=renderEvents;
 document.addEventListener('keydown',e=>{if(e.defaultPrevented||document.activeElement.closest('.workspace-ui')||['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)||document.querySelector('dialog[open]'))return;if(e.code==='Space'){e.preventDefault();play();}if(e.code==='ArrowLeft'){e.preventDefault();setStep(state.step-1,true);}if(e.code==='ArrowRight'){e.preventDefault();setStep(state.step+1,true);}});
-for(const id of ['experimentFilter','modelFilter','methodFilter','taskFilter','initFilter','seedFilter','outcomeFilter','videoOnly','includeForced'])$(id).onchange=()=>{state.limit=65;renderList();};
-$('search').oninput=()=>{state.limit=65;renderList();};$('clearFilters').onclick=()=>{for(const id of ['experimentFilter','modelFilter','methodFilter','taskFilter','initFilter','seedFilter','outcomeFilter','search'])$(id).value='';$('videoOnly').checked=$('includeForced').checked=false;state.baselinePreset=false;$('baselinePreset').setAttribute('aria-pressed','false');renderList();};
+for(const id of ['experimentFilter','modelFilter','methodFilter','taskFilter','initFilter','seedFilter','outcomeFilter','videoOnly','includeForced'])$(id).onchange=()=>{state.limit=65;renderList();if(['videoOnly','includeForced'].includes(id)){renderPairOptions();document.dispatchEvent(new Event('replay-filter-change'));}};
+$('search').oninput=()=>{state.limit=65;renderList();};$('clearFilters').onclick=()=>{for(const id of ['experimentFilter','modelFilter','methodFilter','taskFilter','initFilter','seedFilter','outcomeFilter','search'])$(id).value='';$('videoOnly').checked=$('includeForced').checked=false;state.baselinePreset=false;$('baselinePreset').setAttribute('aria-pressed','false');renderList();renderPairOptions();document.dispatchEvent(new Event('replay-filter-change'));};
 $('baselinePreset').onclick=()=>{$('clearFilters').click();state.baselinePreset=true;$('baselinePreset').setAttribute('aria-pressed','true');renderList();const first=filtered().find(r=>r.method==='H50');if(first)selectRun(first.id);toast('原始对照：task2/9、init2、seed1000，H50 / H20 / MLP+OGG；未导入的视频仍明确标缺失。');};
 $('loadMore').onclick=()=>{state.limit+=100;renderList();};$('closeExport').onclick=()=>$('exportDialog').close();
 $('exportBtn').onclick=async()=>{if(!state.a)return;pause();$('exportBtn').disabled=true;try{const ids=[state.a.run.id,...(state.b?[state.b.run.id]:[])];const result=await api('/api/export',{ids,step:state.step,alignment:state.alignment,note:$('note').value});$('exportDir').textContent=result.directory;$('exportFiles').innerHTML=result.files.map(name=>`<a download="${esc(name)}" href="/api/export-file/${result.export}/${esc(name)}">${esc(name)}</a>`).join('');$('exportDialog').showModal();}catch(e){toast('导出失败：'+e.message);}finally{$('exportBtn').disabled=false;}};
@@ -199,5 +219,5 @@ async function boot(){try{const catalog=await api('/api/catalog');state.catalog=
  if(catalog.warnings.length)toast('部分来源无法读取；其他回合仍可用。详见服务日志/来源说明。');
 }catch(e){fail('索引加载失败：'+e.message);}}
 createWorkspace({pause,notify:toast});
-setupCasebank({api,notify:toast,openPair:async(a,b)=>{await selectRun(a);state.compare=true;$('pairSelect').value=b;await selectPair(b);}});
+setupCasebank({api,notify:toast,getFilters:sharedFlags,openPair:async(a,b)=>{$('pairScope').value='same';$('pairSearch').value='';await selectRun(a);state.compare=true;renderPairOptions();$('pairSelect').value=b;await selectPair(b);}});
 boot();

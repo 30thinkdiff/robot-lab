@@ -73,7 +73,8 @@ const out=path.resolve(__dirname,'../.local/review');fs.mkdirSync(out,{recursive
    const unbound=catalog.runs.find(r=>r.model==='T-H1'&&r.method==='H20'&&r.task===9&&r.init===2&&r.seed===1000&&!r.forced);
    await page.locator(`.run-item[data-id="${unbound.id}"]`).click();await page.waitForFunction(()=>document.querySelector('#labelA').textContent==='H20 / T-H1'&&document.querySelector('#videoA').readyState>=2);
    await jump(65);assert.equal(await page.locator('#videoA').evaluate(v=>v.controls),true);
-   await page.waitForFunction(()=>document.querySelector('#stepA').textContent.includes('数据 step 65 · 视频独立'));
+   try{await page.waitForFunction(()=>document.querySelector('#stepA').textContent.includes('数据 step 65 · 视频独立'));}
+   catch(e){results.alias_debug=await page.evaluate(()=>({step:document.querySelector('#stepA').textContent,clock:document.querySelector('#clockStep').textContent,context:document.querySelector('#contextA').textContent,notice:document.querySelector('#pairNotice').textContent}));throw e;}
    assert(await page.locator('#videoA').evaluate(v=>v.currentTime<.01));
    const verifiedPair=catalog.runs.find(r=>r.model==='MLP'&&r.method==='H20'&&r.task===9&&r.init===2&&r.seed===1000&&!r.forced);
    await page.locator('#pairSelect').selectOption(verifiedPair.id);await page.waitForFunction(()=>document.querySelector('#labelB').textContent==='H20 / MLP'&&document.querySelector('#videoB').readyState>=2);

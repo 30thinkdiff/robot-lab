@@ -70,6 +70,28 @@ class CasebankUnitTests(unittest.TestCase):
 
 @unittest.skipUnless((REPO/'outputs/corrector_audit_20261111/results_bundle.zip').exists(),'需真实旧实验')
 class RealCasebankTests(unittest.TestCase):
+    def test_method_bank_includes_nonbaseline_pilots_without_cross_cohort_stitching(self):
+        c=Catalog()
+        try:
+            bank=inventory(c);hybrid=[g for g in bank['groups'] if g['study']=='hybrid_pilot'];self.assertEqual(len(hybrid),4)
+            self.assertTrue(all('H50' not in g['methods'] and 'H20' not in g['methods'] for g in hybrid))
+            self.assertTrue(all({'transformer-h1_ogg','hybrid_t1_a10_ogg','transformer-a10-h1_ogg'}<=set(g['methods']) for g in hybrid))
+            paired=[g for g in hybrid if all(g['methods'][m]['replay_complete'] for m in ['transformer-h1_ogg','hybrid_t1_a10_ogg'])]
+            self.assertEqual(len(paired),1)
+            self.assertTrue(any(r['video'] and not r['video_bound'] and not r['replay_complete'] for g in hybrid for r in g['methods'].values()))
+            self.assertEqual(len([g for g in bank['groups'] if g['study']=='consistency_closed_loop']),12)
+        finally:c.close()
+
+    def test_old_horizon_group_reuses_recordings_and_import_is_idempotent(self):
+        from import_horizon import selection
+        c=Catalog()
+        try:
+            groups=[g for g in inventory(c)['groups'] if g['study']=='horizon_pilot']
+            complete=[g for g in groups if all(m['replay_complete'] for m in g['methods'].values())]
+            if not complete:self.skipTest('需只读导入一组已有Horizon视频')
+            self.assertEqual(len(complete),1);self.assertEqual(set(complete[0]['methods']),{'H50','H20','H10','H5','H2','H1'})
+            self.assertEqual(selection(),[])  # 已绑定后不再请求任何远程文件。
+        finally:c.close()
     def test_verified_zip_bank_does_not_duplicate_earlier_snapshot(self):
         c=Catalog()
         try:
