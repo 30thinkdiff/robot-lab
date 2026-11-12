@@ -136,7 +136,7 @@ class RealExperimentTests(unittest.TestCase):
         self.assertEqual(max(c['max_gap_steps'] for c in coverage),19)
 
     def test_old_experiments_with_no_local_video_and_no_gradients(self):
-        r=next(r for r in self.catalog.runs.values() if r['model']=='MLP' and r['method']=='ogg' and not r['forced'])
+        r=next(r for r in self.catalog.runs.values() if r['model']=='MLP' and r['method']=='ogg' and not r['forced'] and not self.catalog.video_path(r))
         d=self.catalog.details(r['id']);self.assertFalse(d['video']['available'])
         guides=[e for e in d['events'] if e['kind']=='ogg'];self.assertTrue(guides)
         self.assertTrue(all('gradient_l2' not in e['data'] for e in guides))
@@ -184,6 +184,56 @@ class RealExperimentTests(unittest.TestCase):
                 guides=[r for r in events if r['environment_step']=='61' and r['type']=='ogg']
                 self.assertEqual(len(guides),4);self.assertTrue(all(r['gradient_l2'] and r['ogg_loss'] for r in guides))
                 for f in manifest['files']:self.assertEqual(hashlib.sha256((folder/f['name']).read_bytes()).hexdigest(),f['sha256'])
+
+
+@unittest.skipUnless(any((HERE/'.local/import_batches').glob('*/manifest.json')),'需先只读追加真实基线视频')
+class RealImportReviewTests(unittest.TestCase):
+    def test_requested_seven_sources_have_independent_video_bindings(self):
+        from import_review import selection,validate
+        requested=selection();self.assertEqual(len(requested),7)
+        batches=list((HERE/'.local/import_batches').glob('*.zip'))
+        manifest=validate(batches[-1],requested)
+        self.assertEqual(len(manifest['videos']),7)
+        self.assertEqual(manifest['skipped'],[])
+        c=Catalog()
+        try:
+            for item in requested:
+                r=next(r for r in c.runs.values() if r['member']==item['member'])
+                d=c.details(r['id']);self.assertEqual(d['video']['alignment'],'recording_verified')
+                self.assertEqual(len(d['video']['pts']),item['env_steps'])
+            hybrid=next(r for r in c.runs.values() if r['method']=='C' and r['task']==1 and r['init']==0 and not r['forced'])
+            self.assertEqual(c.details(hybrid['id'])['video']['alignment'],'recording_verified')
+            # 新增正式A10绑定不能挤掉相同视频的原Hybrid C绑定。
+            alias=next(r for r in c.runs.values() if r['model']=='T-H1' and r['method']=='H20' and r['task']==9 and r['init']==2)
+            self.assertEqual(c.details(alias['id'])['video']['alignment'],'ordinal_only')
+        finally:c.close()
+
+    def test_import_rejects_unrequested_alias_and_unknown_member(self):
+        from import_review import selection,validate
+        requested=selection();archive=list((HERE/'.local/import_batches').glob('*.zip'))[-1]
+        with self.assertRaises(ValueError):validate(archive,requested[1:])
+        with tempfile.TemporaryDirectory() as tmp:
+            altered=Path(tmp)/'bad.zip'
+            with zipfile.ZipFile(archive) as src,zipfile.ZipFile(altered,'w') as dst:
+                for name in src.namelist():dst.writestr(name,src.read(name))
+                dst.writestr('../escape.txt',b'bad')
+            with self.assertRaises(ValueError):validate(altered,requested)
+
+    def test_snapshot_fair_comparison_uses_common_conditions(self):
+        snapshots=list((REPO/'outputs/corrector_overnight_20261111').glob('snapshot_20261112_105732.zip'))
+        if not snapshots:self.skipTest('需真实2486回合快照')
+        from analyse_snapshot import analyse
+        with tempfile.TemporaryDirectory() as tmp:
+            summary=analyse(snapshots[0],Path(tmp)/'derived')
+            self.assertEqual(summary['execution']['status'],'paused')
+            self.assertEqual(summary['execution']['reason'],'time_budget')
+            self.assertEqual(summary['execution']['completed'],2486)
+            core=[r for r in summary['paired_tables'] if r['scope']=='core_six']
+            four=[r for r in summary['paired_tables'] if r['scope']=='matched_four']
+            self.assertEqual([r['completed'] for r in core],[100]*6)
+            self.assertEqual([r['successes'] for r in core],[71,94,78,84,86,85])
+            self.assertEqual([r['completed'] for r in four],[571]*4)
+            self.assertEqual([r['successes'] for r in four],[393,529,436,477])
 
 
 if __name__=='__main__':unittest.main()

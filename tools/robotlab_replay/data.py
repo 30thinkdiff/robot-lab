@@ -54,8 +54,8 @@ class Source:
         if self.zip:self.zip.close()
 
 
-def recording_evidence(state):
-    root=state/'imported_video/recording';meta=root/'evidence.json';source=root/'lerobot_eval.py'
+def verify_recording(root):
+    meta=root/'evidence.json';source=root/'lerobot_eval.py'
     if not meta.exists() or not source.exists():return {'verified':False,'reason':'尚无录制实现证据'}
     evidence=json.loads(meta.read_text())
     if (evidence.get('git_revision')!='7e241bd630a3719a56157a497ce5d08f244784f1'
@@ -73,6 +73,9 @@ def recording_evidence(state):
     ok=bool(control_loop and env_steps and renders and renders[0]<control_loop.lineno and any(r>env_steps[0] for r in renders) and slicing)
     return {'verified':ok,**evidence,'phase':'frame n = Z_n, before submitted u_n; terminal Z_N is not retained',
         'render_lines':renders,'env_step_lines':env_steps,'reason':None if ok else '未识别到预期录制顺序'}
+
+
+def recording_evidence(state):return verify_recording(state/'imported_video/recording')
 
 
 @lru_cache(maxsize=24)
@@ -95,7 +98,7 @@ class Catalog:
             if not Path(path).exists():continue
             try:self.add(Source(path))
             except (OSError,ValueError,zipfile.BadZipFile,KeyError) as e:self.errors.append(Path(path).name+': '+str(e))
-        self.video_index={};self.video_trial_hash={};manifest=self.state/'imported_video/manifest.json'
+        self.video_index={};self.video_trial_hash=defaultdict(set);manifest=self.state/'imported_video/manifest.json'
         if manifest.exists():
             imports=json.loads(manifest.read_text()).get('videos',[])
             for v in imports:
@@ -104,7 +107,7 @@ class Catalog:
                 except ValueError:continue
                 if p.is_file() and p.suffix.lower() in {'.mp4','.webm'}:
                     self.video_index[v['sha256']]=p
-                    if v.get('trial_sha256'):self.video_trial_hash[v['sha256']]=v['trial_sha256']
+                    if v.get('trial_sha256'):self.video_trial_hash[v['sha256']].add(v['trial_sha256'])
             # 首次导入清单没有trial哈希时，只从当时读取的真实Hybrid归档补全绑定；不把SHA相同的视频套到其他回合。
             canonical=REPO/'outputs/hybrid_pilot_20261111/results.zip'
             if canonical.exists():
@@ -116,8 +119,21 @@ class Catalog:
                             if v.get('trial_sha256'):continue
                             if (v['path'] in record.get('result',{}).get('video_paths',[]) and
                                 any(a.get('sha256')==v['sha256'] for a in record.get('video_artifacts',[]))):
-                                self.video_trial_hash[v['sha256']]=hashlib.sha256(raw).hexdigest()
+                                self.video_trial_hash[v['sha256']].add(hashlib.sha256(raw).hexdigest())
         self.recorder=recording_evidence(self.state)
+        # 新批次只追加。每个视频分别绑定原trial哈希；相同视频内容可以有多个经核验的来源。
+        for manifest in sorted((self.state/'import_batches').glob('*/manifest.json')):
+            try:
+                proof=verify_recording(manifest.parent/'recording')
+                if proof.get('verified') and not self.recorder.get('verified'):self.recorder=proof
+                same_source=proof.get('verified') and proof.get('source_sha256')==self.recorder.get('source_sha256')
+                for v in json.loads(manifest.read_text())['videos']:
+                    p=(manifest.parent/v['file']).resolve();p.relative_to(manifest.parent.resolve())
+                    if p.is_file() and p.suffix.lower() in {'.mp4','.webm'}:
+                        self.video_index.setdefault(v['sha256'],p)
+                        if same_source and v.get('trial_sha256'):self.video_trial_hash[v['sha256']].add(v['trial_sha256'])
+            except (OSError,ValueError,KeyError,SyntaxError,StopIteration) as e:
+                self.errors.append(manifest.parent.name+': 导入证据未通过 '+type(e).__name__)
         self.details=lru_cache(maxsize=20)(self._detail)
 
     def close(self):
@@ -252,7 +268,7 @@ class Catalog:
             pts=proof.get('pts',[])
             ordered=bool(pts and abs(pts[0])<1e-6 and all(finite(v) for v in pts) and all(a<b for a,b in zip(pts,pts[1:])))
             bound=bool(expected and self.video_index.get(expected)==video_path and
-                self.video_trial_hash.get(expected)==hashlib.sha256(source.read(r['member'])).hexdigest())
+                hashlib.sha256(source.read(r['member'])).hexdigest() in self.video_trial_hash.get(expected,set()))
             exact=bool(matched and ordered and bound and verified and self.recorder['verified'] and fps)
             message=('录制顺序、SHA、逐帧PTS与帧数已核验：帧n=动作u_n之前的Z_n；末次动作后的Z_N不在视频中。' if exact
                 else 'ffprobe不可用或无法读取PTS，没有建立逐步同步。' if proof.get('error')

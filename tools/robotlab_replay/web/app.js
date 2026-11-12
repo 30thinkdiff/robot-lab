@@ -3,7 +3,7 @@ const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const number=v=>typeof v==='number'&&Number.isFinite(v);
 const fmt=(v,n=3)=>number(v)?v.toFixed(n):'未记录';
 const pct=v=>number(v)?(v*100).toFixed(1)+'%':'未确定';
-const state={catalog:[],a:null,b:null,step:0,playing:false,compare:false,speed:1,limit:65,request:0,pairs:[]};
+const state={catalog:[],a:null,b:null,step:0,playing:false,compare:false,speed:1,limit:65,request:0,pairs:[],baselinePreset:false};
 async function api(path,body){const r=await fetch(path,body?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}:{});const data=await r.json();if(!r.ok)throw Error(data.error||r.statusText);return data;}
 function toast(message){$('toast').textContent=message;$('toast').classList.remove('hidden');clearTimeout(toast.timer);toast.timer=setTimeout(()=>$('toast').classList.add('hidden'),4500);}
 function fail(message){$('errorBanner').textContent=message;$('errorBanner').classList.remove('hidden');}
@@ -11,6 +11,7 @@ function statusName(r){return r.status!=='completed'?'程序未完成':r.success
 function runLabel(r){return `${r.method} · ${r.model} · task_${r.task} / init_${r.init} · seed ${r.seed}`;}
 function options(id,field,label){const values=[...new Set(state.catalog.map(r=>r[field]).filter(v=>v!==null&&v!==undefined))].sort((a,b)=>typeof a==='number'?a-b:String(a).localeCompare(String(b)));$(id).innerHTML='<option value="">'+label+'</option>'+values.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');}
 function filtered(){const text=$('search').value.trim().toLowerCase();return state.catalog.filter(r=>
+  (!state.baselinePreset||(r.model==='MLP'&&r.experiment==='Object10 五模型'&&['H50','H20','ogg'].includes(r.method)&&[2,9].includes(r.task)&&r.init===2&&r.seed===1000&&!r.forced))&&
   (!$('experimentFilter').value||r.experiment===$('experimentFilter').value)&&
   (!$('modelFilter').value||r.model===$('modelFilter').value)&&(!$('methodFilter').value||r.method===$('methodFilter').value)&&
   (!$('taskFilter').value||String(r.task)===$('taskFilter').value)&&(!$('initFilter').value||String(r.init)===$('initFilter').value)&&
@@ -44,6 +45,7 @@ async function selectPair(id){pause();try{const d=await api('/api/run?id='+id);i
  if(d.run.condition!==state.a.run.condition||d.run.seed!==state.a.run.seed)throw Error('配对条件不一致');
  state.b=d;setVideo('B',d);applyMode();drawAll();}catch(e){fail('配对读取失败：'+e.message);}}
 function applyMode(){const paired=state.compare&&!!state.b;$('paneB').classList.toggle('hidden',!paired);$('plotB').classList.toggle('hidden',!paired);$('players').classList.toggle('paired',paired);
+ renderSyncBadge();
  $('pairSummary').classList.toggle('hidden',!paired);$('inspectLane').classList.toggle('hidden',!paired);if(!paired)$('inspectLane').value='a';
  $('comparePicker').classList.toggle('hidden',!state.compare);$('pairNotice').classList.toggle('hidden',!paired);$('singleTab').classList.toggle('active',!state.compare);$('compareTab').classList.toggle('active',state.compare);
  if(paired){const a=state.a.metrics,b=state.b.metrics;let sa=a.initial_signature||[a.initial_state_sha256,a.first_input_sha256,a.first_noise_sha256],sb=b.initial_signature||[b.initial_state_sha256,b.first_input_sha256,b.first_noise_sha256];
@@ -62,10 +64,20 @@ function renderHeader(){const d=state.a,r=d.run,m=d.metrics;$('eyebrow').textCon
  $('outcomeBadge').textContent=statusName(r);$('outcomeBadge').className='outcome '+(r.success?'success':'failure');$('forcedWarning').classList.toggle('hidden',!r.forced);
  const cards=[['环境控制步',m.env_steps,'steps',`回合墙钟 ${fmt(m.episode_wall_s,2)} s`],['VLA动作块',m.chunk_calls,'calls','完整动作块生成'],['纠错 / 重规划',m.event_replans,'events',`OGG引导 ${m.guidance_calls??'未记录'} 次`],['监测覆盖率',baseline?'不适用':pct(d.coverage?.fraction),'',baseline?'纯VLA，未启用Corrector':d.coverage?`最长空窗 ${d.coverage.max_gap_steps} 步`:'缺少分母协议'],['VLA / 监测',`${fmt(m.policy_s,2)} / ${fmt(m.monitor_s,2)}`,'s',`峰值分配显存 ${fmt(m.peak_torch_allocated_gib,2)} GiB`]];
  $('metrics').innerHTML=cards.map(([label,value,unit,sub])=>`<div class="metric"><label>${label}</label><strong ${String(value).length>10?'style="font-size:16px"':''}>${esc(value??'—')}</strong><small>${unit}</small><div class="sub">${esc(sub)}</div></div>`).join('');
- $('syncBadge').textContent=d.video.alignment==='recording_verified'?'录制协议 + PTS已核验':d.video.available?'同步精度受限':'视频缺失 · trace可用';
+ renderSyncBadge();
+ $('configurationText').textContent=configurationDescription(r);
  $('provenance').textContent=`来源：${d.source.archive} · ${d.source.member}\nTrial SHA256：${d.source.trial_sha256}\n${d.limits.join('；')}\n${d.warnings.join('；')}`;
  $('protocol').textContent=JSON.stringify({source:d.source,video_alignment:d.video.alignment,recording_evidence:d.video.recorder,protocol:d.protocol},null,2);
 }
+function configurationDescription(r){
+ const visual={'MLP':'MLP：当前视觉帧 + 单动作条件','T-H1':'Transformer：当前1帧视觉 + 单动作条件','T-H3':'Transformer：最近3帧视觉 + 单动作条件','A10-H1':'Transformer：当前1帧视觉 + 10个动作条件','A10-H3':'Transformer：最近3帧视觉 + 10个动作条件'};
+ if(/^H[0-9]+$/.test(r.method))return `纯SmolVLA：每次仍生成50步动作块，只执行前${r.method.slice(1)}步后清空剩余动作，用新观测重新推理。${r.model}是归档对照组标签，本回合未使用该Corrector。`;
+ const method={monitor:'只监测，不中断、不引导',lvm:'LVM检测触发普通重规划，无OGG',ogg:'LVM检测 + 中断重规划 + OGG引导',planned_lvm:'A10规划动作条件监测 + 普通重规划，无OGG',executed_lvm:'A10已执行动作历史到期评分 + 普通重规划，无OGG',single_lvm:'单动作T-H1原监测规则 + 普通重规划，无OGG',single_ogg:'单动作T-H1原监测规则 + 单动作OGG'};
+ if(['A','B','C'].includes(r.method))return ({A:'混合配置A：T-H1检测 → T-H1引导',B:'混合配置B：T-H1检测 → A10-H1引导',C:'混合配置C：A10-H1检测 → A10-H1引导'})[r.method]+'。箭头表示检测器 → 引导器；视频面板的主选/对照位置与配置字母无关。';
+ return `${visual[r.model]||r.model}；${method[r.method]||r.method}。输出是未来视觉特征变化，不是未来动作。具体权重、阈值和时间跨度以本回合冻结协议为准。`;
+}
+function renderSyncBadge(){if(!state.a)return;const label=d=>d.video.alignment==='recording_verified'?'已同步':d.video.available?'视频独立':'无视频';
+ $('syncBadge').textContent=state.compare&&state.b?`主选${label(state.a)} · 对照${label(state.b)}`:label(state.a)==='已同步'?'录制协议 + PTS已核验':label(state.a)==='视频独立'?'仅数据时间轴 · 视频独立':'视频缺失 · trace可用';}
 function gaps(detail){const result=[];let start=null;for(const row of detail.steps){const gap=detail.first_due!==null&&row.step>=detail.first_due&&!number(row.score)&&row.monitor_state!=='未记录';
  if(gap&&start===null)start=row.step;if(!gap&&start!==null){result.push([start,row.step-1]);start=null;}}
  if(start!==null)result.push([start,detail.steps.length-1]);return result;}
@@ -113,7 +125,8 @@ function renderEvents(){if(!state.a)return;const filter=$('eventFilter').value;c
  $('events').querySelectorAll('button[data-step]').forEach(b=>b.onclick=()=>setStep(Number(b.dataset.step),true));
 }
 function syncVideo(side,d,force=false){if(!d)return;const v=$('video'+side),valid=d.video.alignment==='recording_verified',end=state.step>=d.steps.length;
- $('step'+side).textContent=end?`已结束 · ${d.steps.length}步`:`step ${state.step}`;$('ended'+side).classList.toggle('hidden',!end);$('ended'+side).textContent=`已结束，冻结末帧 ${Math.max(0,d.steps.length-1)}`;
+ $('step'+side).textContent=valid?(end?`已结束 · ${d.steps.length}步`:`视频 step ${state.step}`):(end?'数据已结束':`数据 step ${state.step}`)+(d.video.available?' · 视频独立':' · 无视频');
+ $('ended'+side).classList.toggle('hidden',!end||!valid);$('ended'+side).textContent=`已结束，冻结末帧 ${Math.max(0,d.steps.length-1)}`;
  if(!valid||!v.src)return;const pts=d.video.pts,index=Math.min(state.step,pts.length-1),time=pts[index]+.001;
  if(force||Math.abs(v.currentTime-time)>.085||(end&&Math.abs(v.currentTime-time)>.004)){v.currentTime=Math.min(time,Math.max(0,(v.duration||Infinity)-.002));}
  if(end)v.pause();
@@ -146,7 +159,8 @@ $('play').onclick=play;$('prev').onclick=()=>setStep(state.step-1,true);$('next'
 $('speed').onchange=e=>{const was=state.playing;pause();state.speed=Number(e.target.value);if(was)play();};$('eventFilter').onchange=renderEvents;
 document.addEventListener('keydown',e=>{if(['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)||$('exportDialog').open)return;if(e.code==='Space'){e.preventDefault();play();}if(e.code==='ArrowLeft'){e.preventDefault();setStep(state.step-1,true);}if(e.code==='ArrowRight'){e.preventDefault();setStep(state.step+1,true);}});
 for(const id of ['experimentFilter','modelFilter','methodFilter','taskFilter','initFilter','seedFilter','outcomeFilter','videoOnly','includeForced'])$(id).onchange=()=>{state.limit=65;renderList();};
-$('search').oninput=()=>{state.limit=65;renderList();};$('clearFilters').onclick=()=>{for(const id of ['experimentFilter','modelFilter','methodFilter','taskFilter','initFilter','seedFilter','outcomeFilter','search'])$(id).value='';$('videoOnly').checked=$('includeForced').checked=false;renderList();};
+$('search').oninput=()=>{state.limit=65;renderList();};$('clearFilters').onclick=()=>{for(const id of ['experimentFilter','modelFilter','methodFilter','taskFilter','initFilter','seedFilter','outcomeFilter','search'])$(id).value='';$('videoOnly').checked=$('includeForced').checked=false;state.baselinePreset=false;$('baselinePreset').setAttribute('aria-pressed','false');renderList();};
+$('baselinePreset').onclick=()=>{$('clearFilters').click();state.baselinePreset=true;$('baselinePreset').setAttribute('aria-pressed','true');renderList();const first=filtered().find(r=>r.method==='H50');if(first)selectRun(first.id);toast('原始对照：task2/9、init2、seed1000，H50 / H20 / MLP+OGG；未导入的视频仍明确标缺失。');};
 $('loadMore').onclick=()=>{state.limit+=100;renderList();};$('closeExport').onclick=()=>$('exportDialog').close();
 $('exportBtn').onclick=async()=>{if(!state.a)return;pause();$('exportBtn').disabled=true;try{const ids=[state.a.run.id,...(state.b?[state.b.run.id]:[])];const result=await api('/api/export',{ids,step:state.step,note:$('note').value});$('exportDir').textContent=result.directory;$('exportFiles').innerHTML=result.files.map(name=>`<a download="${esc(name)}" href="/api/export-file/${result.export}/${esc(name)}">${esc(name)}</a>`).join('');$('exportDialog').showModal();}catch(e){toast('导出失败：'+e.message);}finally{$('exportBtn').disabled=false;}};
 window.addEventListener('pagehide',pause);

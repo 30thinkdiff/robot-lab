@@ -50,6 +50,38 @@ const out=path.resolve(__dirname,'../.local/review');fs.mkdirSync(out,{recursive
   const range=await context.request.get(base+'/api/video/'+b.id,{headers:{Range:'bytes=0-31'}});assert.equal(range.status(),206);assert.equal((await range.body()).length,32);
   const invalid=await context.request.get(base+'/api/run?id=../../etc/passwd');assert.equal(invalid.status(),400);
   const csrf=await context.request.post(base+'/api/export',{headers:{Origin:'https://untrusted.example'},data:{ids:[b.id],step:61}});assert.equal(csrf.status(),400);results.checks.push('video byte Range, traversal rejection, cross-origin export rejection');
+  // 用户截图回归：原正式A10回合必须有自己的录制绑定，不能仅凭与Hybrid C的内容SHA相同就联动。
+  const originalA10=catalog.runs.find(r=>r.model==='A10-H1'&&r.method==='ogg'&&r.task===1&&r.init===0&&r.seed===1000&&!r.forced);
+  const originalDetail=await (await context.request.get(base+'/api/run?id='+originalA10.id)).json();
+  if(originalDetail.video.alignment==='recording_verified'){
+   await page.locator('#baselinePreset').click();await page.waitForFunction(()=>document.querySelectorAll('#runList .run-item').length===6);
+   assert((await page.locator('#configurationText').textContent()).includes('纯SmolVLA'));
+   const selected=catalog.runs.find(r=>r.model==='MLP'&&r.method==='H50'&&r.task===2&&r.init===2&&r.seed===1000&&!r.forced);
+   await page.locator(`.run-item[data-id="${selected.id}"]`).click();await page.waitForFunction(()=>document.querySelector('#labelA').textContent==='H50 / MLP'&&document.querySelector('#videoA').readyState>=2);
+   await page.locator('#compareTab').click();
+   const h20=catalog.runs.find(r=>r.model==='MLP'&&r.method==='H20'&&r.task===2&&r.init===2&&r.seed===1000&&!r.forced);
+   await page.locator('#pairSelect').selectOption(h20.id);await page.waitForFunction(()=>document.querySelector('#labelB').textContent==='H20 / MLP'&&document.querySelector('#videoB').readyState>=2);
+   await jump(65);await page.waitForFunction(()=>Math.abs(document.querySelector('#videoA').currentTime-3.251)<.01&&Math.abs(document.querySelector('#videoB').currentTime-3.251)<.01);
+   assert.equal(await page.locator('#videoA').evaluate(v=>v.controls),false);assert((await page.locator('#syncBadge').textContent()).includes('主选已同步 · 对照已同步'));
+   await page.screenshot({path:path.join(out,'review_baseline_pair.png'),fullPage:true});results.checks.push('six genuine H50/H20/MLP+OGG baseline preset; H50/H20 dual video seeks to recorded frame65 PTS3.25');
+   await page.locator('#clearFilters').click();await page.locator('#modelFilter').selectOption('A10-H1');await page.locator('#methodFilter').selectOption('ogg');await page.locator('#taskFilter').selectOption('1');await page.locator('#initFilter').selectOption('0');await page.locator('#seedFilter').selectOption('1000');
+   await page.locator(`.run-item[data-id="${originalA10.id}"]`).click();await page.waitForFunction(()=>document.querySelector('#labelA').textContent==='ogg / A10-H1'&&document.querySelector('#videoA').readyState>=2);
+   await jump(65);await page.waitForFunction(()=>Math.abs(document.querySelector('#videoA').currentTime-3.251)<.01);
+   assert.equal(await page.locator('#videoA').evaluate(v=>v.controls),false);assert((await page.locator('#stepA').textContent()).includes('视频 step 65'));
+   await page.screenshot({path:path.join(out,'a10_verified_binding.png'),fullPage:true});results.checks.push('original formal A10/OGG recording independently rebound and synchronized; original Hybrid C proof retained');
+   await page.locator('#clearFilters').click();await page.locator('#modelFilter').selectOption('T-H1');await page.locator('#methodFilter').selectOption('H20');await page.locator('#taskFilter').selectOption('9');await page.locator('#initFilter').selectOption('2');await page.locator('#seedFilter').selectOption('1000');
+   const unbound=catalog.runs.find(r=>r.model==='T-H1'&&r.method==='H20'&&r.task===9&&r.init===2&&r.seed===1000&&!r.forced);
+   await page.locator(`.run-item[data-id="${unbound.id}"]`).click();await page.waitForFunction(()=>document.querySelector('#labelA').textContent==='H20 / T-H1'&&document.querySelector('#videoA').readyState>=2);
+   await jump(65);assert.equal(await page.locator('#videoA').evaluate(v=>v.controls),true);
+   assert((await page.locator('#stepA').textContent()).includes('数据 step 65 · 视频独立'));
+   assert(await page.locator('#videoA').evaluate(v=>v.currentTime<.01));
+   const verifiedPair=catalog.runs.find(r=>r.model==='MLP'&&r.method==='H20'&&r.task===9&&r.init===2&&r.seed===1000&&!r.forced);
+   await page.locator('#pairSelect').selectOption(verifiedPair.id);await page.waitForFunction(()=>document.querySelector('#labelB').textContent==='H20 / MLP'&&document.querySelector('#videoB').readyState>=2);
+   await jump(66);await page.waitForFunction(()=>Math.abs(document.querySelector('#videoB').currentTime-3.301)<.01);
+   assert((await page.locator('#syncBadge').textContent()).includes('主选视频独立 · 对照已同步'));
+   assert(await page.locator('#videoA').evaluate(v=>v.currentTime<.01));await page.screenshot({path:path.join(out,'unbound_alias_independent.png'),fullPage:true});
+   results.checks.push('unbound equal-SHA alias remains independent and explicitly labels data step; verified comparison alone follows common slider');
+  }
   for(const viewport of [{width:1920,height:1080},{width:1366,height:768},{width:900,height:900}]){
    await page.setViewportSize(viewport);await page.goto(base);await page.waitForFunction(()=>document.querySelector('#videoA').readyState>=2);assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));await page.screenshot({path:path.join(out,`viewport_${viewport.width}.png`)});
    if(viewport.width===1366){await page.locator('#focusBtn').click();const plot=await page.locator('#plot').boundingBox();assert(plot.y+plot.height<=viewport.height);await page.screenshot({path:path.join(out,'focused_laptop.png')});results.checks.push('laptop focus mode keeps real video and full score plot in same viewport');}

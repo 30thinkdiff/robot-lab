@@ -52,6 +52,46 @@ python3 tools/robotlab_replay/import_remote.py --ssh-host <SSH配置中的别名
 
 不访问远程也可以使用已在本机的JSON/ZIP；没有视频的回合会明确提示，事件/曲线/配对仍可用。
 
+### 追加原始H50 / H20 / MLP+OGG对照
+
+```bash
+python3 tools/robotlab_replay/import_review.py --ssh-host <SSH配置中的别名>
+```
+
+它选择**task2/init2、task9/init2、seed1000**的两组真实对照，各含H50、H20、MLP+OGG；另核验原A10-H1/OGG task1/init0的独立trial绑定。先验证远程原trial字节SHA、已完成状态、录制版本、视频SHA，再写新`.local/import_batches/<时间>/`，不覆盖原导入。`--plan`可以只在本地预览选择。成功回合若当时没有留视频，不会生成替代品。这六个基线回合全部失败，仅用于机制复盘，不能代表六回合无偏成功率估计。
+
+导入后在原终端Ctrl+C退出**本地Replay**，重新启动；不会影响远程后台实验。网页左侧点“原始对照 · H50 / H20 / MLP+OGG”，便可找到6条元信息；在同task/init/seed下切换配对。视频还没取回时仍标缺失。本轮已验证的视频数量以导入回执/服务实际索引为准，不能仅凭准备好导入命令就称已导入。
+
+截图中曾出现的“左侧ogg/A10-H1独立播放”原因：本地视频来自Hybrid C，虽与另一正式A10回合内容SHA相同，原清单只绑定Hybrid C的原trial。工具正确禁用了未经绑定的同步，但旧面板仍把数据step写在视频上方，造成误解。现在明确显示“数据step · 视频独立”，配对徽标分别显示两边状态；追加导入经独立来源核验后才启用该正式回合的同步。不会用假定FPS强行消除偏移。
+
+### 配置读法
+
+| 名字 | 实际含义 |
+| --- | --- |
+| VLA H50 / H20 / H10 | 生成完整50步动作块，只执行前50/20/10步后重新推理 |
+| MLP / T-H1 / T-H3 | MLP或Transformer预测器；视觉历史1帧/3帧，单动作输入 |
+| A10-H1 / A10-H3 | Transformer，10个动作条件，视觉历史1帧/3帧 |
+| monitor / lvm / ogg | 只监测 / 监测后普通重规划 / 监测后重规划并OGG引导 |
+| 混合 A / B / C | T-H1→T-H1 / T-H1→A10-H1 / A10-H1→A10-H1；箭头为检测器→引导器 |
+| planned_lvm / executed_lvm | A10以未来规划动作 / 已执行历史动作评分后普通重规划，无OGG |
+| single_lvm / single_ogg | 单动作T-H1采用原监测规则；后者加原单动作OGG，并非MLP |
+
+Corrector都预测**未来视觉特征变化**，不直接输出未来动作。A10条件对应20Hz控制块中0,2,…,18的位置；OGG可以影响这些位置。单动作OGG只影响首位置。H3是t−4,t−2,t视觉历史。当前10Hz数据/k10对应1秒，在线20Hz跨20步；数据存储时钟与原始采集物理时钟仍需区分。选中回合上方可展开“配置释义”，具体权重/阈值查看冻结协议。
+
+后续实验保留什么、精确同步需要哪些证据、如何控制视频/Tensor体积，见[DATA_CONTRACT.md](DATA_CONTRACT.md)。
+
+### 昨晚队列的只读分析
+
+已取得的真实夜间快照为2486/3400、paused/time_budget、errors0，完整核心600回合已跑完。分析使用六方法共同100组、四方法共同571组条件；不把不同分母的总体直接排序。中文解释、预测精度与成功率关联及图表见[夜间分析报告](../../studies/policy_generalization/results/20261112/overnight_review/RESULTS.md)。
+
+可对同格式轻量快照复算到**新的派生目录**：
+
+```bash
+python3 tools/robotlab_replay/analyse_snapshot.py --snapshot /path/to/snapshot.zip --output /path/to/new-analysis
+```
+
+有现成matplotlib时可加`--plot`，不安装任何依赖。该快照只有逐回合诊断摘要，不包含完整逐步trace/视频；因此不会把2486条摘要自动冒充Replay逐步回放数据。要复盘新回合仍需按需取回对应trace和保留的视频。
+
 ## 一次可用的失败案例复盘
 
 1. 打开后默认选中**混合Corrector B，task1/init0/seed1000，失败280步**。B是单动作检测器+A10引导器。
@@ -133,6 +173,6 @@ node tools/robotlab_replay/tests/browser_check.cjs
 
 ## 当前边界
 
-目前只有三个Corrector真实视频已取回；其他回合可看数据，缺视频清楚提示。未提供操作阶段自动对齐、全量原始Tensor热图、真实机器人测量状态补全、自动失败原因分类、训练曲线专页或实时控制。它们需要额外记录或独立标签，不能由现有CSV推造。原始视频256×256，放大不会产生新细节。
+当前本机已取回9份不同内容的视频，对10条回合建立了独立核验的录制绑定：原Hybrid A/B/C三条、六条MLP组原始对照、正式A10-H1/OGG一条（与Hybrid C内容相同、原trial不同）。SHA相同的其他19条归档别名可以独立播放，但不会自动继承逐步同步证据；因此“本地有视频”的29条记录不是29份独立视频。其他回合可看数据，缺视频清楚提示。未提供操作阶段自动对齐、全量原始Tensor热图、真实机器人测量状态补全、自动失败原因分类、训练曲线专页或实时控制。它们需要额外记录或独立标签，不能由现有CSV推造。原始视频256×256，放大不会产生新细节。
 
 关闭后若导入了新数据，重启本地服务重新索引；当前不提供后台目录监控、共享多用户服务或远程公开部署。Python服务在前台运行，Ctrl+C退出；不启动常驻worker或GPU进程。
