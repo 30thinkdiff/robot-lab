@@ -172,6 +172,8 @@ class Catalog:
                     if not isinstance(result,dict):raise ValueError('result不是对象')
                     uid=hashlib.sha256((str(source.path)+'::'+member).encode()).hexdigest()[:20]
                     match=re.search(r'task_(\d+)/init_(\d+)',case.get('condition',''))
+                    condition_meta=protocol.get('conditions',{}).get(case.get('condition'),{})
+                    if not isinstance(condition_meta,dict):condition_meta={}
                     model_match=re.search(r'evaluation/([^/]+)/',prefix)
                     model=model_match[1].split('_s')[0] if model_match else ('SmolVLA' if 'horizon' in source.path.parent.name else 'A10-H1')
                     if 'hybrid' in source.path.parent.name:model={'A':'T-H1 → T-H1','B':'T-H1 → A10-H1','C':'A10-H1 → A10-H1'}.get(case['method'],'Hybrid')
@@ -181,8 +183,8 @@ class Catalog:
                     forced='forced_check' in prefix or bool(protocol.get('debug_forced_event'))
                     group='混合 Corrector' if 'hybrid' in source.path.parent.name else ('Object10 五模型' if 'corrector_audit' in str(source.path) else source.path.parent.name.replace('_20261111',''))
                     group=protocol.get('experiment_label',group)
-                    self.runs[uid]={'id':uid,'model':variant,'method':case['method'],'task':int(match[1]) if match else None,
-                        'init':int(match[2]) if match else None,'seed':case.get('seed'),'condition':case.get('condition'),
+                    self.runs[uid]={'id':uid,'model':variant,'method':case['method'],'task':int(match[1]) if match else condition_meta.get('task_id'),
+                        'init':int(match[2]) if match else condition_meta.get('init'),'seed':case.get('seed'),'condition':case.get('condition'),
                         'success':result.get('success'),'status':record['status'],'steps':result.get('env_steps'),
                         'experiment':group,'forced':forced,'source_name':source.path.name,'member':member,
                         '_source':source,'_prefix':prefix,'_record':record,'_protocol':protocol}
@@ -273,6 +275,8 @@ class Catalog:
                 for k in ['block_derived','block_start_derived','queue_remaining_derived']:s.pop(k,None)
             if n:warnings.append('动作块生成时刻未完整记录；队列重建与总调用次数不一致，未显示推导块号')
         actions=source.json(base+'executed_actions.json');commands=source.json(base+'controller_commands.json')
+        if actual.get('derivation'):
+            warnings.append('派生导入：动作和队列来自执行时记录；控制返回标志由完整回合返回推断，未单独记录返回时间。详见实际协议。')
         if actions is not None and len(actions)==n:
             for s,a in zip(steps,actions):s['submitted_action']=a
         elif actions is not None:warnings.append('动作数量与环境步数不符，未强行对齐')

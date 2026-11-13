@@ -17,6 +17,19 @@ from diagnostics import summarize,heatmaps,alignment_steps
 
 
 class UnitTests(unittest.TestCase):
+    def test_plus_metadata_and_joint_method_are_not_mislabeled(self):
+        from casebank import inventory
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);(root/'trials').mkdir()
+            case={'id':'plus-j','condition':'plus/view15','method':'j_ogg','seed':1000,'config':{'model_label':'J-36M'}}
+            protocol={'study_id':'replay_casebank_plus_test','conditions':{'plus/view15':{'task_id':666,'init':0}}}
+            (root/'plan.json').write_text(json.dumps({'protocol':protocol,'cases':[case]}))
+            (root/'trials/plus-j.json').write_text(json.dumps({'case':case,'status':'completed','result':{'success':False,'env_steps':30}}))
+            c=Catalog([root],state=root/'derived')
+            try:
+                r=next(iter(c.runs.values()));self.assertEqual((r['task'],r['init'],r['model']),(666,0,'J-36M'))
+                self.assertIn('j_ogg',inventory(c)['groups'][0]['methods'])
+            finally:c.close()
     def test_missing_outcome_and_arrays_remain_missing(self):
         d={'run':{'status':'completed','success':None,'method':'lvm'},'steps':[{'step':0,'events':[]}],
            'coverage':None,'events':[],'video':{'alignment':'unavailable','message':'视频未记录'},'source':{}}

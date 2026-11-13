@@ -4,7 +4,8 @@ import hashlib
 
 MODELS={'MLP':'mlp','T-H1':'transformer-h1','T-H3':'transformer-h3','A10-H1':'transformer-a10-h1','A10-H3':'transformer-a10-h3'}
 LABELS={'H50':'H50','H20':'H20','H10':'H10','H5':'H5','H2':'H2','H1':'H1',**{model+'_'+mode:label+' / '+mode.upper() for label,model in MODELS.items() for mode in ['lvm','ogg']},
-        'hybrid_t1_a10_ogg':'T-H1检测 → A10-H1引导','planned_lvm':'A10-H1 / 新规则规划LVM','executed_lvm':'A10-H1 / 新规则已执行LVM'}
+        'hybrid_t1_a10_ogg':'T-H1检测 → A10-H1引导','planned_lvm':'A10-H1 / 新规则规划LVM','executed_lvm':'A10-H1 / 新规则已执行LVM',
+        'j_lvm':'J-36M / LVM','j_ogg':'J-36M / OGG','j_lvm_ogg':'J-36M / OGG'}
 
 
 def inventory(catalog):

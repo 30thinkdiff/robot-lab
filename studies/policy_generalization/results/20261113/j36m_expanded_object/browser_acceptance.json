@@ -1,0 +1,7 @@
+{
+  "checks": [
+    "real J success vs original MLP failure; both videos seek to step75/PTS3.75",
+    "actual Plus A10 score gaps, OGG loss/gradient records and video indexed"
+  ],
+  "errors": []
+}

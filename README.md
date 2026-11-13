@@ -1,12 +1,12 @@
 # Robot-Lab
 
-**更新：2026-11-12。** 统一入口为[工作日志](studies/policy_generalization/work_log.md)、[研究报告](studies/policy_generalization/research_report.md)和[RobotLab Replay回放工作台](tools/robotlab_replay/README.md)。
+**更新：2026-11-14。** 统一入口为[研究报告](studies/policy_generalization/research_report.md)、[工作日志](studies/policy_generalization/work_log.md)、[最终结果总入口](studies/policy_generalization/results/LATEST.md)和[RobotLab Replay回放工作台](tools/robotlab_replay/README.md)。
 
 已完成Object10的454条示范特征准备、MLP/T-H1/T-H3/A10-H1/A10-H3各3个训练seed共15组训练，以及冻结模型的闭环、混合检测/引导、已执行动作监测实验。Corrector预测视觉特征变化，OGG利用该预测器引导SmolVLA动作生成；不把冻结基座能力当作新训练成果。
 
-最新夜间扩展在截止时间正常暂停，**2486/3400回合、错误0**，核心600回合全部完成。四方法共同571组条件中，H50/H10/规划LVM/已执行LVM分别成功393/529/436/477次；H10仍是成功率更强的参照。已执行监测提高覆盖并呈现闭环收益，但未证明覆盖率是唯一原因。详见[匹配条件结果、成本与五模型同轨迹预测准度](studies/policy_generalization/results/20261112/overnight_review/RESULTS.md)。
+最新活动评测已全部完成：普通J补测120、Plus首轮544、选例复测272，错误0。普通Object10的J与原MLP同为55/60；Plus首轮H20为20/32、原MLP两方法各11/32、J两方法各9/32。选例复测与首轮分开，J尚未显示闭环成功率优势。详见[最终复盘、三种子复现与候选案例](studies/policy_generalization/results/20261114/expanded_final_review_20261114_002/RESULTS.md)。此前[夜间2486回合扩展](studies/policy_generalization/results/20261112/overnight_review/RESULTS.md)按时限暂停，独立保留。
 
-Replay支持真实视频、LVM/OGG事件与环境步时间轴、配对比较、人工事件锚点、已记录动作/更新范数热图、证据摘要和可溯源导出。新增可拖动/缩放、独立滚动和保存组合的自由布局工作台；不自动判定失败原因。[Case Bank研究审计](studies/policy_generalization/results/20261112/casebank_research_v2/RESULTS.md)已将660计划在119完整回合安全暂停，推荐新增0回合；[多层视觉接口](studies/policy_generalization/corrector/MULTILAYER_DESIGN.md)已完成三帧真实示范核验，尚未训练。Ubuntu启动：
+Replay支持真实视频、LVM/OGG事件与环境步时间轴、配对比较、人工事件锚点、已记录动作/更新范数热图、证据摘要和可溯源导出。新增可拖动/缩放、独立滚动和保存组合的自由布局工作台；不自动判定失败原因。[Case Bank研究审计](studies/policy_generalization/results/20261112/casebank_research_v2/RESULTS.md)已将660计划在119完整回合安全暂停；后续J-36M、C0、J_equal、S2已用70条数据完成训练，S8保持暂停。算法与实际服务器源码由独立的[corrector仓库](https://github.com/30thinkdiff/corrector/tree/feature/j36m-lvm-ogg-20261112)管理。Ubuntu启动：
 
 ```bash
 python3 -X utf8 tools/robotlab_replay/server.py --open
