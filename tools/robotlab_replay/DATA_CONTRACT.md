@@ -53,3 +53,25 @@
 旧格式目录/ZIP可用`server.py --source`读取。当前服务在启动时索引；取回新视频后仅重启本地Replay服务，不重启远程实验。JSON、视频、录制证据并不要求全部复制：先取轻量结果，再按具体回合取视频/trace。当前不在线挂载远程、不提供浏览器SSH；SSHFS等额外挂载属于未来方案，不是当前已验收能力。
 
 人工复盘注释保存在派生导出：人工锚点包含主选/对照原始step和事件说明，诊断摘要区分日志事实与缺失证据。它们不是物理阶段真值、机器人状态或失败原因标签，不能反向覆盖原trial。动作热图是实际控制数组，OGG热图是逐动作更新范数，两者与完整候选动作/梯度/视觉Tensor分别声明。
+
+## 可选运动诊断扩展：robotlab_motion_v1
+
+新回合可在attempt下附加`motion/protocol.json`、`motion/chunks/*.json`、`motion/steps.jsonl`及`motion/status.json`。每个真实控制周期记录提交前/返回后仿真时间、末端实际位姿、7关节角/速度、夹爪状态、真实OSC目标、限幅前后力矩与块/slot。终末观测单独保留，不能因原视频缺终帧而丢掉最后控制返回状态。
+
+区分动作块名义轨迹、控制器实际目标和机器人实际运动；记录坐标系、单位和每步相位。归一化动作、反归一化控制输入、控制器缩放后的增量均不可称为关节目标角。OGG最终动作块不能标成无引导反事实；缺少实际状态时轨迹gap必须null。完整候选轨迹属于名义解释，不当作真实未来测量。
+
+采集器保留异常现场，使用单回合字节预算；不额外调用模型或物理步，GPU到CPU复制和IO开销需要实测。现在仅通过CPU接口与历史命令链测试，未完成真实LIBERO/GPU验收；专用三轨迹/3D视图未实现。格式与未来最小采集开关对照命令见[MOTION_CAPTURE.md](MOTION_CAPTURE.md)。
+
+## motion-v1回放接口（2026-11-16）
+
+原`Replay-v1`为基础，`result.motion_capture.files_sha256`绑定`motion/protocol.json`、`status.json`、`steps.jsonl`和所引用的`chunks/NNNN.json`。可选扩展缺失时只显示“未记录”，不生成替代状态。适配层按回合惰性读取、SHA校验、case id/condition/seed/method绑定、连续步号及`after.sim_time-before.sim_time=1/control_fps`核验后，向UI提供`motion.rows[n]`。任一关键校验失败时关闭运动联动，保留该回合其他可读资料。
+
+`before`对应视频帧n；`after`对应执行u_n后的状态，误差曲线标注为本步执行后。`goals[0]`为真实OSC目标；`nominal`来自本块记录的规则解释，不能混称未来真实状态。关节位置/速度与力矩命令/动力学作用力分开；不存在逐步关节目标角时保持缺失。可选子步默认不记录，不能声称保留完整高频力矩曲线。
+
+新增OGG损失试验使用`protocol.ogg_loss`和`case.config.ogg_loss_mode`标识余弦、原始MSE及MSE+余弦。`monitor_steps.jsonl`保留真实引导步/去噪序号/损失/梯度/动作更新；额外`guidance_loss_details.jsonl`按实际引导调用顺序对应，分析器须先核对次数与损失一致才能关联，不按墙钟猜测。
+
+## 跨loss组合视图与状态去重
+
+`reviewed_replay_comparisons_v1`的`comparison_kind=ogg_loss_modes`引用既有trial及其SHA。模型/原method/loss模式需与case、protocol、result三处一致；六配置使用同一冻结控制协议、相同condition/seed、初始状态指纹及经数值核对的首候选证据。未发生实际引导时只接受全段命令一致的明确证据，不补造候选/梯度。原始trial不复制，衍生清单与证据放在忽略的`.local/comparison_sets`。
+
+样本库分别计数测试条件、condition/seed组和已记录的初始仿真状态指纹。历史`physical_state`字段仅兼容旧condition标识，不等于已测物理状态；真实记录可通过`initial_state_sha256`另行去重。指纹也不编码相机/语言或全部静态模型资产。缺少指纹时不猜测“独立物理场景数”。

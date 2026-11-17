@@ -1,0 +1,60 @@
+{
+  "captured_utc": "2026-11-16T08:24:48.595316+00:00",
+  "cpu": {
+    "interpreter": "existing Torch CPU environment; no package installation",
+    "tests": 97,
+    "passed": 97,
+    "skipped": 0,
+    "log_sha256": "69671ebf86161ea93fc112b875e260be92b5b97e065013b9155d7e7bca2b79f6"
+  },
+  "motion_browser": {
+    "checks": [
+      "real failed J-OGG step65/videoPTS3.25 and recorded OSC error synchronized",
+      "single step, play/pause, projections, angular error and click-to-seek share one cursor",
+      "paired lane uses own recorded state and stops at ended H20; no stale pose",
+      "motion workspace keeps video/monitor/motion simultaneously visible at desktop and laptop widths",
+      "derived export includes selected real state, whole-episode errors and source hashes",
+      "24 imported loss trials show explicit MSE objective and real guidance events; absent motion remains absent"
+    ],
+    "errors": [],
+    "status": "passed"
+  },
+  "layout_browser": {
+    "checks": [
+      "real video DOM and step61/PTS3.05 preserved when entering four-panel workspace",
+      "pointer drag/resize and keyboard movement work without seeking the shared clock",
+      "locked layout, maximize/Escape restore and independent inspector scrolling retain visible video",
+      "module hide/show and named layout survive reload in browser-local storage",
+      "video/curve/real A10 update heatmap preset displays live linked modules on one viewport",
+      "comparison preset responds to real pair selection; two videos and metrics remain linked",
+      "all visible panels remain reachable within 1366x768 and 900x900 viewports",
+      "hide-all recovery and return to original page preserve DOM/timebase; page-mode choice persists",
+      "corrupt/blocked browser storage gracefully falls back without breaking replay"
+    ],
+    "errors": [],
+    "status": "passed"
+  },
+  "import_validation": {
+    "catalog_records": 1652,
+    "new_motion_trials": 12,
+    "new_loss_trials": 24,
+    "new_video_alignment_verified": 36,
+    "catalog_warnings": []
+  },
+  "remote_final": {
+    "captured_utc": "2026-11-16T08:22:38.593567+00:00",
+    "loss_queue_status": "completed",
+    "completed_stages": 6,
+    "compute_processes": 0,
+    "gpu_utilization_percent": 0,
+    "gpu_memory_mib": 1,
+    "system_free_gib": 10.84207534790039,
+    "data_free_gib": 11.07717514038086
+  },
+  "limitations": [
+    "video frame n is before action; OSC tracking errors use after-action state",
+    "nominal block path is an interpretation, not a VLA predicted physical trajectory",
+    "no new motion capture in 24 loss trials",
+    "Windows not tested on real hardware"
+  ]
+}

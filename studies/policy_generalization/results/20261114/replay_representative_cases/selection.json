@@ -1,0 +1,963 @@
+{
+  "methods_order": [
+    "j_lvm",
+    "j_ogg",
+    "mlp_lvm",
+    "mlp_ogg"
+  ],
+  "ordinary_groups": 4,
+  "ordinary_complete_groups": 3,
+  "new_plus_trials": 54,
+  "plus_discovery_groups": 8,
+  "plus_replication_groups": 1,
+  "catalog_records": 1616,
+  "population_performance_claim": false,
+  "gpu_work": false,
+  "scope": "reviewed cross-batch ordinary comparisons, separately retained discovery and selected replication; full tensors not imported",
+  "cases": [
+    {
+      "study": "replay_casebank_representative_plus_20261114",
+      "condition": "plus/cheese/background_textures/1",
+      "seed": 1000,
+      "pattern": "0000",
+      "methods": {
+        "j_ogg": {
+          "success": false,
+          "steps": 280,
+          "video": true,
+          "video_bound": true,
+          "trace": true,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "95cefb166e5ff5830242",
+          "trial_sha256": "332e5eed534681495f6ec081f010c03b5415647f3c9c50cd6f2fcba636053013",
+          "original_member": "trials/95cefb166e5ff5830242.json"
+        },
+        "mlp_ogg": {
+          "success": false,
+          "steps": 280,
+          "video": true,
+          "video_bound": true,
+          "trace": true,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "5d1f8cf815fee70cb5ed",
+          "trial_sha256": "119f9937e62af801981a698c86e19d6e8ae866350637973ff8ae68e46282a771",
+          "original_member": "trials/5d1f8cf815fee70cb5ed.json"
+        },
+        "j_lvm": {
+          "success": false,
+          "steps": 280,
+          "video": true,
+          "video_bound": true,
+          "trace": true,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "d05670bb0a1a84c38bdc",
+          "trial_sha256": "df339d02974ff1d16712387624e808ae40a63b4dd2c682f7efa9b4010ad0724a",
+          "original_member": "trials/d05670bb0a1a84c38bdc.json"
+        },
+        "mlp_lvm": {
+          "success": false,
+          "steps": 280,
+          "video": true,
+          "video_bound": true,
+          "trace": true,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "120edfe0cdc79e9cca83",
+          "trial_sha256": "7fd8fb4d0c92432920b95e10457a4f936b917be3c692e9fabaa58434b0674478",
+          "original_member": "trials/120edfe0cdc79e9cca83.json"
+        },
+        "H20": {
+          "success": false,
+          "steps": 280,
+          "video": true,
+          "video_bound": true,
+          "trace": false,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "f170988646c249806996",
+          "trial_sha256": "1dfe6f4f0150df1da9c943025cededb7670f6be7bc7a18a64f42d8feff4c187c",
+          "original_member": "trials/f170988646c249806996.json"
+        },
+        "H50": {
+          "success": false,
+          "steps": 280,
+          "video": true,
+          "video_bound": true,
+          "trace": false,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "2ed46afbc63706a29dd0",
+          "trial_sha256": "c058190b3d07c0551aa1eec3594f1a03f7c841df0a4fc69acd18ae7e90ceb478",
+          "original_member": "trials/2ed46afbc63706a29dd0.json"
+        }
+      }
+    },
+    {
+      "study": "replay_casebank_representative_plus_20261114",
+      "condition": "plus/cheese/camera_viewpoints/1",
+      "seed": 1000,
+      "pattern": "0000",
+      "methods": {
+        "mlp_lvm": {
+          "success": false,
+          "steps": 280,
+          "video": true,
+          "video_bound": true,
+          "trace": true,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "b0bee65b1ddf191299ed",
+          "trial_sha256": "c1da61193e363214d8a06e1ff8ef0477b28e43329363acf3662dc96c639516c2",
+          "original_member": "trials/b0bee65b1ddf191299ed.json"
+        },
+        "mlp_ogg": {
+          "success": false,
+          "steps": 280,
+          "video": true,
+          "video_bound": true,
+          "trace": true,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "470b894c896f51f59766",
+          "trial_sha256": "a169068351f64471a34fb2fc49f05be10c0bb6d71cc25dabe6d77f8dd7a4568f",
+          "original_member": "trials/470b894c896f51f59766.json"
+        },
+        "H20": {
+          "success": false,
+          "steps": 280,
+          "video": true,
+          "video_bound": true,
+          "trace": false,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "9eee18b780e41a712fae",
+          "trial_sha256": "4dd96156ea4a4c79f7bc940dac7b165cc2815594a0651afbbb11c9847bb0649a",
+          "original_member": "trials/9eee18b780e41a712fae.json"
+        },
+        "j_lvm": {
+          "success": false,
+          "steps": 280,
+          "video": true,
+          "video_bound": true,
+          "trace": true,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "7842e1797b0c56fe87a8",
+          "trial_sha256": "a354b80b59be10c4530c41bcd766c003cfe25c63749f2b4c35c85496f2d111c8",
+          "original_member": "trials/7842e1797b0c56fe87a8.json"
+        },
+        "H50": {
+          "success": false,
+          "steps": 280,
+          "video": true,
+          "video_bound": true,
+          "trace": false,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "70b4a2c8065bb6b4e327",
+          "trial_sha256": "f4cdcb17a05a2dd3de0f2288ca542ecb0b0cc7ee259f04a850172fae00813fd2",
+          "original_member": "trials/70b4a2c8065bb6b4e327.json"
+        },
+        "j_ogg": {
+          "success": false,
+          "steps": 280,
+          "video": true,
+          "video_bound": true,
+          "trace": true,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "cda3e3263d1fe7d616b5",
+          "trial_sha256": "8ae99506b56fb0e06dc01394813f90c8523f6eceeea1d36bd87e754b7efe5e9f",
+          "original_member": "trials/cda3e3263d1fe7d616b5.json"
+        }
+      }
+    },
+    {
+      "study": "replay_casebank_representative_plus_20261114",
+      "condition": "plus/cheese/light_conditions/1",
+      "seed": 1000,
+      "pattern": "0000",
+      "methods": {
+        "mlp_lvm": {
+          "success": false,
+          "steps": 280,
+          "video": true,
+          "video_bound": true,
+          "trace": true,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "136d09496f2533818a30",
+          "trial_sha256": "1bc2ca7ec9f62fa534bc787657aa3ed6d364050faee5dab189c8110c0e1dd791",
+          "original_member": "trials/136d09496f2533818a30.json"
+        },
+        "j_lvm": {
+          "success": false,
+          "steps": 280,
+          "video": true,
+          "video_bound": true,
+          "trace": true,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "8e9975751fbe1ab7a232",
+          "trial_sha256": "df57f380a771f531d287ae27878be3ef089fe69a5324a58b6b57a8b0da9ddc1f",
+          "original_member": "trials/8e9975751fbe1ab7a232.json"
+        },
+        "H20": {
+          "success": true,
+          "steps": 124,
+          "video": true,
+          "video_bound": true,
+          "trace": false,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "75e2a81eb1f561c937a2",
+          "trial_sha256": "0e0bcda7d3f0ab8ea6f50a6df4c4938e5c1f728627d5127faaf6225fd5d25061",
+          "original_member": "trials/75e2a81eb1f561c937a2.json"
+        },
+        "j_ogg": {
+          "success": false,
+          "steps": 280,
+          "video": true,
+          "video_bound": true,
+          "trace": true,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "0f70d3dfd47ce9b62f61",
+          "trial_sha256": "090c127613b242abf11cd8caf7ce9b23f9324384dfb7330237eb5d6eee08981f",
+          "original_member": "trials/0f70d3dfd47ce9b62f61.json"
+        },
+        "H50": {
+          "success": false,
+          "steps": 280,
+          "video": true,
+          "video_bound": true,
+          "trace": false,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "dbb96d3b35770584f67a",
+          "trial_sha256": "55bf564cdcbfae48903f7ddf13c38ae3940748655f5a70999b71b4818751ea31",
+          "original_member": "trials/dbb96d3b35770584f67a.json"
+        },
+        "mlp_ogg": {
+          "success": false,
+          "steps": 280,
+          "video": true,
+          "video_bound": true,
+          "trace": true,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "73734266df25861d286e",
+          "trial_sha256": "327badfd2afa883ac158e83e48b1773db72c7bcad3f389fcc0f3eaf7b2a1d983",
+          "original_member": "trials/73734266df25861d286e.json"
+        }
+      }
+    },
+    {
+      "study": "replay_casebank_representative_plus_20261114",
+      "condition": "plus/cheese/robot_initial_states/1",
+      "seed": 1000,
+      "pattern": "1111",
+      "methods": {
+        "mlp_ogg": {
+          "success": true,
+          "steps": 146,
+          "video": true,
+          "video_bound": true,
+          "trace": true,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "fa66f2e60e85a97c7825",
+          "trial_sha256": "9c0cdca4b5fa4f1b73ecdbfe28c3d24f9490ffca4c37ca10dbfa5b5e40a1a9d9",
+          "original_member": "trials/fa66f2e60e85a97c7825.json"
+        },
+        "j_lvm": {
+          "success": true,
+          "steps": 137,
+          "video": true,
+          "video_bound": true,
+          "trace": true,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "d8363770b998d043e2a6",
+          "trial_sha256": "2a09e776b521891980335f5b9833aa52c4e022d11add62bbc2366fc3e40fab4b",
+          "original_member": "trials/d8363770b998d043e2a6.json"
+        },
+        "mlp_lvm": {
+          "success": true,
+          "steps": 146,
+          "video": true,
+          "video_bound": true,
+          "trace": true,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "8c0ada0d28ca2144dfe4",
+          "trial_sha256": "68b3c5bd010b12a49fb4abd984212e1c0400426814e920296808af4f52860ebd",
+          "original_member": "trials/8c0ada0d28ca2144dfe4.json"
+        },
+        "H20": {
+          "success": true,
+          "steps": 271,
+          "video": true,
+          "video_bound": true,
+          "trace": false,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "1875878c4c4ae326e990",
+          "trial_sha256": "f16de8ae1628eb477e55853fe8ec1684c858de10d0a44ba18b8f27a3dce2f46a",
+          "original_member": "trials/1875878c4c4ae326e990.json"
+        },
+        "H50": {
+          "success": false,
+          "steps": 280,
+          "video": true,
+          "video_bound": true,
+          "trace": false,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "e3ca23bc4f2d7960ec43",
+          "trial_sha256": "4e0991867e149b8a7c6ff1418e08dd969b0a40bdaaeab4a5cc308f47943a0a24",
+          "original_member": "trials/e3ca23bc4f2d7960ec43.json"
+        },
+        "j_ogg": {
+          "success": true,
+          "steps": 154,
+          "video": true,
+          "video_bound": true,
+          "trace": true,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "baac55b3dd75ffb04d33",
+          "trial_sha256": "3273c92d171df9a2e2d5e7645c9fccf59d62b1a28ddd951c8a5f4241a6e3df85",
+          "original_member": "trials/baac55b3dd75ffb04d33.json"
+        }
+      }
+    },
+    {
+      "study": "replay_casebank_representative_plus_20261114",
+      "condition": "plus/cheese/sensor_noise/1",
+      "seed": 1000,
+      "pattern": "0011",
+      "methods": {
+        "j_lvm": {
+          "success": false,
+          "steps": 280,
+          "video": true,
+          "video_bound": true,
+          "trace": true,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "0cbefb024cdad8472699",
+          "trial_sha256": "01e2d8e40b28802fc086ecb5384a5cf27dc74020f71458deb5312ff213a464e5",
+          "original_member": "trials/0cbefb024cdad8472699.json"
+        },
+        "mlp_lvm": {
+          "success": true,
+          "steps": 151,
+          "video": true,
+          "video_bound": true,
+          "trace": true,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "692d3f87b5b7c73483d7",
+          "trial_sha256": "9ac4307f740d8ff2c5b1e5d073925e7e1013fb0f0b86d7a41039ded01db324f3",
+          "original_member": "trials/692d3f87b5b7c73483d7.json"
+        },
+        "H50": {
+          "success": false,
+          "steps": 280,
+          "video": true,
+          "video_bound": true,
+          "trace": false,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "312b6f02529ab60381ec",
+          "trial_sha256": "b3774ae08a2015e3dd7831be71d6e0e7e0322c6ca61edac17f4980042c766c5c",
+          "original_member": "trials/312b6f02529ab60381ec.json"
+        },
+        "H20": {
+          "success": true,
+          "steps": 120,
+          "video": true,
+          "video_bound": true,
+          "trace": false,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "48c4384f7470baed0e08",
+          "trial_sha256": "93769d1382d81bba45dd903970d2b40dbbaab33c0d3c91c7d5217f8d7e002a0a",
+          "original_member": "trials/48c4384f7470baed0e08.json"
+        },
+        "mlp_ogg": {
+          "success": true,
+          "steps": 152,
+          "video": true,
+          "video_bound": true,
+          "trace": true,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "f07a8fe0c231d3128c0d",
+          "trial_sha256": "de4cd376c8f2ba8f99b31f23ec729f3b6ded2063f9f0671d84867c9b71fa71eb",
+          "original_member": "trials/f07a8fe0c231d3128c0d.json"
+        },
+        "j_ogg": {
+          "success": false,
+          "steps": 280,
+          "video": true,
+          "video_bound": true,
+          "trace": true,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "ceb9e87bacfd5f6e4b6f",
+          "trial_sha256": "3fa251e378da1003e12b24ad481f4656bd197e0cb1108d66c8e5696da58645f8",
+          "original_member": "trials/ceb9e87bacfd5f6e4b6f.json"
+        }
+      }
+    },
+    {
+      "study": "replay_casebank_representative_plus_20261114",
+      "condition": "plus/default",
+      "seed": 1000,
+      "pattern": "1111",
+      "methods": {
+        "H20": {
+          "success": true,
+          "steps": 134,
+          "video": true,
+          "video_bound": true,
+          "trace": false,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "74e9232d88d36729da3c",
+          "trial_sha256": "6acd80576c34f535f7d822fb85b886e336c36d9bc260512d4993bba7ee25c19e",
+          "original_member": "trials/74e9232d88d36729da3c.json"
+        },
+        "mlp_lvm": {
+          "success": true,
+          "steps": 135,
+          "video": true,
+          "video_bound": true,
+          "trace": true,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "549e06db76472a698a17",
+          "trial_sha256": "15e0fb004f5ab361815ab5f23585d97ba51ed0f6b3f34da4a6cc7e2eb3b5613e",
+          "original_member": "trials/549e06db76472a698a17.json"
+        },
+        "j_ogg": {
+          "success": true,
+          "steps": 125,
+          "video": true,
+          "video_bound": true,
+          "trace": true,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "e7970e4c25dfb4f783e8",
+          "trial_sha256": "19e32029b90440851e035d34ff7d412fd47ad7cc0c65294853ff304ddc78f13f",
+          "original_member": "trials/e7970e4c25dfb4f783e8.json"
+        },
+        "j_lvm": {
+          "success": true,
+          "steps": 125,
+          "video": true,
+          "video_bound": true,
+          "trace": true,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "3f2660c30d65036d45ec",
+          "trial_sha256": "5a6642b4b8dd29ab00ec9f4e426c54ea96d591a842bddb86f33734ffea0c5cba",
+          "original_member": "trials/3f2660c30d65036d45ec.json"
+        },
+        "H50": {
+          "success": true,
+          "steps": 124,
+          "video": true,
+          "video_bound": true,
+          "trace": false,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "a676fc6d4c8de9575b2d",
+          "trial_sha256": "6bb3034332cfe4d7a0d5141c3e565afdc767259a28fb20f68c36e9d03e042578",
+          "original_member": "trials/a676fc6d4c8de9575b2d.json"
+        },
+        "mlp_ogg": {
+          "success": true,
+          "steps": 135,
+          "video": true,
+          "video_bound": true,
+          "trace": true,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "1b32f3c64adca3ba250e",
+          "trial_sha256": "4c0aa1c93d64f73b1761fe7c0ff4bb41e49848881dba450b4430ce3b02d22620",
+          "original_member": "trials/1b32f3c64adca3ba250e.json"
+        }
+      }
+    },
+    {
+      "study": "replay_casebank_representative_plus_20261114",
+      "condition": "plus/soup/language_instructions/1",
+      "seed": 1000,
+      "pattern": "1101",
+      "methods": {
+        "H50": {
+          "success": false,
+          "steps": 280,
+          "video": true,
+          "video_bound": true,
+          "trace": false,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "4f1d2fbb5049ede5a711",
+          "trial_sha256": "12ca742393b9a1ff6501ebc1439d6090402be598c440d1bdc785756143ca1abc",
+          "original_member": "trials/4f1d2fbb5049ede5a711.json"
+        },
+        "j_ogg": {
+          "success": true,
+          "steps": 165,
+          "video": true,
+          "video_bound": true,
+          "trace": true,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "e50c82220a841c366ca3",
+          "trial_sha256": "6d6f76c5075d25a68b16e69710c760fa9c612bab5f723de812e1ab5a0df9a7f0",
+          "original_member": "trials/e50c82220a841c366ca3.json"
+        },
+        "mlp_lvm": {
+          "success": false,
+          "steps": 280,
+          "video": true,
+          "video_bound": true,
+          "trace": true,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "c054400e946d04856891",
+          "trial_sha256": "c8a477b16e63a56351cfc10392bdcecad005fe34e861619de916677e41c7374e",
+          "original_member": "trials/c054400e946d04856891.json"
+        },
+        "H20": {
+          "success": true,
+          "steps": 129,
+          "video": true,
+          "video_bound": true,
+          "trace": false,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "21cac0adebff1faff452",
+          "trial_sha256": "372cf917762357ac1c812cb5eaba763c0bc579e601ddca9c03ffdef8da27fdca",
+          "original_member": "trials/21cac0adebff1faff452.json"
+        },
+        "j_lvm": {
+          "success": true,
+          "steps": 165,
+          "video": true,
+          "video_bound": true,
+          "trace": true,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "34022be25ecbc7c3c172",
+          "trial_sha256": "196721c18719b71be01370a25c5e5b6726c2a12216f975c71c4bfcbe4e10b056",
+          "original_member": "trials/34022be25ecbc7c3c172.json"
+        },
+        "mlp_ogg": {
+          "success": true,
+          "steps": 155,
+          "video": true,
+          "video_bound": true,
+          "trace": true,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "53dc651184157b076390",
+          "trial_sha256": "297123fb58e5bcd9b1e719b1df48a7a2adc981714bc2b09357a201fe22f469f4",
+          "original_member": "trials/53dc651184157b076390.json"
+        }
+      }
+    },
+    {
+      "study": "replay_casebank_representative_plus_20261114",
+      "condition": "plus/soup/objects_layout/2",
+      "seed": 1000,
+      "pattern": "0010",
+      "methods": {
+        "H20": {
+          "success": true,
+          "steps": 238,
+          "video": true,
+          "video_bound": true,
+          "trace": false,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "fb55d795ec7b0e8ea86b",
+          "trial_sha256": "883974a489d3abfbb9575807eaff87810591eadcfaaf4928fcb818ada2a90de2",
+          "original_member": "trials/fb55d795ec7b0e8ea86b.json"
+        },
+        "j_ogg": {
+          "success": false,
+          "steps": 280,
+          "video": true,
+          "video_bound": true,
+          "trace": true,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "ea1f94e07b041f7226a2",
+          "trial_sha256": "46c8c2f71c6cf7429f91e7521fe7f4e1cfcd4ce76c049b90c4030628e666d226",
+          "original_member": "trials/ea1f94e07b041f7226a2.json"
+        },
+        "H50": {
+          "success": false,
+          "steps": 280,
+          "video": true,
+          "video_bound": true,
+          "trace": false,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "9d313a51eb988d920ffa",
+          "trial_sha256": "9e643bc1557b898b51dfa688dc274ed641d9eb903ebe9eb7d689c1d82f6daf4c",
+          "original_member": "trials/9d313a51eb988d920ffa.json"
+        },
+        "mlp_ogg": {
+          "success": false,
+          "steps": 280,
+          "video": true,
+          "video_bound": true,
+          "trace": true,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "c7bc10e89882c067c9e2",
+          "trial_sha256": "d9e0d7cd6cd1db22e5d9f096e9b9b3fa3e3f4a4686581b0a8cf752dea7bc601a",
+          "original_member": "trials/c7bc10e89882c067c9e2.json"
+        },
+        "mlp_lvm": {
+          "success": true,
+          "steps": 229,
+          "video": true,
+          "video_bound": true,
+          "trace": true,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "b4f52ab0d80ab00adaf0",
+          "trial_sha256": "6ab1d097924659acd0b68e7bfef698554448df040d7f866b8cc6e9a6b50217f6",
+          "original_member": "trials/b4f52ab0d80ab00adaf0.json"
+        },
+        "j_lvm": {
+          "success": false,
+          "steps": 280,
+          "video": true,
+          "video_bound": true,
+          "trace": true,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "87b1a5b783fccff4693c",
+          "trial_sha256": "b093c7acf8b550c67ccd12bcd2c07d0fcc213288bef5b8b1e131864fd7e6927b",
+          "original_member": "trials/87b1a5b783fccff4693c.json"
+        }
+      }
+    },
+    {
+      "study": "replay_casebank_representative_plus_replicates_20261114",
+      "condition": "plus/cheese/sensor_noise/1",
+      "seed": 1002,
+      "pattern": "0011",
+      "methods": {
+        "j_ogg": {
+          "success": false,
+          "steps": 280,
+          "video": true,
+          "video_bound": true,
+          "trace": true,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "f944312dcc4c52526a30",
+          "trial_sha256": "7a102732f4f0b7bc54e6f8034b76505e3c83e1a02c16c930fefd6a857fae3e7b",
+          "original_member": "trials/f944312dcc4c52526a30.json"
+        },
+        "H20": {
+          "success": true,
+          "steps": 120,
+          "video": true,
+          "video_bound": true,
+          "trace": false,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "ed4eb74e5cfb2c5f185c",
+          "trial_sha256": "f80bdd13139736a9cc87e94b0fc8026353b2b568963bac8d9b9d9d7082a698c6",
+          "original_member": "trials/ed4eb74e5cfb2c5f185c.json"
+        },
+        "j_lvm": {
+          "success": false,
+          "steps": 280,
+          "video": true,
+          "video_bound": true,
+          "trace": true,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "4abe0f3e47f7af9bbfb0",
+          "trial_sha256": "ac0190a02a309349e13205c9c3f546ea769428ca63c29a73a6bf6d9fd6c40f9d",
+          "original_member": "trials/4abe0f3e47f7af9bbfb0.json"
+        },
+        "mlp_ogg": {
+          "success": true,
+          "steps": 153,
+          "video": true,
+          "video_bound": true,
+          "trace": true,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "2281d9e3e1d2df177996",
+          "trial_sha256": "217ca1eb79e36e779433d008ce67ec4c63bdaecd3ae8af3d5e455e899da6f06c",
+          "original_member": "trials/2281d9e3e1d2df177996.json"
+        },
+        "mlp_lvm": {
+          "success": true,
+          "steps": 151,
+          "video": true,
+          "video_bound": true,
+          "trace": true,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "f205cd2268109ff6f270",
+          "trial_sha256": "9a17760f85c9c5e2f59e2d3aede536b59ec478539d968b9960228c809473c166",
+          "original_member": "trials/f205cd2268109ff6f270.json"
+        },
+        "H50": {
+          "success": false,
+          "steps": 280,
+          "video": true,
+          "video_bound": true,
+          "trace": false,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "edcf7b6ac89e6586ce3e",
+          "trial_sha256": "62b1229877aa47c394bf27f7b1928ea274086d21cacc8cf30ff6835eb11db1e1",
+          "original_member": "trials/edcf7b6ac89e6586ce3e.json"
+        }
+      }
+    },
+    {
+      "study": "reviewed_ordinary_j_mlp_20261114",
+      "condition": "libero_object/task_0/init_0",
+      "seed": 1000,
+      "pattern": "1111",
+      "methods": {
+        "j_lvm": {
+          "success": true,
+          "steps": 125,
+          "video": true,
+          "video_bound": true,
+          "trace": true,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "75213fe53d251e3fb3c8",
+          "trial_sha256": "c9d2e90a6a7d071c3b76ab3230fa94f78dc451ef72e0a399acfb8b4ec7a532e4",
+          "original_member": "trials/75213fe53d251e3fb3c8.json"
+        },
+        "j_ogg": {
+          "success": true,
+          "steps": 125,
+          "video": true,
+          "video_bound": true,
+          "trace": true,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "56aa7aefafa61680c177",
+          "trial_sha256": "77cd16d9a6c51b591aacbd9e1a61957ac3812b65fe5a0b97972c6a66b3e97920",
+          "original_member": "trials/56aa7aefafa61680c177.json"
+        },
+        "mlp_lvm": {
+          "success": true,
+          "steps": 123,
+          "video": true,
+          "video_bound": true,
+          "trace": true,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "aa73a8be3790206f6671",
+          "trial_sha256": "97ce08b01c5b597bd5b42ff71cbb15ada816f1b5ce47168a65346479a61b77a7",
+          "original_member": "results/trials/aa73a8be3790206f6671.json"
+        },
+        "mlp_ogg": {
+          "success": true,
+          "steps": 123,
+          "video": true,
+          "video_bound": true,
+          "trace": true,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "a52e3f89257f09a94bf0",
+          "trial_sha256": "260edba1ba50d9d7b2c4d50ba8f941e1c89e89fb3d4ede73effe6916fef05aa6",
+          "original_member": "results/trials/a52e3f89257f09a94bf0.json"
+        }
+      }
+    },
+    {
+      "study": "reviewed_ordinary_j_mlp_20261114",
+      "condition": "libero_object/task_0/init_2",
+      "seed": 1001,
+      "pattern": "0000",
+      "methods": {
+        "j_lvm": {
+          "success": false,
+          "steps": 280,
+          "video": true,
+          "video_bound": true,
+          "trace": true,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "80b23858bc6a2a2df5cf",
+          "trial_sha256": "a3bce4dc03fde7485cbd310538c4647ee2db1b5973282edfae72ea2f7820b290",
+          "original_member": "trials/80b23858bc6a2a2df5cf.json"
+        },
+        "j_ogg": {
+          "success": false,
+          "steps": 280,
+          "video": true,
+          "video_bound": true,
+          "trace": true,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "2514a3d388148254859a",
+          "trial_sha256": "a3973ecdc2ccda5e9baf149a602bc1d64c826ffa8d09743882f3254496643de6",
+          "original_member": "trials/2514a3d388148254859a.json"
+        },
+        "mlp_lvm": {
+          "success": false,
+          "steps": 280,
+          "video": true,
+          "video_bound": true,
+          "trace": true,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "27acba0210f103c33bc6",
+          "trial_sha256": "ec80a5e79bd278f514f5063c490b810e49bb53b2b74096c5a4c34edb264f5627",
+          "original_member": "results/trials/27acba0210f103c33bc6.json"
+        },
+        "mlp_ogg": {
+          "success": false,
+          "steps": 280,
+          "video": true,
+          "video_bound": true,
+          "trace": true,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "ef4ab0223ee568aac214",
+          "trial_sha256": "360f379ac63714ccdc58712bbee7d4cd852a7a1d2cd62446319b9a1a04c7adeb",
+          "original_member": "results/trials/ef4ab0223ee568aac214.json"
+        }
+      }
+    },
+    {
+      "study": "reviewed_ordinary_j_mlp_20261114",
+      "condition": "libero_object/task_9/init_2",
+      "seed": 1000,
+      "pattern": "1100",
+      "methods": {
+        "j_lvm": {
+          "success": true,
+          "steps": 164,
+          "video": true,
+          "video_bound": true,
+          "trace": true,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "b453b1e15d7f70fd0c8f",
+          "trial_sha256": "fba7ed6033f338616b54cb44ebe8ad0eeb0c3d7707abb8a19a67c0a1f0e0bbf2",
+          "original_member": "trials/b453b1e15d7f70fd0c8f.json"
+        },
+        "j_ogg": {
+          "success": true,
+          "steps": 163,
+          "video": true,
+          "video_bound": true,
+          "trace": true,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "24624001974a0f1c732e",
+          "trial_sha256": "5655e242d02eae4a10b7db7985a0446422b4d8aca0032e0b29cfa6a6cd317051",
+          "original_member": "trials/24624001974a0f1c732e.json"
+        },
+        "mlp_lvm": {
+          "success": false,
+          "steps": 280,
+          "video": true,
+          "video_bound": true,
+          "trace": true,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "380bd7f52807906e29b2",
+          "trial_sha256": "73abdeadb19dddab5a5eed4fa47b75948e1c1c36a7ab89b42de8dc84505b3e5c",
+          "original_member": "results/trials/380bd7f52807906e29b2.json"
+        },
+        "mlp_ogg": {
+          "success": false,
+          "steps": 280,
+          "video": true,
+          "video_bound": true,
+          "trace": true,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "cce2635ac7515684508e",
+          "trial_sha256": "c2424d46dbc9fea458a10b26cb51b63b4a8a840bb54fc8966a3fdc40653d94c8",
+          "original_member": "results/trials/cce2635ac7515684508e.json"
+        }
+      }
+    },
+    {
+      "study": "reviewed_ordinary_j_mlp_20261114",
+      "condition": "libero_object/task_1/init_0",
+      "seed": 1001,
+      "pattern": "0011",
+      "methods": {
+        "j_lvm": {
+          "success": false,
+          "steps": 280,
+          "video": true,
+          "video_bound": true,
+          "trace": true,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "2a47f0d21211cd3a1ea9",
+          "trial_sha256": "034b9cce47f94616f54383da85499188a95144f5fb828d2c9d0fe90dd1055708",
+          "original_member": "trials/2a47f0d21211cd3a1ea9.json"
+        },
+        "j_ogg": {
+          "success": false,
+          "steps": 280,
+          "video": true,
+          "video_bound": true,
+          "trace": true,
+          "actions": true,
+          "replay_complete": true,
+          "case_id": "c1cae79f7bbc722c3d16",
+          "trial_sha256": "a5887264c875147d1aff142ee88990708a7b3d9c1298e7be58319902b197350e",
+          "original_member": "trials/c1cae79f7bbc722c3d16.json"
+        },
+        "mlp_lvm": {
+          "success": true,
+          "steps": 144,
+          "video": false,
+          "video_bound": false,
+          "trace": true,
+          "actions": false,
+          "replay_complete": false,
+          "case_id": "1191a53b5fd82f609315",
+          "trial_sha256": "9766197e42358e7db794e4580a08f4cf2960ef6ff516cb7ee08b3274457e131b",
+          "original_member": "night/evaluation/mlp_s42/05d55ba9452142be/paired/trials/1191a53b5fd82f609315.json"
+        },
+        "mlp_ogg": {
+          "success": true,
+          "steps": 137,
+          "video": false,
+          "video_bound": false,
+          "trace": true,
+          "actions": false,
+          "replay_complete": false,
+          "case_id": "08d154b45014db414f23",
+          "trial_sha256": "66df86c050f7828cfcb6ddcd52174a04756fc5897881dce023384ca163b3c4c3",
+          "original_member": "night/evaluation/mlp_s42/05d55ba9452142be/paired/trials/08d154b45014db414f23.json"
+        }
+      }
+    }
+  ]
+}

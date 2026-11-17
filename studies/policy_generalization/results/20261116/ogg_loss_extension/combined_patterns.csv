@@ -1,0 +1,17 @@
+domain,condition,seed,mlp_ogg@cosine,mlp_ogg@mse,mlp_ogg@mse_cosine,j_ogg@cosine,j_ogg@mse,j_ogg@mse_cosine
+ordinary,libero_object/task_1/init_0,1000,True,False,False,True,True,True
+ordinary,libero_object/task_1/init_0,1001,True,True,True,False,False,False
+ordinary,libero_object/task_9/init_2,1000,False,False,False,True,True,True
+ordinary,libero_object/task_9/init_2,1001,True,True,True,True,True,True
+ordinary,libero_object/task_2/init_2,1000,False,False,False,False,False,False
+ordinary,libero_object/task_2/init_2,1001,False,False,False,False,False,False
+ordinary,libero_object/task_7/init_1,1000,True,True,True,True,True,True
+ordinary,libero_object/task_7/init_1,1001,True,True,True,True,True,True
+plus,plus/cheese/sensor_noise/1,1000,True,True,True,False,False,False
+plus,plus/cheese/sensor_noise/1,1001,True,True,True,True,True,True
+plus,plus/soup/language_instructions/1,1000,True,True,True,True,True,True
+plus,plus/soup/language_instructions/1,1001,True,True,True,False,True,True
+plus,plus/view15,1000,False,False,False,False,False,False
+plus,plus/view15,1001,True,True,True,False,False,False
+plus,plus/soup/objects_layout/2,1000,False,True,True,False,True,False
+plus,plus/soup/objects_layout/2,1001,True,True,True,False,False,False

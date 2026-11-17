@@ -1,0 +1,161 @@
+condition,category,seed,method,success,env_steps,chunk_calls,policy_s,episode_wall_s,same_initial_signatures_as_H20
+plus/default,Historical camera,1000,H50,True,124,3,0.634995648637414,6.718970814719796,historical baseline
+plus/view10,Historical camera,1000,H50,True,128,3,0.6375402994453907,6.79602537304163,historical baseline
+plus/view15,Historical camera,1000,H50,False,280,6,1.2870639953762293,10.79594174772501,historical baseline
+plus/soup/background_textures/1,Background Textures,1000,H50,True,123,3,0.6462137661874294,7.03655563108623,historical baseline
+plus/view5,Historical camera,1000,H50,False,280,6,1.328789072111249,11.361336138099432,historical baseline
+plus/soup/background_textures/2,Background Textures,1000,H50,False,280,6,1.276155861094594,10.794554352760315,historical baseline
+plus/soup/camera_viewpoints/1,Camera Viewpoints,1000,H50,False,280,6,1.2545214630663395,10.573011619970202,historical baseline
+plus/soup/camera_viewpoints/2,Camera Viewpoints,1000,H50,False,280,6,1.3027593530714512,11.035646250471473,historical baseline
+plus/soup/language_instructions/1,Language Instructions,1000,H50,False,280,6,1.2936153654009104,10.757030960172415,historical baseline
+plus/soup/language_instructions/2,Language Instructions,1000,H50,True,124,3,0.6388091538101435,6.578471014276147,historical baseline
+plus/soup/light_conditions/1,Light Conditions,1000,H50,False,280,6,1.2705587465316057,11.235032411292195,historical baseline
+plus/soup/light_conditions/2,Light Conditions,1000,H50,True,136,3,0.6371310111135244,6.894051980227232,historical baseline
+plus/soup/objects_layout/1,Objects Layout,1000,H50,False,280,6,1.3318152446299791,13.044352691620588,historical baseline
+plus/soup/objects_layout/2,Objects Layout,1000,H50,False,280,6,1.3070567660033703,11.011945683509111,historical baseline
+plus/soup/robot_initial_states/1,Robot Initial States,1000,H50,True,130,3,0.63795998506248,6.69999561086297,historical baseline
+plus/soup/robot_initial_states/2,Robot Initial States,1000,H50,False,280,6,1.3572503849864006,10.976362459361553,historical baseline
+plus/soup/sensor_noise/1,Sensor Noise,1000,H50,True,139,3,0.6319229546934366,28.403456803411245,historical baseline
+plus/soup/sensor_noise/2,Sensor Noise,1000,H50,False,280,6,1.2896856348961592,13.05115370452404,historical baseline
+plus/cheese/background_textures/1,Background Textures,1000,H50,False,280,6,1.3224529884755611,11.002342583611608,historical baseline
+plus/cheese/background_textures/2,Background Textures,1000,H50,False,280,6,1.2444254457950592,10.540461502969265,historical baseline
+plus/cheese/camera_viewpoints/1,Camera Viewpoints,1000,H50,False,280,6,1.2830436807125807,10.785387767478824,historical baseline
+plus/cheese/camera_viewpoints/2,Camera Viewpoints,1000,H50,False,280,6,1.2740593273192644,10.681500228121877,historical baseline
+plus/cheese/language_instructions/1,Language Instructions,1000,H50,False,280,6,1.2546435203403234,10.49344041571021,historical baseline
+plus/cheese/language_instructions/2,Language Instructions,1000,H50,False,280,6,1.3009365014731884,11.091084536164999,historical baseline
+plus/cheese/light_conditions/1,Light Conditions,1000,H50,False,280,6,1.2625853531062603,10.928309736773372,historical baseline
+plus/cheese/light_conditions/2,Light Conditions,1000,H50,False,280,6,1.2591540291905403,10.91865723580122,historical baseline
+plus/cheese/objects_layout/1,Objects Layout,1000,H50,False,280,6,1.3460827991366386,13.930011441931129,historical baseline
+plus/cheese/objects_layout/2,Objects Layout,1000,H50,False,280,6,1.2614339403808117,10.842876615002751,historical baseline
+plus/cheese/robot_initial_states/1,Robot Initial States,1000,H50,False,280,6,1.2711369544267654,10.666125738993287,historical baseline
+plus/cheese/robot_initial_states/2,Robot Initial States,1000,H50,False,280,6,1.2536169588565826,10.536776771768928,historical baseline
+plus/cheese/sensor_noise/1,Sensor Noise,1000,H50,False,280,6,1.2701980285346508,11.568441860377789,historical baseline
+plus/cheese/sensor_noise/2,Sensor Noise,1000,H50,False,280,6,1.291167201474309,72.7539006266743,historical baseline
+plus/default,Historical camera,1000,H20,True,134,7,1.4612101167440414,7.8683794643729925,historical baseline
+plus/view10,Historical camera,1000,H20,True,121,7,1.5040574185550213,7.898502729833126,historical baseline
+plus/view15,Historical camera,1000,H20,True,137,7,1.4829961024224758,7.986152490600944,historical baseline
+plus/soup/background_textures/1,Background Textures,1000,H20,True,133,7,1.4687360674142838,7.804837271571159,historical baseline
+plus/view5,Historical camera,1000,H20,True,173,9,2.026141971349716,10.330350868403912,historical baseline
+plus/soup/background_textures/2,Background Textures,1000,H20,True,130,7,1.5098118335008621,7.746876768767834,historical baseline
+plus/soup/camera_viewpoints/1,Camera Viewpoints,1000,H20,False,280,14,2.9670584928244352,12.263270199298859,historical baseline
+plus/soup/camera_viewpoints/2,Camera Viewpoints,1000,H20,True,134,7,1.5399813950061798,8.480007715523243,historical baseline
+plus/soup/language_instructions/1,Language Instructions,1000,H20,True,129,7,1.4587143920361996,7.399415783584118,historical baseline
+plus/soup/language_instructions/2,Language Instructions,1000,H20,True,127,7,1.4605502765625715,7.474346533417702,historical baseline
+plus/soup/light_conditions/1,Light Conditions,1000,H20,True,129,7,1.5030997153371572,8.099500101059675,historical baseline
+plus/soup/light_conditions/2,Light Conditions,1000,H20,True,135,7,1.4850070904940367,7.730843428522348,historical baseline
+plus/soup/objects_layout/1,Objects Layout,1000,H20,True,190,10,2.2166960295289755,11.583622304722667,historical baseline
+plus/soup/objects_layout/2,Objects Layout,1000,H20,True,238,12,2.515337472781539,11.632046503946185,historical baseline
+plus/soup/robot_initial_states/1,Robot Initial States,1000,H20,True,126,7,1.5535365864634514,7.579198520630598,historical baseline
+plus/soup/robot_initial_states/2,Robot Initial States,1000,H20,False,280,14,2.971490580588579,12.353892248123884,historical baseline
+plus/soup/sensor_noise/1,Sensor Noise,1000,H20,True,142,8,1.7722942735999823,30.327204279601574,historical baseline
+plus/soup/sensor_noise/2,Sensor Noise,1000,H20,False,280,14,3.0884220898151398,15.482800273224711,historical baseline
+plus/cheese/background_textures/1,Background Textures,1000,H20,False,280,14,3.016924872994423,12.661721302196383,historical baseline
+plus/cheese/background_textures/2,Background Textures,1000,H20,False,280,14,2.9486997108906507,12.413408029824495,historical baseline
+plus/cheese/camera_viewpoints/1,Camera Viewpoints,1000,H20,False,280,14,3.036081425845623,12.681911699473858,historical baseline
+plus/cheese/camera_viewpoints/2,Camera Viewpoints,1000,H20,False,280,14,2.9325956609100103,12.895861949771643,historical baseline
+plus/cheese/language_instructions/1,Language Instructions,1000,H20,False,280,14,2.9508942142128944,12.226293321698904,historical baseline
+plus/cheese/language_instructions/2,Language Instructions,1000,H20,False,280,14,3.0565843246877193,12.801138089969754,historical baseline
+plus/cheese/light_conditions/1,Light Conditions,1000,H20,True,124,7,1.5148907117545605,7.514180084690452,historical baseline
+plus/cheese/light_conditions/2,Light Conditions,1000,H20,False,280,14,2.972681526094675,12.81312126480043,historical baseline
+plus/cheese/objects_layout/1,Objects Layout,1000,H20,True,232,12,2.5037734284996986,13.397542268037796,historical baseline
+plus/cheese/objects_layout/2,Objects Layout,1000,H20,False,280,14,3.029424760490656,12.84467183984816,historical baseline
+plus/cheese/robot_initial_states/1,Robot Initial States,1000,H20,True,271,14,2.973263533785939,12.45471528917551,historical baseline
+plus/cheese/robot_initial_states/2,Robot Initial States,1000,H20,True,121,7,1.4585576597601175,7.162213122472167,historical baseline
+plus/cheese/sensor_noise/1,Sensor Noise,1000,H20,True,120,6,1.2917409539222717,7.44892324320972,historical baseline
+plus/cheese/sensor_noise/2,Sensor Noise,1000,H20,False,280,14,2.97786283493042,73.47858723439276,historical baseline
+plus/cheese/language_instructions/1,Language Instructions,1000,H10,False,280,28,5.924411127343774,15.79171684011817,True
+plus/cheese/sensor_noise/1,Sensor Noise,1000,H10,True,117,12,2.5319773852825165,8.874505637213588,True
+plus/view15,Historical camera,1000,H10,True,162,17,3.7292580101639032,11.502979369834065,True
+plus/soup/robot_initial_states/2,Robot Initial States,1000,H10,False,280,28,6.138424405828118,16.62080397643149,True
+plus/cheese/light_conditions/2,Light Conditions,1000,H10,False,280,28,6.001335302367806,16.475745275616646,True
+plus/soup/light_conditions/1,Light Conditions,1000,H10,True,129,13,2.9555688872933388,10.517811676487327,True
+plus/soup/sensor_noise/1,Sensor Noise,1000,H10,True,145,15,3.1808257829397917,32.194168999791145,True
+plus/soup/language_instructions/1,Language Instructions,1000,H10,True,165,17,3.5363620053976774,11.317159071564674,True
+plus/view5,Historical camera,1000,H10,False,280,28,6.393767695873976,17.51184330135584,True
+plus/cheese/camera_viewpoints/2,Camera Viewpoints,1000,H10,False,280,28,6.274913774803281,18.33827161602676,True
+plus/soup/objects_layout/2,Objects Layout,1000,H10,False,280,28,5.958628047257662,16.063969373703003,True
+plus/cheese/robot_initial_states/2,Robot Initial States,1000,H10,True,122,13,2.8773799166083336,9.235197892412543,True
+plus/cheese/objects_layout/1,Objects Layout,1000,H10,False,280,28,6.253956304863095,20.144945872947574,True
+plus/soup/objects_layout/1,Objects Layout,1000,H10,True,259,26,5.502295933663845,17.463418148458004,True
+plus/view10,Historical camera,1000,H10,True,167,17,3.7958860900253057,12.025831615552306,True
+plus/soup/camera_viewpoints/2,Camera Viewpoints,1000,H10,True,170,17,3.734080959111452,12.384898606687784,True
+plus/soup/sensor_noise/2,Sensor Noise,1000,H10,True,210,21,4.5588055569678545,15.243814777582884,True
+plus/soup/camera_viewpoints/1,Camera Viewpoints,1000,H10,False,280,28,6.09309840016067,17.867491791024804,True
+plus/soup/light_conditions/2,Light Conditions,1000,H10,True,141,15,3.2835348322987556,10.575514471158385,True
+plus/soup/robot_initial_states/1,Robot Initial States,1000,H10,True,118,12,2.7689842991530895,9.366774007678032,True
+plus/cheese/sensor_noise/2,Sensor Noise,1000,H10,False,280,28,6.148521980270743,79.51009227894247,True
+plus/cheese/background_textures/1,Background Textures,1000,H10,True,128,13,2.8518463242799044,9.373707711696625,True
+plus/cheese/light_conditions/1,Light Conditions,1000,H10,False,280,28,5.92980576865375,16.16841887868941,True
+plus/default,Historical camera,1000,H10,True,129,13,3.554292816668749,11.428936569020152,True
+plus/cheese/robot_initial_states/1,Robot Initial States,1000,H10,True,118,12,2.597415041178465,8.81768831051886,True
+plus/cheese/camera_viewpoints/1,Camera Viewpoints,1000,H10,False,280,28,6.536986351013184,17.55912152864039,True
+plus/cheese/language_instructions/2,Language Instructions,1000,H10,True,166,17,3.66645341552794,11.20089127868414,True
+plus/cheese/background_textures/2,Background Textures,1000,H10,False,280,28,6.068828018382192,16.174756744876504,True
+plus/soup/background_textures/1,Background Textures,1000,H10,True,129,13,2.8838035464286804,9.849382225424051,True
+plus/soup/background_textures/2,Background Textures,1000,H10,True,169,17,3.8142265006899834,11.630152367055416,True
+plus/soup/language_instructions/2,Language Instructions,1000,H10,True,141,15,3.2503858637064695,10.69745646417141,True
+plus/cheese/objects_layout/2,Objects Layout,1000,H10,False,280,28,6.253684628754854,16.628680389374495,True
+plus/soup/objects_layout/2,Objects Layout,1000,H5,False,280,56,12.086959429085255,21.90736318193376,True
+plus/cheese/objects_layout/1,Objects Layout,1000,H5,True,194,39,9.006774622946978,20.306268863379955,True
+plus/view5,Historical camera,1000,H5,False,280,56,12.708565440028906,24.393063684925437,True
+plus/soup/sensor_noise/2,Sensor Noise,1000,H5,False,280,56,12.268980383872986,24.888137437403202,True
+plus/soup/background_textures/2,Background Textures,1000,H5,True,174,35,7.847495570778847,15.33606113679707,True
+plus/soup/objects_layout/1,Objects Layout,1000,H5,False,280,56,12.094999000430107,25.113213857635856,True
+plus/cheese/robot_initial_states/1,Robot Initial States,1000,H5,True,176,36,7.690575314685702,14.980624727904797,True
+plus/soup/camera_viewpoints/1,Camera Viewpoints,1000,H5,False,280,56,12.86231060884893,24.31331648118794,True
+plus/cheese/background_textures/2,Background Textures,1000,H5,False,280,56,11.609835593029857,20.991724763065577,True
+plus/cheese/sensor_noise/1,Sensor Noise,1000,H5,True,118,24,5.026440761983395,11.118788801133633,True
+plus/cheese/language_instructions/1,Language Instructions,1000,H5,False,280,56,11.892845567315817,21.37756916694343,True
+plus/soup/light_conditions/1,Light Conditions,1000,H5,True,272,55,11.991170221939683,23.290050115436316,True
+plus/cheese/light_conditions/1,Light Conditions,1000,H5,True,136,28,5.9505767822265625,12.291410433128476,True
+plus/view15,Historical camera,1000,H5,True,250,50,11.116754611954093,21.832653561607003,True
+plus/cheese/robot_initial_states/2,Robot Initial States,1000,H5,True,129,26,5.707204112783074,11.96252753958106,True
+plus/soup/background_textures/1,Background Textures,1000,H5,True,132,27,5.913990704342723,12.515669433400035,True
+plus/soup/robot_initial_states/1,Robot Initial States,1000,H5,True,127,26,5.775510603561997,12.260459618642926,True
+plus/cheese/light_conditions/2,Light Conditions,1000,H5,False,280,56,12.455901838839054,22.941177900880575,True
+plus/soup/robot_initial_states/2,Robot Initial States,1000,H5,False,280,56,12.629506094381213,23.427112409844995,True
+plus/soup/language_instructions/1,Language Instructions,1000,H5,True,134,27,5.690951768308878,12.80054072290659,True
+plus/cheese/camera_viewpoints/2,Camera Viewpoints,1000,H5,False,280,56,12.805601507425308,24.482068622484803,True
+plus/default,Historical camera,1000,H5,False,280,56,12.9022565651685,24.666590865701437,True
+plus/cheese/sensor_noise/2,Sensor Noise,1000,H5,False,280,56,12.341812619939446,89.56623263470829,True
+plus/cheese/camera_viewpoints/1,Camera Viewpoints,1000,H5,False,280,56,12.67721171490848,23.493020618334413,True
+plus/soup/camera_viewpoints/2,Camera Viewpoints,1000,H5,False,280,56,12.575347159057856,24.905775036662817,True
+plus/soup/sensor_noise/1,Sensor Noise,1000,H5,True,127,26,5.650092512369156,33.021765699610114,True
+plus/cheese/background_textures/1,Background Textures,1000,H5,True,176,36,7.8438721392303705,14.943387126550078,True
+plus/cheese/objects_layout/2,Objects Layout,1000,H5,False,280,56,12.566844576969743,22.909689739346504,True
+plus/cheese/language_instructions/2,Language Instructions,1000,H5,True,180,36,7.805080879479647,15.279408572241664,True
+plus/soup/language_instructions/2,Language Instructions,1000,H5,True,127,26,5.833896389231086,12.815489392727613,True
+plus/view10,Historical camera,1000,H5,False,280,56,12.401379577815533,23.30116230994463,True
+plus/soup/light_conditions/2,Light Conditions,1000,H5,False,280,56,12.389256590977311,23.61824862100184,True
+plus/cheese/light_conditions/2,Light Conditions,1000,H1,False,280,280,62.448682591319084,73.54604465141892,True
+plus/cheese/background_textures/1,Background Textures,1000,H1,False,280,280,62.73829126358032,73.31710854172707,True
+plus/cheese/camera_viewpoints/1,Camera Viewpoints,1000,H1,False,280,280,62.13530698977411,73.26189810782671,True
+plus/cheese/language_instructions/1,Language Instructions,1000,H1,False,280,280,61.04668609239161,71.46327404677868,True
+plus/soup/robot_initial_states/2,Robot Initial States,1000,H1,True,213,213,47.428417006507516,57.26416467316449,True
+plus/view15,Historical camera,1000,H1,False,280,280,63.36937275156379,75.95787361077964,True
+plus/cheese/background_textures/2,Background Textures,1000,H1,False,280,280,61.291037337854505,71.85415574908257,True
+plus/cheese/sensor_noise/1,Sensor Noise,1000,H1,False,280,280,62.18046450801194,74.21330666542053,True
+plus/soup/objects_layout/2,Objects Layout,1000,H1,False,280,280,62.80101288110018,73.83969839848578,True
+plus/soup/objects_layout/1,Objects Layout,1000,H1,False,280,280,60.07913703471422,74.9577279984951,True
+plus/cheese/robot_initial_states/2,Robot Initial States,1000,H1,False,280,280,60.117442985996604,71.13744981214404,True
+plus/soup/robot_initial_states/1,Robot Initial States,1000,H1,True,225,225,49.86686757951975,59.48159610107541,True
+plus/soup/camera_viewpoints/1,Camera Viewpoints,1000,H1,False,280,280,63.14335687831044,74.79577223397791,True
+plus/default,Historical camera,1000,H1,False,280,280,60.95404909364879,72.5104529876262,True
+plus/cheese/sensor_noise/2,Sensor Noise,1000,H1,False,280,280,59.82735971920192,133.76195032149553,True
+plus/soup/language_instructions/2,Language Instructions,1000,H1,False,280,280,62.56048406474292,74.56831384636462,True
+plus/view5,Historical camera,1000,H1,False,280,280,64.05219289846718,76.58365681953728,True
+plus/soup/background_textures/1,Background Textures,1000,H1,False,280,280,61.78284914419055,72.76109660044312,True
+plus/view10,Historical camera,1000,H1,False,280,280,63.95506341941655,75.74746232666075,True
+plus/cheese/light_conditions/1,Light Conditions,1000,H1,True,147,147,30.89267984777689,37.58902176655829,True
+plus/soup/light_conditions/1,Light Conditions,1000,H1,True,243,243,53.907365154474974,65.40396041981876,True
+plus/cheese/robot_initial_states/1,Robot Initial States,1000,H1,True,209,209,45.609169255942106,54.08104329369962,True
+plus/soup/sensor_noise/2,Sensor Noise,1000,H1,False,280,280,63.15780694782734,77.81938903592527,True
+plus/soup/language_instructions/1,Language Instructions,1000,H1,False,280,280,59.62514605559409,70.69557569921017,True
+plus/cheese/objects_layout/1,Objects Layout,1000,H1,False,280,280,62.95768141373992,77.2016136571765,True
+plus/cheese/objects_layout/2,Objects Layout,1000,H1,False,280,280,59.75967971980572,70.20932320319116,True
+plus/cheese/language_instructions/2,Language Instructions,1000,H1,False,280,280,61.44647010229528,72.18600487709045,True
+plus/soup/light_conditions/2,Light Conditions,1000,H1,False,280,280,62.43778470158577,74.58723885193467,True
+plus/soup/sensor_noise/1,Sensor Noise,1000,H1,True,176,176,37.80224475823343,72.70191738381982,True
+plus/cheese/camera_viewpoints/2,Camera Viewpoints,1000,H1,False,280,280,60.60833923146129,72.93771493248641,True
+plus/soup/background_textures/2,Background Textures,1000,H1,False,280,280,62.85061564296484,73.67649017833173,True
+plus/soup/camera_viewpoints/2,Camera Viewpoints,1000,H1,False,280,280,61.60291089862585,74.39639865234494,True

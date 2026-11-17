@@ -18,6 +18,7 @@ REPO=HERE.parents[1]
 sys.dont_write_bytecode=True  # 复用旧分析函数时不向原脚本目录写入字节缓存。
 sys.path.insert(0,str(REPO/'scripts'))
 from corrector_results_analysis import coverage_stats,residual_mse_from_norms
+from motion_data import load_motion
 
 
 def finite(v):return isinstance(v,(int,float)) and not isinstance(v,bool) and math.isfinite(v)
@@ -183,10 +184,12 @@ class Catalog:
                     forced='forced_check' in prefix or bool(protocol.get('debug_forced_event'))
                     group='混合 Corrector' if 'hybrid' in source.path.parent.name else ('Object10 五模型' if 'corrector_audit' in str(source.path) else source.path.parent.name.replace('_20261111',''))
                     group=protocol.get('experiment_label',group)
+                    objective=protocol.get('ogg_loss')
                     self.runs[uid]={'id':uid,'model':variant,'method':case['method'],'task':int(match[1]) if match else condition_meta.get('task_id'),
                         'init':int(match[2]) if match else condition_meta.get('init'),'seed':case.get('seed'),'condition':case.get('condition'),
                         'success':result.get('success'),'status':record['status'],'steps':result.get('env_steps'),
                         'experiment':group,'forced':forced,'source_name':source.path.name,'member':member,
+                        'ogg_loss_mode':objective.get('loss_mode') if isinstance(objective,dict) else None,
                         '_source':source,'_prefix':prefix,'_record':record,'_protocol':protocol}
                 except (ValueError,KeyError,TypeError) as e:self.errors.append(member+': '+str(e))
 
@@ -315,6 +318,7 @@ class Catalog:
         return clean({'run':public,'metrics':result,'coverage':coverage,'first_due':first,'horizon_steps':horizon,
             'control_fps':fps,'steps':steps,'events':events,'video':video,'warnings':list(dict.fromkeys(warnings)),
             'targets':targets,'queue_trace':queue_trace,'actual_protocol':actual,'protocol':p,
+            'motion':load_motion(source,base,record,n,fps),
             'source':{'archive':source.path.name,'member':r['member'],'trial_sha256':hashlib.sha256(source.read(r['member'])).hexdigest()},
             'limits':['环境步对齐不等于操作阶段对齐','仿真控制时间、视频PTS与推理墙钟分别呈现',
                 '未保存的预测Tensor/机器人测量状态不恢复或伪造','推导动作块仅在总调用次数核对一致时显示，区别于逐次调用实测']})

@@ -1,0 +1,58 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
+const {chromium}=require(process.env.REPLAY_PLAYWRIGHT||'playwright');
+const base=process.env.REPLAY_URL||'http://127.0.0.1:8874';
+const out=path.resolve(__dirname,'../.local/review/loss_casebank');fs.mkdirSync(out,{recursive:true});
+(async()=>{
+ const browser=await chromium.launch({headless:true,executablePath:process.env.REPLAY_BROWSER,args:['--no-sandbox']});
+ const result={checks:[],errors:[]};
+ try{
+  const page=await browser.newPage({viewport:{width:1600,height:1000}});page.on('pageerror',e=>result.errors.push(e.message));
+  await page.goto(base);await page.waitForSelector('#runList button');
+  await page.locator('#videoOnly').check();await page.locator('#casebankOpen').click();
+  await page.locator('#casebankPreset').selectOption('loss_all');
+  assert((await page.locator('#casebankCount').textContent()).includes('8个测试条件'));
+  assert((await page.locator('#casebankCount').textContent()).includes('6种初始仿真状态指纹'));
+  await page.locator('#casebankStudy').selectOption('reviewed_ogg_losses_pilot_ordinary_20261116');
+  assert.equal(await page.locator('#casebankRows tr').count(),2);
+  assert.equal(await page.locator('#casebankHead th').count(),8);
+  assert((await page.locator('#casebankRows').textContent()).includes('视频✓ / trace✓ / 动作✓'));
+  await page.locator('#casebankStudy').selectOption('reviewed_ogg_losses_pilot_plus_20261116');
+  assert.equal(await page.locator('#casebankRows tr').count(),2);
+  await page.locator('#casebankFrom').selectOption('mlp_ogg@cosine');await page.locator('#casebankTo').selectOption('mlp_ogg@mse');
+  await page.screenshot({path:path.join(out,'six_loss_columns.png')});
+  await page.locator('#casebankRows button').first().click();
+  await page.waitForFunction(()=>document.querySelector('#videoB').readyState>=2);
+  const labels=await page.locator('#labelA,#labelB').allTextContents();assert(labels.every(v=>v.includes('mlp_ogg')));
+  assert(labels[0].includes('余弦'));assert(labels[1].includes('MSE'));
+  const protocol=JSON.parse(await page.locator('#protocol').textContent());assert.equal(protocol.protocol.ogg_loss.loss_mode,'cosine');
+  const source=(await (await page.request.get(base+'/api/casebank')).json()).groups.find(g=>g.study==='reviewed_ogg_losses_pilot_plus_20261116');
+  const a=await (await page.request.get(base+'/api/run?id='+source.methods['mlp_ogg@cosine'].id)).json();
+  const b=await (await page.request.get(base+'/api/run?id='+source.methods['mlp_ogg@mse'].id)).json();
+  assert.equal(a.run.condition,b.run.condition);assert.equal(a.run.seed,b.run.seed);assert.equal(b.protocol.ogg_loss.loss_mode,'mse');
+  await page.locator('#stepInput').fill('65');await page.locator('#stepInput').press('Tab');
+  await page.waitForFunction(()=>Math.abs(document.querySelector('#videoA').currentTime-3.251)<.02&&Math.abs(document.querySelector('#videoB').currentTime-3.251)<.02);
+  result.checks.push('six real same-condition loss configurations, complete/video filters and direct cosine-vs-MSE paired playback');
+  await page.locator('#casebankOpen').click();await page.locator('#casebankPreset').selectOption('loss_joint');
+  await page.locator('#casebankStudy').selectOption('reviewed_ogg_losses_pilot_ordinary_20261116');
+  assert.equal(await page.locator('#casebankHead th').count(),5);assert.equal(await page.locator('#casebankRows tr').count(),2);
+  await page.locator('#casebankPattern').selectOption('000');assert.equal(await page.locator('#casebankRows tr').count(),1);
+  result.checks.push('three-loss J view and failure-combination filter select the actual failed ordinary trial');
+  await page.locator('#casebankPattern').selectOption('');
+  await page.locator('#casebankStudy').selectOption('reviewed_ogg_losses_extension_plus_20261116');
+  await page.locator('#casebankPattern').selectOption('010');assert.equal(await page.locator('#casebankRows tr').count(),1);
+  assert((await page.locator('#casebankRows').textContent()).includes('plus/soup/objects_layout/2'));
+  await page.locator('#casebankFrom').selectOption('j_ogg@cosine');await page.locator('#casebankTo').selectOption('j_ogg@mse');
+  await page.screenshot({path:path.join(out,'j_mse_recovery_case.png')});
+  await page.locator('#casebankRows button').first().click();await page.waitForFunction(()=>document.querySelector('#videoB').readyState>=2);
+  assert((await page.locator('#labelA').textContent()).includes('余弦'));assert((await page.locator('#labelB').textContent()).includes('MSE'));
+  const bank=await (await page.request.get(base+'/api/casebank')).json();const flip=bank.groups.find(g=>g.study==='reviewed_ogg_losses_extension_plus_20261116'&&g.condition==='plus/soup/objects_layout/2'&&g.seed===1000);
+  assert.equal(flip.methods['j_ogg@cosine'].success,false);assert.equal(flip.methods['j_ogg@mse'].success,true);
+  const main=await (await page.request.get(base+'/api/run?id='+flip.methods['j_ogg@cosine'].id)).json();
+  const guide=main.events.find(e=>e.kind==='ogg');assert(guide);await page.locator('#stepInput').fill(String(guide.step));await page.locator('#stepInput').press('Tab');
+  await page.waitForFunction(n=>Number(document.querySelector('#clockStep').textContent)===n,guide.step);
+  assert((await page.locator('#stepEvents').textContent()).includes('OGG'));
+  result.checks.push('real Plus J cosine-failure/MSE-success/both-failure case opens with video and actual guidance-step inspection');
+  assert.deepEqual(result.errors,[]);result.status='passed';
+ }catch(e){result.status='failed';result.failure=e.stack;throw e;}
+ finally{fs.writeFileSync(path.join(out,'acceptance.json'),JSON.stringify(result,null,2));console.log(JSON.stringify(result,null,2));await browser.close();}
+})().catch(e=>{console.error(e);process.exit(1);});

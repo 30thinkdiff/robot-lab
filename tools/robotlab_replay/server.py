@@ -104,10 +104,35 @@ def export_report(catalog,uids,step,note='',alignment=None):
         if not isinstance(weights,dict):weights={}
         source['checkpoint_hashes']={name:{k:v for k,v in meta.items() if k.endswith('sha256')} for name,meta in weights.items() if isinstance(meta,dict)}
         if isinstance(protocol.get('checkpoint'),dict):source['checkpoint_hashes']['predictor']={k:v for k,v in protocol['checkpoint'].items() if k.endswith('sha256')}
+        if protocol.get('joint_checkpoint_sha256'):source['checkpoint_hashes']['joint']={'checkpoint_sha256':protocol['joint_checkpoint_sha256']}
+        if isinstance(protocol.get('legacy_weights'),dict):
+            for name,meta in protocol['legacy_weights'].items():
+                if isinstance(meta,dict):source['checkpoint_hashes']['legacy/'+name]={k:v for k,v in meta.items() if k.endswith('sha256')}
         config=catalog.runs[r['id']]['_record']['case'].get('config',{})
-        source['method_configuration']={k:config[k] for k in ['detector','guide','model','mode','family','phase','anchor_pattern','n_action_steps','action_steps','uses_corrector','corrector_sha256'] if k in config}
+        source['method_configuration']={k:config[k] for k in ['detector','guide','model','mode','family','phase','anchor_pattern','n_action_steps','action_steps','uses_corrector','corrector_sha256','ogg_loss_mode'] if k in config}
+        if isinstance(protocol.get('ogg_loss'),dict):
+            source['ogg_guidance_objective']={k:protocol['ogg_loss'][k] for k in ['loss_mode','eta','combination','support','loss_source_sha256'] if k in protocol['ogg_loss']}
         if isinstance(protocol.get('calibration'),dict):source['frozen_configuration']['trigger_rule']=protocol['calibration'].get('rule')
         (folder/f'{label}_lvm.svg').write_text(chart_svg(d,step))
+        motion=d.get('motion',{})
+        source['motion']={k:motion[k] for k in ['available','schema','verified','phase','nominal_limit','files_sha256','message'] if k in motion}
+        if motion.get('available') and 0<=step<len(motion['rows']):
+            from motion_data import motion_chart_svg
+            (folder/f'{label}_motion.svg').write_text(motion_chart_svg(d,step))
+            payload={'source':source,'environment_step':step,'phase':motion['phase'],
+                     'motion_step':motion['rows'][step]}
+            (folder/f'{label}_motion_step.json').write_text(json.dumps(payload,ensure_ascii=False,indent=2)+'\n')
+            with (folder/f'{label}_motion_errors.csv').open('w',newline='') as f:
+                fields=['step','chunk_id','slot','sim_before_s','sim_after_s','osc_position_error_m',
+                        'osc_orientation_error_rad','nominal_position_error_m','controller_updates','clipped_updates','peak_command_torque_l2']
+                w=csv.DictWriter(f,fieldnames=fields);w.writeheader()
+                for row in motion['rows']:
+                    w.writerow({'step':row['step'],'chunk_id':row['chunk_id'],'slot':row['slot'],
+                        'sim_before_s':row['before']['sim_time_s'],'sim_after_s':row['after']['sim_time_s'],
+                        'osc_position_error_m':row.get('tracking_error',{}).get('position_m'),
+                        'osc_orientation_error_rad':row.get('tracking_error',{}).get('orientation_rad'),
+                        'nominal_position_error_m':row.get('nominal_block_error',{}).get('position_m'),
+                        **{k:row.get(k) for k in fields[-3:]}})
         # Exports contain selected numeric fields, no private absolute filesystem paths.
         selected={k:metrics.get(k) for k in ['success','env_steps','chunk_calls','event_replans','guidance_calls','policy_s','monitor_s']}
         report += [f'## {label} · {r["model"]} / {r["method"]}',f'条件：{r["condition"]}；seed={r["seed"]}；当前原始环境步={step}',
@@ -192,7 +217,7 @@ class Handler(BaseHTTPRequestHandler):
                 if not path.is_file():raise KeyError('文件不存在')
                 mime={'.png':'image/png','.svg':'image/svg+xml','.json':'application/json','.csv':'text/csv','.md':'text/plain'}.get(path.suffix,'application/octet-stream')
                 self.file(path,mime);return
-            static={'/':'index.html','/app.js':'app.js','/diagnostics.js':'diagnostics.js','/style.css':'style.css',
+            static={'/':'index.html','/app.js':'app.js','/motion.js':'motion.js','/diagnostics.js':'diagnostics.js','/style.css':'style.css',
                 '/workspace.js':'workspace.js','/workspace_model.mjs':'workspace_model.mjs','/workspace.css':'workspace.css'}
             static['/casebank.js']='casebank.js'
             static['/comparison_model.mjs']='comparison_model.mjs'

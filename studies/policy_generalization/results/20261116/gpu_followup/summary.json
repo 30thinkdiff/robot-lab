@@ -1,0 +1,168 @@
+{
+  "execution": {
+    "status": "completed",
+    "started_utc": "2026-11-16T07:01:20.494995+00:00",
+    "max_seconds": 21566.674598932266,
+    "min_free_gib": 5,
+    "stop_file": "/root/corrector_gpu_followup_20261116_001/plus_horizons/STOP",
+    "wall_seconds": 3616.9887274373323,
+    "planned": 96,
+    "completed": 96,
+    "errors": 0,
+    "reason": "all_planned_trials_completed"
+  },
+  "methods": {
+    "H50": {
+      "completed": 32,
+      "successes": 7,
+      "success_rate": 0.21875,
+      "mean_env_steps": 247,
+      "mean_chunk_calls": 5.34375,
+      "mean_policy_s": 1.145586919854395,
+      "mean_episode_wall_s": 12.828225384640973,
+      "mean_peak_torch_allocated_gib": 2.8859923481941223
+    },
+    "H20": {
+      "completed": 32,
+      "successes": 20,
+      "success_rate": 0.625,
+      "mean_env_steps": 200.1875,
+      "mean_chunk_calls": 10.3125,
+      "mean_policy_s": 2.2077849226188846,
+      "mean_episode_wall_s": 12.901110507023986,
+      "mean_peak_torch_allocated_gib": 2.8859923481941223
+    },
+    "H10": {
+      "completed": 32,
+      "successes": 19,
+      "success_rate": 0.59375,
+      "mean_env_steps": 203.90625,
+      "mean_chunk_calls": 20.59375,
+      "mean_policy_s": 4.532804530404974,
+      "mean_episode_wall_s": 16.204879595898092,
+      "mean_peak_torch_allocated_gib": 2.878000169992447,
+      "mean_denoise_forward_calls": 205.9375,
+      "command_translation_delta_mean": 0.08651378806659474
+    },
+    "H5": {
+      "completed": 32,
+      "successes": 15,
+      "success_rate": 0.46875,
+      "mean_env_steps": 225.375,
+      "mean_chunk_calls": 45.28125,
+      "mean_policy_s": 10.00375003949739,
+      "mean_episode_wall_s": 22.2203304086579,
+      "mean_peak_torch_allocated_gib": 2.877993106842041,
+      "mean_denoise_forward_calls": 452.8125,
+      "command_translation_delta_mean": 0.08647786063716778
+    },
+    "H1": {
+      "completed": 32,
+      "successes": 6,
+      "success_rate": 0.1875,
+      "mean_env_steps": 265.40625,
+      "mean_chunk_calls": 265.40625,
+      "mean_policy_s": 58.57612399908248,
+      "mean_episode_wall_s": 72.64089673262788,
+      "mean_peak_torch_allocated_gib": 2.877993106842041,
+      "mean_denoise_forward_calls": 2654.0625,
+      "command_translation_delta_mean": 0.08398557887866044
+    }
+  },
+  "paired_vs_H20": {
+    "H10": {
+      "both_success": 16,
+      "both_failure": 9,
+      "new_only_success": 3,
+      "H20_only_success": 4
+    },
+    "H5": {
+      "both_success": 13,
+      "both_failure": 10,
+      "new_only_success": 2,
+      "H20_only_success": 7
+    },
+    "H1": {
+      "both_success": 5,
+      "both_failure": 11,
+      "new_only_success": 1,
+      "H20_only_success": 15
+    }
+  },
+  "categories": {
+    "Background Textures": {
+      "n": 4,
+      "H50": 1,
+      "H20": 2,
+      "H10": 3,
+      "H5": 3,
+      "H1": 0
+    },
+    "Camera Viewpoints": {
+      "n": 4,
+      "H50": 0,
+      "H20": 1,
+      "H10": 1,
+      "H5": 0,
+      "H1": 0
+    },
+    "Historical camera": {
+      "n": 4,
+      "H50": 2,
+      "H20": 4,
+      "H10": 3,
+      "H5": 1,
+      "H1": 0
+    },
+    "Language Instructions": {
+      "n": 4,
+      "H50": 1,
+      "H20": 2,
+      "H10": 3,
+      "H5": 3,
+      "H1": 0
+    },
+    "Light Conditions": {
+      "n": 4,
+      "H50": 1,
+      "H20": 3,
+      "H10": 2,
+      "H5": 2,
+      "H1": 2
+    },
+    "Objects Layout": {
+      "n": 4,
+      "H50": 0,
+      "H20": 3,
+      "H10": 1,
+      "H5": 1,
+      "H1": 0
+    },
+    "Robot Initial States": {
+      "n": 4,
+      "H50": 1,
+      "H20": 3,
+      "H10": 3,
+      "H5": 3,
+      "H1": 3
+    },
+    "Sensor Noise": {
+      "n": 4,
+      "H50": 1,
+      "H20": 2,
+      "H10": 3,
+      "H5": 2,
+      "H1": 1
+    }
+  },
+  "initial_signatures_verified": 96,
+  "queue_audits_passed": 96,
+  "scope": "32 previously selected Plus conditions, eval seed1000; not full benchmark or independent seed replication",
+  "captured_utc": "2026-11-16T08:02:59.330463+00:00",
+  "source_snapshot_sha256": "8aba51fd2c3c6b672b497f2eca33af16efee565677529419fd0ee466ee3ecc12",
+  "queue_status": "completed",
+  "disk_free_gib": {
+    "/root": 11.009239196777344,
+    "/root/autodl-tmp": 11.07717514038086
+  }
+}

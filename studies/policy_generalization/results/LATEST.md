@@ -1,6 +1,8 @@
 # 实验结果总入口
 
-本地快照截止：**2026-11-14 00:14:34 北京时间**。本地文件不会自动追随服务器变化。
+11月16日后续均已完成、错误0：[12回合运动与96回合Plus Horizon](20261116/gpu_followup/RESULTS.md)、[原24回合OGG Pilot](20261116/ogg_loss/RESULTS.md)、[新增72＋复用24的累计96回合OGG损失对照](20261116/ogg_loss_extension/RESULTS.md)。两组“96”是不同实验，不混算。H10/H5/H1为19/32、15/32、6/32，旧H20为20/32。累计loss对照J为余弦7/16、MSE9/16、组合8/16，MLP各11/16；存在个别结局翻转，尚不宣称稳定/显著提升。Replay已导入12条motion及96条loss回放，并提供六配置成败样本库与真实运动诊断。
+
+以下旧扩展阶段最终快照截止：**2026-11-14 00:14:34 北京时间**。
 
 - [本次完整指标报告](20261114/expanded_snapshot_20261113T161434Z/RESULTS.md)：新70条数据训练对照、普通LIBERO、Plus首轮17方法、复测快照和逐类结果。
 - [机器可读摘要](20261114/expanded_snapshot_20261113T161434Z/summary.json) · [新训练汇总](20261114/expanded_snapshot_20261113T161434Z/training_runs.csv) · [逐层验证指标](20261114/expanded_snapshot_20261113T161434Z/training_layers.csv)。
@@ -38,7 +40,11 @@
 - [扰动类别](20261114/expanded_snapshot_20261113T161434Z/plus_plus/categories.csv) · [逐回合](20261114/expanded_snapshot_20261113T161434Z/plus_plus/cases.csv) · [严格配对差异](20261114/expanded_snapshot_20261113T161434Z/plus_plus/comparisons.csv)。
 - [J逐层预测误差](20261114/expanded_snapshot_20261113T161434Z/plus_plus/prediction_layers.csv)：来自已记录RMS/cosine的推导，仅有效评分窗口，不是全量离线预测。
 
+[Replay新增代表案例：J/MLP四方法与54条Plus完整回放](20261114/replay_representative_cases/RESULTS.md)；普通3组完整、1组旧MLP明确缺视频，Plus首轮与复测分开。
+
 [最终复盘：配对得失、三种子复现与Replay候选](20261114/expanded_final_review_20261114_002/RESULTS.md)。
+
+[动作块与实际运动数据审计：六回合、36块、1263步](20261114/motion_evidence/RESULTS.md)。旧数据可核验命令传递，缺逐步状态与OSC目标，不能计算运动gap；新采集器仅CPU验证，未启动GPU。
 
 ## 当前队列已完成：历史指标与状态核查
 

@@ -1,0 +1,33 @@
+condition,seed,category,H50,H20,H10,H5,H1
+plus/cheese/background_textures/1,1000,Background Textures,False,False,True,True,False
+plus/cheese/background_textures/2,1000,Background Textures,False,False,False,False,False
+plus/cheese/camera_viewpoints/1,1000,Camera Viewpoints,False,False,False,False,False
+plus/cheese/camera_viewpoints/2,1000,Camera Viewpoints,False,False,False,False,False
+plus/cheese/language_instructions/1,1000,Language Instructions,False,False,False,False,False
+plus/cheese/language_instructions/2,1000,Language Instructions,False,False,True,True,False
+plus/cheese/light_conditions/1,1000,Light Conditions,False,True,False,True,True
+plus/cheese/light_conditions/2,1000,Light Conditions,False,False,False,False,False
+plus/cheese/objects_layout/1,1000,Objects Layout,False,True,False,True,False
+plus/cheese/objects_layout/2,1000,Objects Layout,False,False,False,False,False
+plus/cheese/robot_initial_states/1,1000,Robot Initial States,False,True,True,True,True
+plus/cheese/robot_initial_states/2,1000,Robot Initial States,False,True,True,True,False
+plus/cheese/sensor_noise/1,1000,Sensor Noise,False,True,True,True,False
+plus/cheese/sensor_noise/2,1000,Sensor Noise,False,False,False,False,False
+plus/default,1000,Historical camera,True,True,True,False,False
+plus/soup/background_textures/1,1000,Background Textures,True,True,True,True,False
+plus/soup/background_textures/2,1000,Background Textures,False,True,True,True,False
+plus/soup/camera_viewpoints/1,1000,Camera Viewpoints,False,False,False,False,False
+plus/soup/camera_viewpoints/2,1000,Camera Viewpoints,False,True,True,False,False
+plus/soup/language_instructions/1,1000,Language Instructions,False,True,True,True,False
+plus/soup/language_instructions/2,1000,Language Instructions,True,True,True,True,False
+plus/soup/light_conditions/1,1000,Light Conditions,False,True,True,True,True
+plus/soup/light_conditions/2,1000,Light Conditions,True,True,True,False,False
+plus/soup/objects_layout/1,1000,Objects Layout,False,True,True,False,False
+plus/soup/objects_layout/2,1000,Objects Layout,False,True,False,False,False
+plus/soup/robot_initial_states/1,1000,Robot Initial States,True,True,True,True,True
+plus/soup/robot_initial_states/2,1000,Robot Initial States,False,False,False,False,True
+plus/soup/sensor_noise/1,1000,Sensor Noise,True,True,True,True,True
+plus/soup/sensor_noise/2,1000,Sensor Noise,False,False,True,False,False
+plus/view10,1000,Historical camera,True,True,True,False,False
+plus/view15,1000,Historical camera,False,True,True,True,False
+plus/view5,1000,Historical camera,False,True,False,False,False

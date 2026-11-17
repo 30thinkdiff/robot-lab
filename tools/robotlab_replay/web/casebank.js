@@ -1,11 +1,13 @@
 import {selectCaseGroups} from './comparison_model.mjs';
 const $=id=>document.getElementById(id),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const classicPatterns=['001','000','011','111','010','101','100','110'];
-const studyLabel=s=>({legacy_five_models:'旧正式五模型筛选库',hybrid_pilot:'混合引导自然Pilot',consistency_closed_loop:'规划 / 已执行闭环Pilot',horizon_pilot:'SmolVLA Horizon Pilot'})[s]||(s.startsWith('replay_casebank_')?'完整补测 · '+s:s);
+const studyLabel=s=>({reviewed_ogg_losses_pilot_ordinary_20261116:'OGG损失Pilot · 普通LIBERO · 六配置严格配对',reviewed_ogg_losses_pilot_plus_20261116:'OGG损失Pilot · Plus · 六配置严格配对',reviewed_ogg_losses_extension_ordinary_20261116:'OGG损失扩展 · 普通LIBERO · 六配置严格配对',reviewed_ogg_losses_extension_plus_20261116:'OGG损失扩展 · Plus · 六配置严格配对',reviewed_ordinary_j_mlp_20261114:'普通LIBERO · J与MLP四方法（桥接审查）',replay_casebank_representative_plus_20261114:'Plus首轮 · 成败与扰动精选',replay_casebank_representative_plus_replicates_20261114:'Plus选例复测 · 既有独立seed',legacy_five_models:'旧正式五模型筛选库',hybrid_pilot:'混合引导自然Pilot',consistency_closed_loop:'规划 / 已执行闭环Pilot',horizon_pilot:'SmolVLA Horizon Pilot'})[s]||(s.startsWith('replay_casebank_')?'完整补测 · '+s:s);
 
 export function setupCasebank({api,openPair,notify,getFilters=()=>({})}){
  let bank=null,current=[],selected=['H50','H20','mlp_ogg'],outcomes={};
- const presets={architectures:['mlp_ogg','transformer-h1_ogg','transformer-h3_ogg','transformer-a10-h1_ogg','transformer-a10-h3_ogg'],
+ const presets={joint_mlp:['j_lvm','j_ogg','mlp_lvm','mlp_ogg'],architectures:['mlp_ogg','transformer-h1_ogg','transformer-h3_ogg','transformer-a10-h1_ogg','transformer-a10-h3_ogg'],
+  loss_mlp:['mlp_ogg@cosine','mlp_ogg@mse','mlp_ogg@mse_cosine'],loss_joint:['j_ogg@cosine','j_ogg@mse','j_ogg@mse_cosine'],
+  loss_all:['mlp_ogg@cosine','mlp_ogg@mse','mlp_ogg@mse_cosine','j_ogg@cosine','j_ogg@mse','j_ogg@mse_cosine'],
   lvm_ogg:['transformer-h3_lvm','transformer-h3_ogg'],hybrid:['transformer-h1_ogg','hybrid_t1_a10_ogg'],consistency:['planned_lvm','executed_lvm'],horizon:['H50','H20','H10','H5','H2','H1']};
  const label=m=>bank.methods.find(r=>r.id===m)?.label||m;
  const patternLabel=p=>selected.map((m,i)=>`${label(m)}${p[i]==='1'?'成功':p[i]==='0'?'失败':'未记录'}`).join(' · ');
@@ -31,13 +33,14 @@ export function setupCasebank({api,openPair,notify,getFilters=()=>({})}){
   $('casebankCounts').querySelectorAll('button').forEach(b=>b.onclick=()=>{$('casebankPattern').value=b.dataset.pattern;render();});
   current=eligible.filter(g=>!pattern||g.pattern===pattern);
   $('casebankFlagStatus').textContent=(flags.videoOnly?'已同步左侧“仅本地有视频”；':'当前允许查看无视频旧记录；')+'成败顺序与下表方法列一致。多于4种方法时只列实际观察到的组合。';
-  $('casebankCount').textContent=`${current.length}组条件 · ${new Set(current.map(g=>g.condition)).size}个不同物理状态 · ${new Set(current.map(g=>g.seed)).size}个评测seed值；同一状态的重复执行不算新场景。`;
+  const known=current.filter(g=>g.initial_state_sha256);
+  $('casebankCount').textContent=`${current.length}组条件/seed · ${new Set(current.map(g=>g.condition)).size}个测试条件 · ${new Set(current.map(g=>g.seed)).size}个评测seed值`+(known.length===current.length&&current.length?` · ${new Set(known.map(g=>g.initial_state_sha256)).size}种初始仿真状态指纹（不含相机/语言/静态模型配置）`:'；条件名不同不保证物理状态不同。');
   $('casebankHead').innerHTML='<tr><th>配对条件</th>'+selected.map(m=>`<th>${esc(label(m))}</th>`).join('')+'<th>打开回放</th></tr>';
   const cell=r=>!r?'<span class="casebank-outcome missing">未记录</span><small>未运行 / 未导入；不是失败</small>':`<span class="casebank-outcome ${r.success===true?'success':r.success===false?'failure':'missing'}">${r.success===true?'成功':r.success===false?'失败':'结局未记录'}</span><small>${r.steps??'—'}步 · 视频${r.video?(r.video_bound?'✓':'独立'):'缺'} / trace${r.trace?'✓':/^H\d+$/.test(r.method)?'不适用':'缺'} / 动作${r.actions?'✓':'缺'}</small>`;
   const from=$('casebankFrom').value,to=$('casebankTo').value;
   $('casebankRows').innerHTML=current.map((g,i)=>{const ready=from!==to&&g.methods[from]&&g.methods[to];
    const shortcuts=$('casebankPreset').value==='classic'?['H50','H20'].map(m=>`<button data-index="${i}" data-base="${m}" ${!g.methods[m]||!g.methods[selected[2]]?'disabled':''}>${m} ↔ 参照</button>`).join(''):'';
-   return `<tr><td><strong>${esc(g.condition.replace('libero_object/',''))}</strong><small>seed ${g.seed} · ${esc(g.phase)}<br>${esc(studyLabel(g.study))}</small></td>${selected.map(m=>`<td>${cell(g.methods[m])}</td>`).join('')}<td><button data-index="${i}" ${ready?'':'disabled'}>打开所选两者</button>${shortcuts}<small>已记录配置 ${Object.keys(g.methods).length}</small></td></tr>`;
+   return `<tr><td><strong>${esc(g.condition.replace('libero_object/',''))}</strong><small>seed ${g.seed} · ${esc(g.phase)}<br>${esc(studyLabel(g.study))}${g.pairing_note?'<br>'+esc(g.pairing_note):''}</small></td>${selected.map(m=>`<td>${cell(g.methods[m])}</td>`).join('')}<td><button data-index="${i}" ${ready?'':'disabled'}>打开所选两者</button>${shortcuts}<small>已记录配置 ${Object.keys(g.methods).length}</small></td></tr>`;
   }).join('')||`<tr><td colspan="${selected.length+2}">没有满足条件的真实记录。可调整来源、逐方法结局或资料筛选；缺失结果不会当作失败。</td></tr>`;
   $('casebankRows').querySelectorAll('button[data-index]').forEach(b=>b.onclick=async()=>{const g=current[Number(b.dataset.index)],a=b.dataset.base||from,z=b.dataset.base?selected[2]:to;
    if(a===z||!g.methods[a]||!g.methods[z])return;$('casebankDialog').close();try{await openPair(g.methods[a].id,g.methods[z].id);}catch(e){notify('打开对照失败：'+e.message);}});
@@ -50,6 +53,8 @@ export function setupCasebank({api,openPair,notify,getFilters=()=>({})}){
   }render();$('casebankDialog').showModal();}catch(e){notify('样本库读取失败：'+e.message);}};
  $('casebankPreset').onchange=()=>{const preset=$('casebankPreset').value;$('casebankReferenceLabel').hidden=preset!=='classic';if(preset==='custom'){$('casebankMethodDetails').open=true;return;}
   if(preset==='horizon')$('casebankStudy').value='horizon_pilot';
+  if(preset==='joint_mlp')$('casebankStudy').value='';
+  if(preset.startsWith('loss_'))$('casebankStudy').value='';
   configure(preset==='classic'?['H50','H20',$('casebankReference').value]:presets[preset]);};
  $('casebankReference').onchange=()=>configure(['H50','H20',$('casebankReference').value]);
  $('casebankApplyMethods').onclick=()=>{const methods=[...$('casebankMethods').querySelectorAll('input:checked')].map(e=>e.value);

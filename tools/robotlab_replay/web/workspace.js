@@ -9,6 +9,7 @@ const descriptors={
  timeline:{name:'LVM与纠偏曲线',selectors:['.timeline-card'],min:[340,200]},
  inspector:{name:'当前步诊断',selectors:['.inspector'],min:[260,230]},
  events:{name:'关键事件',selectors:['.event-card'],min:[300,200]},
+ motion:{name:'动作与实际运动',selectors:['.motion-card'],min:[400,300]},
  evidence:{name:'证据摘要与动作热图',selectors:['.evidence-section'],min:[380,230]},
  comparison:{name:'配对指标',selectors:['#pairSummary'],min:[340,200]},
  protocol:{name:'来源与冻结协议',selectors:['.technical'],min:[340,200]}

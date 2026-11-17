@@ -1,0 +1,47 @@
+{
+  "captured_utc": "2026-11-16T09:49:48.882585+00:00",
+  "cpu": {
+    "tests": 107,
+    "passed": 107,
+    "skipped": 0,
+    "environment": "existing Torch CPU venv; no dependency installation",
+    "log_sha256": "d1b75cf0bbd33532f41d274cbfa3805770251f76469b9a658cbb4bfd9baa3a04"
+  },
+  "browser": {
+    "checks": [
+      "six real same-condition loss configurations, complete/video filters and direct cosine-vs-MSE paired playback",
+      "three-loss J view and failure-combination filter select the actual failed ordinary trial",
+      "real Plus J cosine-failure/MSE-success/both-failure case opens with video and actual guidance-step inspection"
+    ],
+    "errors": [],
+    "status": "passed"
+  },
+  "replay": {
+    "catalog_records": 1724,
+    "loss_trials": 96,
+    "reviewed_groups": 16,
+    "test_conditions": 8,
+    "initial_state_fingerprints": 6,
+    "eval_seed_values": [
+      1000,
+      1001
+    ],
+    "original_trial_copies_created": 0,
+    "overwritten_historical_results": false
+  },
+  "remote_final": {
+    "captured_utc": "2026-11-16T09:44:44.618558+00:00",
+    "status": "completed",
+    "completed_jobs": 6,
+    "gpu_memory_mib": 1,
+    "gpu_utilization_percent": 0,
+    "compute_processes": 0,
+    "system_free_gib": 10.329853057861328,
+    "data_free_gib": 11.077079772949219
+  },
+  "limits": [
+    "Initial state fingerprint excludes camera/language/static asset configuration.",
+    "Two eval seeds per selected condition do not establish statistical significance.",
+    "Loss rollouts do not contain newly captured actual motion; missing remains missing."
+  ]
+}

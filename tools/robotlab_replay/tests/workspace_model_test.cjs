@@ -3,9 +3,9 @@ const {pathToFileURL}=require('node:url'),path=require('node:path');
 (async()=>{
  const {IDS,presetPanels,cleanState,parseStored,pixels,fractions,fitRect}=await import(pathToFileURL(path.resolve(__dirname,'../web/workspace_model.mjs')));
  const checks=[];
- for(const preset of ['review','heatmap','compare']){
+ for(const preset of ['review','heatmap','compare','motion']){
   const p=presetPanels(preset);assert.deepEqual(Object.keys(p),IDS);assert(Object.values(p).filter(v=>v.visible).length>=3);
- }checks.push('three meaningful presets cover whitelisted modules');
+ }checks.push('four meaningful presets cover whitelisted modules');
  for(const raw of [null,'invalid','[]','{"version":9,"enabled":true}', 'x'.repeat(65537)])assert.equal(parseStored(raw).enabled,false);
  const bad=cleanState({version:1,enabled:'yes',preset:'__proto__',panels:{replay:{x:-9,y:Infinity,w:0,h:99,visible:true}},order:['bogus','replay','replay'],named:[{id:'../../evil',name:'x'}]});
  assert.equal(bad.enabled,false);assert.equal(bad.preset,'review');assert.deepEqual(bad.panels.replay,presetPanels().replay);assert.equal(bad.named.length,0);assert.equal(new Set(bad.order).size,IDS.length);

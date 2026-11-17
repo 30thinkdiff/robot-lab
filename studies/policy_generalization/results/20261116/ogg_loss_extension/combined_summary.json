@@ -1,0 +1,225 @@
+{
+  "status": "completed",
+  "combined_trials": 96,
+  "new_trials": 72,
+  "reused_trials": 24,
+  "errors": 0,
+  "test_conditions": 8,
+  "condition_seed_groups": 16,
+  "eval_seeds": [
+    1000,
+    1001
+  ],
+  "initial_state_signatures": 6,
+  "initial_state_sha256_by_condition": {
+    "libero_object/task_1/init_0": "aaeb94947cc520d451b9b22436fdb01f91b7e29fe158efadb6ed33c1a7c6ca66",
+    "libero_object/task_9/init_2": "da703038a44bcfa7f31fe96bbee4fd52988fe809bb331fbb80af980163f909fd",
+    "plus/cheese/sensor_noise/1": "aaeb94947cc520d451b9b22436fdb01f91b7e29fe158efadb6ed33c1a7c6ca66",
+    "plus/soup/language_instructions/1": "3842b074691f165ad4be4a087493ff2e62d88ea2ef89b839988a40ad5d25862b",
+    "libero_object/task_7/init_1": "20a8961a2235d52bb584f532b5dbb5cf12196876125a19d3a6f9153bd06cc730",
+    "libero_object/task_2/init_2": "f6f576539218198ed4533b944634c9c337180ac744051f34158c55f299098661",
+    "plus/view15": "3842b074691f165ad4be4a087493ff2e62d88ea2ef89b839988a40ad5d25862b",
+    "plus/soup/objects_layout/2": "516800f56e0ef631e49ce7d243319d9cf30db7fd09e8800db3baa7b9370cdce8"
+  },
+  "state_fingerprint_limit": "MuJoCo initial state vector only; does not encode camera, language or all static model/asset configuration",
+  "source_batches": [
+    {
+      "name": "pilot",
+      "trials": 24,
+      "snapshot_sha256": "50f9a85330f9397a619e244a5d2dc62abcb3511e1493e0b4373d96de7554c5f9",
+      "source_zip_sha256": "c086f169a5df06f5a35b0ad7978901b820487e3ac9b35d78e4c09d07492bd701"
+    },
+    {
+      "name": "extension",
+      "trials": 72,
+      "snapshot_sha256": "ce6bd69bd300e6e884e452b05f29f90e4203022569e3b224143b70588425797e",
+      "source_zip_sha256": "5216b69963ee8e1e94065bec01902bd4992e38d44b1b12057dad34e89ac984d9"
+    }
+  ],
+  "frozen_control_signature_sha256": "39f0b2dac800626547229fab399e1b70b8e9d696f09ef596230fdd91194d8922",
+  "methods": {
+    "mlp_ogg": {
+      "cosine": {
+        "completed": 16,
+        "successes": 11,
+        "mean_env_steps": 195.625,
+        "mean_event_replans": 4.25,
+        "mean_guidance_calls": 17,
+        "mean_episode_wall_s": 14.513484600116499
+      },
+      "mse": {
+        "completed": 16,
+        "successes": 11,
+        "mean_env_steps": 198.5625,
+        "mean_event_replans": 4.625,
+        "mean_guidance_calls": 18.5,
+        "mean_episode_wall_s": 14.533718580845743
+      },
+      "mse_cosine": {
+        "completed": 16,
+        "successes": 11,
+        "mean_env_steps": 197.8125,
+        "mean_event_replans": 4.875,
+        "mean_guidance_calls": 19.5,
+        "mean_episode_wall_s": 13.973643881385215
+      }
+    },
+    "j_ogg": {
+      "cosine": {
+        "completed": 16,
+        "successes": 7,
+        "mean_env_steps": 226.0625,
+        "mean_event_replans": 2.8125,
+        "mean_guidance_calls": 11.25,
+        "mean_episode_wall_s": 14.482060898793861
+      },
+      "mse": {
+        "completed": 16,
+        "successes": 9,
+        "mean_env_steps": 215.5,
+        "mean_event_replans": 2.3125,
+        "mean_guidance_calls": 9.25,
+        "mean_episode_wall_s": 13.660844362690113
+      },
+      "mse_cosine": {
+        "completed": 16,
+        "successes": 8,
+        "mean_env_steps": 217.875,
+        "mean_event_replans": 2.625,
+        "mean_guidance_calls": 10.5,
+        "mean_episode_wall_s": 13.199770560022444
+      }
+    }
+  },
+  "paired_vs_cosine": {
+    "mlp_ogg": {
+      "mse": {
+        "new_only_success": 1,
+        "cosine_only_success": 1,
+        "both_success": 10,
+        "both_failure": 4
+      },
+      "mse_cosine": {
+        "new_only_success": 1,
+        "cosine_only_success": 1,
+        "both_success": 10,
+        "both_failure": 4
+      }
+    },
+    "j_ogg": {
+      "mse": {
+        "new_only_success": 2,
+        "cosine_only_success": 0,
+        "both_success": 7,
+        "both_failure": 7
+      },
+      "mse_cosine": {
+        "new_only_success": 1,
+        "cosine_only_success": 0,
+        "both_success": 7,
+        "both_failure": 8
+      }
+    }
+  },
+  "seed_repeat": {
+    "mlp_ogg": {
+      "cosine": {
+        "two_seed_success_conditions": 4,
+        "two_seed_failure_conditions": 1,
+        "seed_sensitive_conditions": 3
+      },
+      "mse": {
+        "two_seed_success_conditions": 4,
+        "two_seed_failure_conditions": 1,
+        "seed_sensitive_conditions": 3
+      },
+      "mse_cosine": {
+        "two_seed_success_conditions": 4,
+        "two_seed_failure_conditions": 1,
+        "seed_sensitive_conditions": 3
+      }
+    },
+    "j_ogg": {
+      "cosine": {
+        "two_seed_success_conditions": 2,
+        "two_seed_failure_conditions": 3,
+        "seed_sensitive_conditions": 3
+      },
+      "mse": {
+        "two_seed_success_conditions": 3,
+        "two_seed_failure_conditions": 2,
+        "seed_sensitive_conditions": 3
+      },
+      "mse_cosine": {
+        "two_seed_success_conditions": 3,
+        "two_seed_failure_conditions": 3,
+        "seed_sensitive_conditions": 2
+      }
+    }
+  },
+  "by_domain": {
+    "ordinary": {
+      "mlp_ogg": {
+        "cosine": {
+          "completed": 8,
+          "successes": 5
+        },
+        "mse": {
+          "completed": 8,
+          "successes": 4
+        },
+        "mse_cosine": {
+          "completed": 8,
+          "successes": 4
+        }
+      },
+      "j_ogg": {
+        "cosine": {
+          "completed": 8,
+          "successes": 5
+        },
+        "mse": {
+          "completed": 8,
+          "successes": 5
+        },
+        "mse_cosine": {
+          "completed": 8,
+          "successes": 5
+        }
+      }
+    },
+    "plus": {
+      "mlp_ogg": {
+        "cosine": {
+          "completed": 8,
+          "successes": 6
+        },
+        "mse": {
+          "completed": 8,
+          "successes": 7
+        },
+        "mse_cosine": {
+          "completed": 8,
+          "successes": 7
+        }
+      },
+      "j_ogg": {
+        "cosine": {
+          "completed": 8,
+          "successes": 2
+        },
+        "mse": {
+          "completed": 8,
+          "successes": 4
+        },
+        "mse_cosine": {
+          "completed": 8,
+          "successes": 3
+        }
+      }
+    }
+  },
+  "active_first_candidate_groups": 30,
+  "no_guidance_matched_groups": 2,
+  "scope": "8 deliberately selected test conditions; 2 eval seeds; diagnostic expansion, not full Plus/Object10 benchmark"
+}

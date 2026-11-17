@@ -1,3 +1,4 @@
+import {renderMotion} from './motion.js';
 import {drawMatrix,drawEvidence} from './diagnostics.js';
 import {createWorkspace} from './workspace.js';
 import {setupCasebank} from './casebank.js';
@@ -12,7 +13,8 @@ async function api(path,body){const r=await fetch(path,body?{method:'POST',heade
 function toast(message){$('toast').textContent=message;$('toast').classList.remove('hidden');clearTimeout(toast.timer);toast.timer=setTimeout(()=>$('toast').classList.add('hidden'),4500);}
 function fail(message){$('errorBanner').textContent=message;$('errorBanner').classList.remove('hidden');}
 function statusName(r){return r.status!=='completed'?'程序未完成':r.success===true?'任务成功':r.success===false?'任务失败':'结局未记录';}
-function runLabel(r){return `${r.method} · ${r.model} · task_${r.task} / init_${r.init} · seed ${r.seed}`;}
+const lossLabel=r=>r.ogg_loss_mode?' · '+({cosine:'余弦',mse:'MSE',mse_cosine:'MSE＋余弦'}[r.ogg_loss_mode]||r.ogg_loss_mode):'';
+function runLabel(r){return `${r.method} · ${r.model}${lossLabel(r)} · task_${r.task} / init_${r.init} · seed ${r.seed}`;}
 function options(id,field,label){const values=[...new Set(state.catalog.map(r=>r[field]).filter(v=>v!==null&&v!==undefined))].sort((a,b)=>typeof a==='number'?a-b:String(a).localeCompare(String(b)));$(id).innerHTML='<option value="">'+label+'</option>'+values.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');}
 function filtered(){const text=$('search').value.trim().toLowerCase();return state.catalog.filter(r=>
   (!state.baselinePreset||(r.model==='MLP'&&r.experiment==='Object10 五模型'&&['H50','H20','ogg'].includes(r.method)&&[2,9].includes(r.task)&&r.init===2&&r.seed===1000&&!r.forced))&&
@@ -25,14 +27,14 @@ function filtered(){const text=$('search').value.trim().toLowerCase();return sta
   (!text||(runLabel(r)+' '+r.experiment+' '+r.condition).toLowerCase().includes(text)));
 }
 function renderList(){const rows=filtered();$('filterCount').textContent=`${rows.length} 个回合`;$('loadMore').classList.toggle('hidden',rows.length<=state.limit);
- $('runList').innerHTML=rows.slice(0,state.limit).map(r=>`<button class="run-item ${state.a?.run.id===r.id?'active':''}" data-id="${r.id}" title="${esc(runLabel(r))}"><div class="line1"><span><i class="dot ${r.success?'success':'failure'}"></i>${esc(r.method)} <span class="muted">${esc(r.model)}</span></span>${r.video_available?'▣':''}</div><div class="line2">task_${esc(r.task)} · init_${esc(r.init)} · seed ${esc(r.seed)}</div><div class="line3"><span class="mini-tag">${r.steps??'—'} steps</span><span>${esc(statusName(r))}</span>${r.forced?'<span>接口检查</span>':''}</div></button>`).join('')||'<p class="empty-detail">没有符合筛选条件的回合。</p>';
+ $('runList').innerHTML=rows.slice(0,state.limit).map(r=>`<button class="run-item ${state.a?.run.id===r.id?'active':''}" data-id="${r.id}" title="${esc(runLabel(r))}"><div class="line1"><span><i class="dot ${r.success?'success':'failure'}"></i>${esc(r.method)} <span class="muted">${esc(r.model)}${esc(lossLabel(r))}</span></span>${r.video_available?'▣':''}</div><div class="line2">task_${esc(r.task)} · init_${esc(r.init)} · seed ${esc(r.seed)}</div><div class="line3"><span class="mini-tag">${r.steps??'—'} steps</span><span>${esc(statusName(r))}</span>${r.forced?'<span>接口检查</span>':''}</div></button>`).join('')||'<p class="empty-detail">没有符合筛选条件的回合。</p>';
  $('runList').querySelectorAll('button[data-id]').forEach(b=>b.onclick=()=>selectRun(b.dataset.id));
 }
 function sharedFlags(){return {videoOnly:$('videoOnly').checked,includeForced:$('includeForced').checked};}
 function clearPair(){pause();state.b=null;state.alignment=null;state.pairRequest++;state.step=Math.min(state.step,maxSteps()-1);setVideo('B',null);if(state.a){applyMode();drawAll();}}
 function renderPairOptions(){if(!state.a)return;
  state.pairs=comparisonCandidates(state.catalog,state.a.run,{scope:$('pairScope').value,text:$('pairSearch').value,...sharedFlags()});
- $('pairSelect').innerHTML='<option value="">选择对照回合…</option>'+state.pairs.map(r=>`<option value="${r.id}">${esc((($('pairScope').value==='all')?runLabel(r)+' · '+r.experiment:r.method+' / '+r.model)+' · '+statusName(r)+(r.forced?' · 强制检查':''))}</option>`).join('');
+ $('pairSelect').innerHTML='<option value="">选择对照回合…</option>'+state.pairs.map(r=>`<option value="${r.id}">${esc((($('pairScope').value==='all')?runLabel(r)+' · '+r.experiment:r.method+' / '+r.model+lossLabel(r))+' · '+statusName(r)+(r.forced?' · 强制检查':''))}</option>`).join('');
  $('pairFilterStatus').textContent=`${state.pairs.length}条可选 · ${$('videoOnly').checked?'仅本地视频':'含无视频记录'} · ${$('includeForced').checked?'含强制检查':'不含强制检查'}；其余左侧筛选只作用于主选列表。`;
  if(state.b&&state.pairs.some(r=>r.id===state.b.run.id))$('pairSelect').value=state.b.run.id;
  else if(state.b){clearPair();toast('原对照不符合当前筛选，已清除；请重新选择。');}
@@ -44,7 +46,7 @@ function pause(){state.playing=false;state.playGeneration++;$('play').textConten
 function setVideo(side,detail){const v=$('video'+side),missing=$('missing'+side);v.pause();v.removeAttribute('src');
  if(detail?.video.available){v.controls=detail.video.alignment!=='recording_verified';v.src=detail.video.url;v.load();missing.classList.add('hidden');v.classList.remove('hidden');v.onloadedmetadata=()=>syncVideo(side,detail,true);}
  else{v.classList.add('hidden');missing.classList.remove('hidden');}
- $('label'+side).textContent=detail?`${detail.run.method} / ${detail.run.model}`:'—';
+ $('label'+side).textContent=detail?`${detail.run.method} / ${detail.run.model}${lossLabel(detail.run)}`:'—';
  $('context'+side).textContent=detail?`${detail.run.condition.replace('libero_object/','')} · seed ${detail.run.seed} · ${detail.control_fps??'未知'}Hz${detail.run.forced?' · 强制检查':''}`:'';
  $('sync'+side).textContent=(detail?.video.message||'没有对照回合')+(detail?.video.available&&detail.video.alignment!=='recording_verified'?' 可用视频原生控件独立播放；数据联动已禁用。':'');
 }
@@ -88,13 +90,15 @@ function renderHeader(){const d=state.a,r=d.run,m=d.metrics;$('eyebrow').textCon
  const cards=[['环境控制步',m.env_steps,'steps',`回合墙钟 ${fmt(m.episode_wall_s,2)} s`],['VLA动作块',m.chunk_calls,'calls','完整动作块生成'],['纠错 / 重规划',m.event_replans,'events',`OGG引导 ${m.guidance_calls??'未记录'} 次`],['监测覆盖率',baseline?'不适用':pct(d.coverage?.fraction),'',baseline?'纯VLA，未启用Corrector':d.coverage?`最长空窗 ${d.coverage.max_gap_steps} 步`:'缺少分母协议'],['VLA / 监测',`${fmt(m.policy_s,2)} / ${fmt(m.monitor_s,2)}`,'s',`峰值分配显存 ${fmt(m.peak_torch_allocated_gib,2)} GiB`]];
  $('metrics').innerHTML=cards.map(([label,value,unit,sub])=>`<div class="metric"><label>${label}</label><strong ${String(value).length>10?'style="font-size:16px"':''}>${esc(value??'—')}</strong><small>${unit}</small><div class="sub">${esc(sub)}</div></div>`).join('');
  renderSyncBadge();
- $('configurationText').textContent=configurationDescription(r);
+ const objective=d.protocol.ogg_loss?.loss_mode;
+ $('configurationText').textContent=configurationDescription(r)+(objective?' 本回合OGG损失：'+({cosine:'1−cos',mse:'原始特征MSE',mse_cosine:'原始特征MSE＋1−cos'}[objective]||objective)+'；LVM规则未改。不同损失的数值尺度不可直接排名。':'');
  $('provenance').textContent=`来源：${d.source.archive} · ${d.source.member}\nTrial SHA256：${d.source.trial_sha256}\n${d.limits.join('；')}\n${d.warnings.join('；')}`;
  $('protocol').textContent=JSON.stringify({source:d.source,video_alignment:d.video.alignment,recording_evidence:d.video.recorder,protocol:d.protocol},null,2);
 }
 function configurationDescription(r){
  const visual={'MLP':'MLP：当前视觉帧 + 单动作条件','T-H1':'Transformer：当前1帧视觉 + 单动作条件','T-H3':'Transformer：最近3帧视觉 + 单动作条件','A10-H1':'Transformer：当前1帧视觉 + 10个动作条件','A10-H3':'Transformer：最近3帧视觉 + 10个动作条件'};
  if(/^H[0-9]+$/.test(r.method))return `纯SmolVLA：每次仍生成50步动作块，只执行前${r.method.slice(1)}步后清空剩余动作，用新观测重新推理。${r.model}是归档对照组标签，本回合未使用该Corrector。`;
+ if(r.model==='J-36M')return '正式J-36M联合多层Corrector（36,793,536参数）：当前Connector、SigLIP Block 2和Block 8视觉特征 + 单动作条件，预测约1秒后的三层视觉变化。'+(r.method==='j_lvm'?'J-LVM：检测触发中断并普通重规划，无OGG。':'J-OGG：使用相同J模型、LVM规则与预测保留机制，事件重规划时增加多层误差OGG引导。')+'不是A10多动作序列预测器。具体checkpoint、层归一化与阈值以冻结协议为准。';
  const method={monitor:'只监测，不中断、不引导',lvm:'LVM检测触发普通重规划，无OGG',ogg:'LVM检测 + 中断重规划 + OGG引导',planned_lvm:'A10规划动作条件监测 + 普通重规划，无OGG',executed_lvm:'A10已执行动作历史到期评分 + 普通重规划，无OGG',single_lvm:'单动作T-H1原监测规则 + 普通重规划，无OGG',single_ogg:'单动作T-H1原监测规则 + 单动作OGG'};
  if(['A','B','C'].includes(r.method))return ({A:'混合配置A：T-H1检测 → T-H1引导',B:'混合配置B：T-H1检测 → A10-H1引导',C:'混合配置C：A10-H1检测 → A10-H1引导'})[r.method]+'。箭头表示检测器 → 引导器；视频面板的主选/对照位置与配置字母无关。';
  if(r.method==='hybrid_t1_a10_ogg')return '混合OGG：T-H1负责LVM检测并生成纠偏目标，触发时由A10-H1引导候选动作。两个冻结预测器不重新训练。';
@@ -137,6 +141,7 @@ function inspectEvidence(d,step){const ticket=++evidenceTicket;clearTimeout(evid
  evidenceTimer=setTimeout(async()=>{try{const result=await api('/api/diagnostics?id='+d.run.id+'&step='+step);evidenceCache.set(key,result);if(evidenceCache.size>80)evidenceCache.delete(evidenceCache.keys().next().value);display(result);}catch(e){if(ticket===evidenceTicket)$('evidenceCards').textContent='诊断读取失败：'+e.message;}},120);
 }
 function inspect(){const side=$('inspectLane').value==='b'&&state.b?'B':'A',d=side==='B'?state.b:state.a,step=laneStep(side),s=d.steps[step];$('inspectStep').textContent=String(step).padStart(3,'0');$('rawStep').textContent=JSON.stringify(s?.raw??[],null,2);
+ renderMotion(d,step,n=>setStep(n-(side==='B'?pairOffset():0),true),side,!!state.b);
  inspectEvidence(d,step);
  $('stepContext').innerHTML='<table><thead><tr><th>步</th><th>Score</th><th>阈值</th><th>事件</th></tr></thead><tbody>'+d.steps.slice(Math.max(0,step-5),Math.max(0,step+6)).map(r=>`<tr ${r.step===step?'class="current-context"':''}><td>${r.step}</td><td>${number(r.score)?fmt(r.score,3):'—'}</td><td>${number(r.threshold)?fmt(r.threshold,3):'—'}</td><td>${r.events.length||'—'}</td></tr>`).join('')+'</tbody></table>';
  if(!s){$('readout').innerHTML=`<div class="inspect-status missing">${step<0?'尚未到达本回合起点':'当前回合已结束，不沿用末次评分'}</div>`;$('actions').innerHTML='<div class="empty-detail">超出此回合记录范围</div>';$('stepEvents').innerHTML='<div class="empty-detail">没有该步数据</div>';return;}
@@ -198,6 +203,7 @@ $('pairScope').onchange=()=>{pause();$('pairSearch').value='';renderPairOptions(
 $('pairSearch').oninput=()=>renderPairOptions();
 $('focusBtn').onclick=()=>{const focus=document.body.classList.toggle('focus-mode');$('focusBtn').textContent=focus?'显示概览':'专注回放';$('focusBtn').setAttribute('aria-pressed',String(focus));};
 $('inspectLane').onchange=inspect;
+$('motionLane').onchange=e=>{$('inspectLane').value=e.target.value;inspect();};
 $('evidenceDetails').ontoggle=()=>{if(state.a)inspect();};
 $('applyAnchor').onclick=()=>{if(!state.b)return;const a=Number($('anchorA').value),b=Number($('anchorB').value),label=$('anchorLabel').value.trim();
  if(!number(state.a.control_fps)||!number(state.b.control_fps)||Math.abs(state.a.control_fps-state.b.control_fps)>1e-8){toast('两侧控制频率未知或不一致，不用固定步差强行对齐。');return;}
