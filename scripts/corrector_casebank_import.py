@@ -13,6 +13,18 @@ REVISION='7e241bd630a3719a56157a497ce5d08f244784f1'
 RECORDER_SHA='fddec10c709401dd863814091d525fcd54d41cc6ccf51f7ef8300459cf69b873'
 
 
+def declared_episode_cap(case, protocol):
+    """Native suite lengths, never silently truncate Long/Goal to Object's 280."""
+    caps={'libero_object':280,'libero_spatial':280,'libero_goal':300,'libero_10':520,'libero_90':400}
+    config=case.get('config',{})
+    cap=config.get('episode_length',protocol.get('horizon',280))
+    if type(cap) is not int or not 1<=cap<=1000:raise ValueError('回合长度未明确声明或超出导入预算')
+    suite=config.get('suite')
+    if suite is not None and (suite not in caps or cap!=caps[suite] or not case['condition'].startswith(suite+'/')):
+        raise ValueError('suite、任务条件和回合长度不一致')
+    return cap
+
+
 def validate_numeric_npz(raw):
     sizes={'<f4':4,'<f8':8,'<i4':4,'<i8':8,'|u1':1}
     with zipfile.ZipFile(io.BytesIO(raw)) as z:
@@ -51,12 +63,13 @@ def install_bundle(archive,state):
         if z.testzip():raise ValueError('ZIP校验失败')
         evidence=json.loads(z.read('results/recording/evidence.json'))
         if evidence.get('git_revision')!=REVISION or evidence.get('source_sha256')!=RECORDER_SHA or not evidence.get('tracked_file_clean') or hashlib.sha256(z.read('results/recording/lerobot_eval.py')).hexdigest()!=RECORDER_SHA:raise ValueError('录制证据不匹配')
+        protocol=json.loads(z.read('results/plan.json'))['protocol']
         videos=[];complete=0
         for member in sorted(n for n in names if n.startswith('results/trials/') and n.endswith('.json')):
             raw=z.read(member);r=json.loads(raw)
             if r.get('status')!='completed':continue
             c=r['case'];n=r['result']['env_steps'];base=f"results/attempts/{c['id']}/attempt_{r['attempt']:03d}/"
-            if r['result'].get('capture_schema')!='replay_casebank_v1' or type(n) is not int or not 0<n<=280:raise ValueError('完成回合不是预期采集协议')
+            if r['result'].get('capture_schema')!='replay_casebank_v1' or type(n) is not int or not 0<n<=declared_episode_cap(c,protocol):raise ValueError('完成回合不是预期采集协议')
             commands=json.loads(z.read(base+'controller_commands.json'));queue=json.loads(z.read(base+'queue_trace.json'))
             if len(commands)!=n or len(queue)!=n or not all(a['step']==i and a['returned'] for i,a in enumerate(commands)):raise ValueError('真实控制记录缺失/步序异常')
             mapping=[json.loads(l) for l in z.read(base+'frame_map.jsonl').decode().splitlines()]

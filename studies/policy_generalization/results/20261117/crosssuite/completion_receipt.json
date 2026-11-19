@@ -1,0 +1,131 @@
+{
+  "schema": "crosssuite_readonly_audit_v1",
+  "audit_source_sha256": "5ac441b4b566cd254a9ac058678c309747a84c7f860ea3d74cb3b531b0788763",
+  "audited_utc": "2026-11-17T07:44:26.022953+00:00",
+  "queue": {
+    "status": "completed",
+    "pid": 2195,
+    "child_pid": null,
+    "deadline_unix": 1794902830.2764027,
+    "phase": "completed",
+    "completed_stages": [
+      "probe",
+      "bridge",
+      "transfer"
+    ],
+    "resources": {
+      "system_free_gib": 9.370903015136719,
+      "data_free_gib": 11.077079772949219,
+      "available_cgroup_gib": 111.9933853149414,
+      "gpu": "3268, 0"
+    },
+    "log": "/root/corrector_crosssuite_20261117_001/transfer.log",
+    "command": [
+      "/root/autodl-tmp/corrector/runtime/sim-venv/bin/python",
+      "-u",
+      "/root/corrector_crosssuite_20261117_001/code/corrector_crosssuite_eval.py",
+      "transfer",
+      "--output",
+      "/root/corrector_crosssuite_20261117_001",
+      "--inventory",
+      "/root/corrector_crosssuite_20261117_001/suite_inventory.json",
+      "--training-audit",
+      "/root/corrector_crosssuite_20261117_001/training_scope_audit.json",
+      "--deadline",
+      "1794902830.2764027"
+    ],
+    "returncode": 0,
+    "updated_unix": 1794900725.6079612
+  },
+  "budget": {
+    "started_unix": 1794888430.2764027,
+    "deadline_unix": 1794902830.2764027,
+    "max_seconds": 14400,
+    "boundary_overrun": "at most current episode; no forced kill"
+  },
+  "bridge_equivalence": {
+    "status": "passed",
+    "checks": [
+      {
+        "condition": "libero_object/task_1/init_0",
+        "seed": 1001,
+        "method": "H50",
+        "controls_and_queue_exact": true
+      },
+      {
+        "condition": "libero_object/task_1/init_0",
+        "seed": 1001,
+        "method": "H20",
+        "controls_and_queue_exact": true
+      },
+      {
+        "condition": "libero_object/task_1/init_0",
+        "seed": 1001,
+        "method": "mlp_lvm",
+        "controls_and_queue_exact": true
+      },
+      {
+        "condition": "libero_object/task_1/init_0",
+        "seed": 1001,
+        "method": "mlp_ogg",
+        "controls_and_queue_exact": true
+      }
+    ]
+  },
+  "source_files_unchanged": 12,
+  "metadata_warning": {
+    "field": "environment_config.json:init",
+    "meaning": "post-reset next-init cursor; not selected init",
+    "offset": 1,
+    "selected_init": "case.config.init and suite_assets.init, verified against native reset selection/increment order",
+    "native_env_source_sha256": "97c984f12331527626812ec19967ef399e545535b3571becf044db2417ae9d71",
+    "source_results_modified": false
+  },
+  "current_process_check": {
+    "evaluators_alive": false,
+    "gpu_query": {
+      "query_available": false,
+      "error": "PermissionError: [Errno 13] Permission denied: 'nvidia-smi'"
+    }
+  },
+  "disk_free_gib": {
+    "/root": 9.39739990234375,
+    "/root/autodl-tmp": 11.077079772949219
+  },
+  "source_writes": false,
+  "gpu_started": false,
+  "integrity": {
+    "bridge": {
+      "status": "passed",
+      "videos_sha256_checked": 4,
+      "sealed_artifacts_sha256_checked": 64,
+      "video_bytes": 421042,
+      "paired_signature_groups": 1,
+      "scope": "native PTS/frame maps and capture assertions plus file hashes, no new full video decode"
+    },
+    "transfer": {
+      "status": "passed",
+      "videos_sha256_checked": 880,
+      "sealed_artifacts_sha256_checked": 17396,
+      "video_bytes": 141443853,
+      "paired_signature_groups": 220,
+      "scope": "native PTS/frame maps and capture assertions plus file hashes, no new full video decode"
+    }
+  },
+  "execution": {
+    "status": "completed",
+    "started_utc": "2026-11-17T04:09:49.767592+00:00",
+    "max_seconds": 14240.52955365181,
+    "min_free_gib": 5,
+    "stop_file": "/root/corrector_crosssuite_20261117_001/STOP",
+    "wall_seconds": 12132.32525187172,
+    "planned": 880,
+    "completed": 880,
+    "errors": 0,
+    "reason": "all_planned_trials_completed"
+  },
+  "environment_probe": {
+    "status": "passed",
+    "checks": 40
+  }
+}

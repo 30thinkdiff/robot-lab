@@ -1,0 +1,108 @@
+{
+  "scope": "2026-11-18 real data preparation and engineering GPU checks, not formal training",
+  "raw_audit": {
+    "status": "completed",
+    "scope": "CPU original Parquet/action/time/split consistency only",
+    "manifest_sha256": "404224879f07af9512a6712b5b98855e84007e6e1bae597f5e07b82c8f1625e0",
+    "episodes": 454,
+    "parquet_files": 98,
+    "frames": 66984,
+    "splits": {
+      "train": 364,
+      "validation": 90
+    },
+    "tasks": {
+      "20": 45,
+      "21": 45,
+      "22": 45,
+      "23": 46,
+      "24": 44,
+      "25": 45,
+      "26": 47,
+      "27": 45,
+      "28": 42,
+      "29": 50
+    },
+    "seconds": 14.090863589197397,
+    "gpu_used": false,
+    "images_extracted": false,
+    "formal_training_started": false
+  },
+  "gpu_probe": {
+    "status": "completed",
+    "scope": "small real-data GPU engineering probe only",
+    "original_connector_parity": "frozen exporter requires exact requantized bytes for all13 frames",
+    "original_raw_layer_parity": "Block2/Block8 FP16 bytes equal original cache for all13 frames",
+    "reports": [
+      {
+        "layer": "block_02",
+        "input_shape": [
+          32,
+          2048,
+          768
+        ],
+        "parameters": 37266176,
+        "microbatch": 32,
+        "intended_formal_effective_batch": 512,
+        "formal_epochs_started": false,
+        "probe_optimizer_steps": 1,
+        "loss": 2.4974160194396973,
+        "mse": 1.4975026845932007,
+        "cosine_loss": 0.999913215637207,
+        "grad_norm_before_clip": 4.712685585021973,
+        "forward_backward_seconds": 0.71732322499156,
+        "sample_definition": "one real demo t2->t12 pair repeated32 for GPU memory only; not a training epoch or validation metric",
+        "checkpoint_reload_verified": true,
+        "checkpoint_sha256": "6046117b8bb1fd6851e7d814e6131530fa09ec823ce18e8d38cf5eb1fe87c09f",
+        "ogg_loss": 0.11460137367248535,
+        "actual_candidate_action_gradient_l2": 0.032070841640233994,
+        "velocity_update_l2": 0.016035420820116997,
+        "ogg_first_action7_only": true,
+        "ogg_candidate_source": "synthetic flow tensor for interface/gradient check, not an executed robot command",
+        "peak_cuda_allocated_gib": 7.606237888336182
+      },
+      {
+        "layer": "block_08",
+        "input_shape": [
+          32,
+          2048,
+          768
+        ],
+        "parameters": 37266176,
+        "microbatch": 32,
+        "intended_formal_effective_batch": 512,
+        "formal_epochs_started": false,
+        "probe_optimizer_steps": 1,
+        "loss": 2.736149787902832,
+        "mse": 1.737006664276123,
+        "cosine_loss": 0.9991430640220642,
+        "grad_norm_before_clip": 3.09307861328125,
+        "forward_backward_seconds": 0.16781846433877945,
+        "sample_definition": "one real demo t2->t12 pair repeated32 for GPU memory only; not a training epoch or validation metric",
+        "checkpoint_reload_verified": true,
+        "checkpoint_sha256": "27079431b4ff252f49a3565d6d15c3ad2727d753aeeebd116ee9c4258b2ed7e6",
+        "ogg_loss": 0.20101642608642578,
+        "actual_candidate_action_gradient_l2": 0.020008724182844162,
+        "velocity_update_l2": 0.010004362091422081,
+        "ogg_first_action7_only": true,
+        "ogg_candidate_source": "synthetic flow tensor for interface/gradient check, not an executed robot command",
+        "peak_cuda_allocated_gib": 7.615026950836182
+      }
+    ],
+    "full_extraction_started": false,
+    "formal_training_started": false,
+    "real_closed_loop_evaluation_completed": false,
+    "motion_capture_on_off_gpu_parity": false,
+    "all_stage_C_gates_passed": false
+  },
+  "local_cpu_tests": 25,
+  "destination_cpu_tests": 25,
+  "v2_gpu_tested_zip_sha256": "bab8f73e0b5bd88426b02c4e83e126923647823bb7134cea5d52ac4be78d9685",
+  "v3_cpu_tested_zip_sha256": "faa11bc9d5e4cfd9490986d9187e51e7713f92b9be6541d828c27ed190abec60",
+  "raw_audit_source_sha256": "f81d0b3e6d1cf373e9335bd415c87960982216495250f8d5fb347b57fde7cd2f",
+  "remaining_stage_C_gates": [
+    "real GPU online control and motion collection on/off parity"
+  ],
+  "full454_extraction_started": false,
+  "formal_training_started": false
+}

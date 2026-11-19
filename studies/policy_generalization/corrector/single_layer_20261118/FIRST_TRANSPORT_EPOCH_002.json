@@ -1,0 +1,41 @@
+{
+  "scope": "First complete full-resolution epoch after lossless transport optimization; not final model outcome",
+  "original_recent_epochs": [
+    66,
+    67,
+    68
+  ],
+  "original_mean_seconds": 502.8984046603243,
+  "new_epoch": {
+    "epoch": 69,
+    "step": 6693,
+    "train_loss": 0.2607325842812693,
+    "train_mse": 0.01658069316030617,
+    "train_cosine_loss": 0.24415189126510553,
+    "validation": {
+      "loss": 0.2702486866342291,
+      "mse": 0.017193977082152354,
+      "cosine_loss": 0.2530547095514604,
+      "zero_prediction_mse": 0.03931354627257266,
+      "mean_batch_pred_rms": 0.15635144267906395,
+      "samples": 12089,
+      "zero_targets": 0
+    },
+    "grad_norm_last": 0.42428889870643616,
+    "seconds": 357.46053417772055,
+    "next_lr": 0.00017011198518429907
+  },
+  "full_epoch_speedup": 1.4068641334550673,
+  "initial_two_worker_epoch_mean_seconds": 1066.1662553027272,
+  "cumulative_speedup_vs_initial": 2.9826124938666814,
+  "train_samples": 49447,
+  "validation_samples": 12089,
+  "updates_in_epoch": 97,
+  "next_epoch_started": 70,
+  "early_stop_patience": 5,
+  "model_and_scientific_settings_unchanged": true,
+  "checkpoint_payload_exact_on_continuation": true,
+  "queue_eta_to_epoch_caps_hours": 82.51380663935716,
+  "gpu_utilization_short_window_percent": 91.4,
+  "scope_gpu": "Independent approximately30 second window, not full-epoch utilization"
+}

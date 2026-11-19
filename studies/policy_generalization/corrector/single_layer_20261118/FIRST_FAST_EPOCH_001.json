@@ -1,0 +1,41 @@
+{
+  "scope": "First full training+validation epoch after engineering continuation; not final model quality",
+  "original_recent_epochs": [
+    5,
+    6,
+    7
+  ],
+  "original_mean_seconds": 1066.1662553027272,
+  "first_optimized_epoch": 8,
+  "first_optimized_seconds": 550.9648197330534,
+  "full_epoch_speedup": 1.9350895322487063,
+  "training_samples": 49447,
+  "validation_samples": 12089,
+  "updates_in_epoch": 97,
+  "epoch8": {
+    "epoch": 8,
+    "step": 776,
+    "train_loss": 0.3624909755207085,
+    "train_mse": 0.023218042719650032,
+    "train_cosine_loss": 0.33927293349188,
+    "validation": {
+      "loss": 0.3599367266982629,
+      "mse": 0.023436142974337076,
+      "cosine_loss": 0.33650058366907415,
+      "zero_prediction_mse": 0.03931354627257266,
+      "mean_batch_pred_rms": 0.17162658224499092,
+      "samples": 12089,
+      "zero_targets": 0
+    },
+    "grad_norm_last": 1.000154733657837,
+    "seconds": 550.9648197330534,
+    "next_lr": 0.00029792041150497
+  },
+  "next_epoch_started": 9,
+  "original_checkpoint_preserved": true,
+  "inheritance_receipt": "PIPELINE_CONTINUATION_001.json",
+  "eta_to_all_six_caps_hours": 136.51683866718992,
+  "eta_scenario_all_six_50_epochs_hours": 44.689368711681,
+  "eta_scenario_all_six_60_epochs_hours": 53.87211570723189,
+  "caveat": "One full optimized epoch; future disk/cache conditions and early stopping remain uncertain; checkpoint/startup time extra"
+}

@@ -1,0 +1,778 @@
+{
+  "scope": "Raw saved MuJoCo flattened float64 state; no pickle execution, no model loading, no new simulation. Vector dimensions have mixed units; max/L2 is a numeric audit, not a pose error.",
+  "conditions": 110,
+  "different_seed_state_conditions": 15,
+  "rows": [
+    {
+      "condition": "libero_10/task_0/init_0",
+      "size": 123,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_10/task_0/init_1",
+      "size": 123,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_10/task_0/init_2",
+      "size": 123,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_10/task_1/init_0",
+      "size": 123,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_10/task_1/init_1",
+      "size": 123,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_10/task_1/init_2",
+      "size": 123,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_10/task_2/init_0",
+      "size": 47,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_10/task_2/init_1",
+      "size": 47,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_10/task_2/init_2",
+      "size": 47,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_10/task_3/init_0",
+      "size": 51,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_10/task_3/init_1",
+      "size": 51,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_10/task_3/init_2",
+      "size": 51,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_10/task_4/init_0",
+      "size": 84,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_10/task_4/init_1",
+      "size": 84,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_10/task_4/init_2",
+      "size": 84,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_10/task_5/init_0",
+      "size": 45,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_10/task_5/init_1",
+      "size": 45,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_10/task_5/init_2",
+      "size": 45,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_10/task_6/init_0",
+      "size": 71,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_10/task_6/init_1",
+      "size": 71,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_10/task_6/init_2",
+      "size": 71,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_10/task_7/init_0",
+      "size": 84,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_10/task_7/init_1",
+      "size": 84,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_10/task_7/init_2",
+      "size": 84,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_10/task_8/init_0",
+      "size": 47,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_10/task_8/init_1",
+      "size": 47,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_10/task_8/init_2",
+      "size": 47,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_10/task_9/init_0",
+      "size": 47,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_10/task_9/init_1",
+      "size": 47,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_10/task_9/init_2",
+      "size": 47,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_90/task_0/init_0",
+      "size": 77,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_90/task_0/init_1",
+      "size": 77,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_90/task_19/init_0",
+      "size": 47,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_90/task_19/init_1",
+      "size": 47,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_90/task_29/init_0",
+      "size": 64,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_90/task_29/init_1",
+      "size": 64,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_90/task_39/init_0",
+      "size": 47,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_90/task_39/init_1",
+      "size": 47,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_90/task_49/init_0",
+      "size": 84,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_90/task_49/init_1",
+      "size": 84,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_90/task_59/init_0",
+      "size": 97,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_90/task_59/init_1",
+      "size": 97,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_90/task_69/init_0",
+      "size": 71,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_90/task_69/init_1",
+      "size": 71,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_90/task_79/init_0",
+      "size": 45,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_90/task_79/init_1",
+      "size": 45,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_90/task_89/init_0",
+      "size": 58,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_90/task_89/init_1",
+      "size": 58,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_90/task_9/init_0",
+      "size": 51,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_90/task_9/init_1",
+      "size": 51,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_goal/task_0/init_0",
+      "size": 79,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_goal/task_0/init_1",
+      "size": 79,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_goal/task_0/init_2",
+      "size": 79,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_goal/task_1/init_0",
+      "size": 79,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_goal/task_1/init_1",
+      "size": 79,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_goal/task_1/init_2",
+      "size": 79,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_goal/task_2/init_0",
+      "size": 79,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_goal/task_2/init_1",
+      "size": 79,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_goal/task_2/init_2",
+      "size": 79,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_goal/task_3/init_0",
+      "size": 79,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_goal/task_3/init_1",
+      "size": 79,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_goal/task_3/init_2",
+      "size": 79,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_goal/task_4/init_0",
+      "size": 79,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_goal/task_4/init_1",
+      "size": 79,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_goal/task_4/init_2",
+      "size": 79,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_goal/task_5/init_0",
+      "size": 79,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_goal/task_5/init_1",
+      "size": 79,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_goal/task_5/init_2",
+      "size": 79,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_goal/task_6/init_0",
+      "size": 79,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_goal/task_6/init_1",
+      "size": 79,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_goal/task_6/init_2",
+      "size": 79,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_goal/task_7/init_0",
+      "size": 79,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_goal/task_7/init_1",
+      "size": 79,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_goal/task_7/init_2",
+      "size": 79,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_goal/task_8/init_0",
+      "size": 79,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_goal/task_8/init_1",
+      "size": 79,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_goal/task_8/init_2",
+      "size": 79,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_goal/task_9/init_0",
+      "size": 79,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_goal/task_9/init_1",
+      "size": 79,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_goal/task_9/init_2",
+      "size": 79,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_spatial/task_0/init_0",
+      "size": 92,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_spatial/task_0/init_1",
+      "size": 92,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_spatial/task_0/init_2",
+      "size": 92,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_spatial/task_1/init_0",
+      "size": 92,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_spatial/task_1/init_1",
+      "size": 92,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_spatial/task_1/init_2",
+      "size": 92,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_spatial/task_2/init_0",
+      "size": 92,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_spatial/task_2/init_1",
+      "size": 92,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_spatial/task_2/init_2",
+      "size": 92,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_spatial/task_3/init_0",
+      "size": 92,
+      "exact_equal": false,
+      "max_abs_difference": 6.542367172211451e-15,
+      "l2_difference": 8.005720270300664e-15
+    },
+    {
+      "condition": "libero_spatial/task_3/init_1",
+      "size": 92,
+      "exact_equal": false,
+      "max_abs_difference": 1.9886442265857153e-15,
+      "l2_difference": 2.1606853890228795e-15
+    },
+    {
+      "condition": "libero_spatial/task_3/init_2",
+      "size": 92,
+      "exact_equal": false,
+      "max_abs_difference": 4.714031092121049e-15,
+      "l2_difference": 4.827974558485772e-15
+    },
+    {
+      "condition": "libero_spatial/task_4/init_0",
+      "size": 92,
+      "exact_equal": false,
+      "max_abs_difference": 2.97217753186807e-09,
+      "l2_difference": 3.837903413111063e-09
+    },
+    {
+      "condition": "libero_spatial/task_4/init_1",
+      "size": 92,
+      "exact_equal": false,
+      "max_abs_difference": 0.0073511237661635365,
+      "l2_difference": 0.010360133150510339
+    },
+    {
+      "condition": "libero_spatial/task_4/init_2",
+      "size": 92,
+      "exact_equal": false,
+      "max_abs_difference": 2.972180834781568e-09,
+      "l2_difference": 3.83790773090319e-09
+    },
+    {
+      "condition": "libero_spatial/task_5/init_0",
+      "size": 92,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_spatial/task_5/init_1",
+      "size": 92,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_spatial/task_5/init_2",
+      "size": 92,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_spatial/task_6/init_0",
+      "size": 92,
+      "exact_equal": false,
+      "max_abs_difference": 4.4321325559251556e-17,
+      "l2_difference": 5.808053820315794e-17
+    },
+    {
+      "condition": "libero_spatial/task_6/init_1",
+      "size": 92,
+      "exact_equal": false,
+      "max_abs_difference": 7.202255733570807e-16,
+      "l2_difference": 7.202560413759542e-16
+    },
+    {
+      "condition": "libero_spatial/task_6/init_2",
+      "size": 92,
+      "exact_equal": false,
+      "max_abs_difference": 4.8790119711182766e-17,
+      "l2_difference": 5.70828783908255e-17
+    },
+    {
+      "condition": "libero_spatial/task_7/init_0",
+      "size": 92,
+      "exact_equal": false,
+      "max_abs_difference": 2.2898349882893854e-16,
+      "l2_difference": 4.0668048556729186e-16
+    },
+    {
+      "condition": "libero_spatial/task_7/init_1",
+      "size": 92,
+      "exact_equal": false,
+      "max_abs_difference": 1.967005221676586e-15,
+      "l2_difference": 2.592172470694736e-15
+    },
+    {
+      "condition": "libero_spatial/task_7/init_2",
+      "size": 92,
+      "exact_equal": false,
+      "max_abs_difference": 9.577892780124188e-15,
+      "l2_difference": 9.639648673218932e-15
+    },
+    {
+      "condition": "libero_spatial/task_8/init_0",
+      "size": 92,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_spatial/task_8/init_1",
+      "size": 92,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_spatial/task_8/init_2",
+      "size": 92,
+      "exact_equal": true,
+      "max_abs_difference": 0.0,
+      "l2_difference": 0.0
+    },
+    {
+      "condition": "libero_spatial/task_9/init_0",
+      "size": 92,
+      "exact_equal": false,
+      "max_abs_difference": 1.050024164271397e-15,
+      "l2_difference": 1.2750580446979341e-15
+    },
+    {
+      "condition": "libero_spatial/task_9/init_1",
+      "size": 92,
+      "exact_equal": false,
+      "max_abs_difference": 9.033884767537847e-16,
+      "l2_difference": 9.650645596100143e-16
+    },
+    {
+      "condition": "libero_spatial/task_9/init_2",
+      "size": 92,
+      "exact_equal": false,
+      "max_abs_difference": 1.5057438501024927e-15,
+      "l2_difference": 1.9323847899295697e-15
+    }
+  ],
+  "source_sha256": "48863716ce231ea60ae5d3bb64cfb2bc2308cd5a1349e2ee39d049787043c907"
+}

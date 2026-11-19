@@ -1,0 +1,19 @@
+{
+  "utc": "2026-11-18T05:01:19.456021+00:00",
+  "limit_bytes": 2147483648,
+  "used_bytes": 942120960,
+  "categories_bytes": {
+    "anon": 317865984,
+    "file": 51544064,
+    "slab_reclaimable": 553388384,
+    "slab_unreclaimable": 5669336,
+    "kernel_stack": 7421952,
+    "pagetables": 5316608
+  },
+  "top_services_rss_kib": {
+    "autopanel": 97600,
+    "tensorboard": 89152,
+    "jupyter_lab": 79552
+  },
+  "source": "Read-only cgroup memory files and ps after inventory process exited; no Torch import or cache drop."
+}

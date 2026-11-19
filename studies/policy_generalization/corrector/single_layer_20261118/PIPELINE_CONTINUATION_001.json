@@ -1,0 +1,28 @@
+{
+  "scope": "Engineering continuation; original checkpoint/source/history retained read-only",
+  "source": "/root/autodl-tmp/corrector/single_layer_20261118_001/training_001/runs/S2_s42/attempt_001",
+  "original_latest_sha256": "93cae193fdd5f89277b5ee524f65dca4a6a6bce52140741522286b2a5e22ba62",
+  "new_latest_sha256": "0a6c57fb744edb2022f3102eabb5c87368ba7eef9238cbd69c7adcf85bcedaf2",
+  "checkpoint_payload_except_protocol_sha256": "d8f951b94e984a8ff2f29ea794e8673ffc6230d6dedccc67fbf9cd9a5e9a392a",
+  "checkpoint_payload_exact": true,
+  "inherited_epoch": 7,
+  "inherited_optimizer_steps": 679,
+  "original_protocol_sha256": "ef4f902dd81c15ae4c4824f90b1a6d8e1931eb9311acf30871b691e8e49053ad",
+  "new_protocol_sha256": "c45da2ad0de4a5d11e0a42101d3415442b5c8991d45df61f59fe37ff3c7f1deb",
+  "changes": {
+    "loader.num_workers": {
+      "before": 2,
+      "after": 4
+    },
+    "collate": "MLP-only omit unused z_hist; batch/target tensor equality accepted separately"
+  },
+  "immutable_other_protocol_fields_equal": true,
+  "copied_files_sha256": {
+    "config.json": "b5acce27f87e04d26f0ac4ad32a1b6fecd983774071d2afbab34c5c62b6702be",
+    "split_indices.npz": "5e2893484c02d7adc82a8d3646ba35d6e9b95ed8337e14bfd457ddbc2ba308f4",
+    "history.json": "41d408fe8efbe1a3dbf0efdaafcac88e8c61c0d0242d0bf4c45ea6103a99a23b",
+    "metrics.csv": "22bbdd9ecf53c71914831d64c9f0dc02097688ee8beb379c16a53de5357f9e21",
+    "initial_validation.json": "289830f45f2e880d1b11d6b6b23a770e2d050dd174e967958a4f368f633ae459"
+  },
+  "acceptance": "/root/autodl-tmp/corrector/single_layer_20261118_001/pipeline_benchmark_002/result.json"
+}

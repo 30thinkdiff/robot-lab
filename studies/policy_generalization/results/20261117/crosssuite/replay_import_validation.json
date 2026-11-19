@@ -1,0 +1,138 @@
+{
+  "status": "passed",
+  "imported_trials": 8,
+  "videos": 8,
+  "complete_quartets": 2,
+  "condition": "libero_90/task_29/init_1",
+  "patterns": {
+    "1000": "0101",
+    "1001": "0001"
+  },
+  "pattern_order": [
+    "H50",
+    "H20",
+    "mlp_lvm",
+    "mlp_ogg"
+  ],
+  "archive_bytes": 2983072,
+  "archive_sha256": "947fd6be5dc013680eb8ffb3b9036b39abcdb88c7b65a2dec21a1edb40cd127c",
+  "backend": {
+    "status": "passed",
+    "checks": [
+      {
+        "id": "b1d51693ab12acfa2a42",
+        "case_id": "0a157b14918e52d57d97",
+        "seed": 1001,
+        "method": "mlp_ogg",
+        "success": true,
+        "steps": 229,
+        "video_alignment": "recording_verified",
+        "video_sha256_verified": true,
+        "guidance_events": 12
+      },
+      {
+        "id": "e98755aa47efbec83a69",
+        "case_id": "6e7e6e155e340db96edb",
+        "seed": 1001,
+        "method": "H50",
+        "success": false,
+        "steps": 400,
+        "video_alignment": "recording_verified",
+        "video_sha256_verified": true,
+        "guidance_events": 0
+      },
+      {
+        "id": "bd8516da59dc5d413e6b",
+        "case_id": "a98e66d96a2166c3ff5b",
+        "seed": 1001,
+        "method": "mlp_lvm",
+        "success": false,
+        "steps": 400,
+        "video_alignment": "recording_verified",
+        "video_sha256_verified": true,
+        "guidance_events": 0
+      },
+      {
+        "id": "9c78d63c166e03fcb6e9",
+        "case_id": "112a6aa6dba52258a1bb",
+        "seed": 1001,
+        "method": "H20",
+        "success": false,
+        "steps": 400,
+        "video_alignment": "recording_verified",
+        "video_sha256_verified": true,
+        "guidance_events": 0
+      },
+      {
+        "id": "5d44a9021948d5021270",
+        "case_id": "05a4f1cc834ab8bcd451",
+        "seed": 1000,
+        "method": "H50",
+        "success": false,
+        "steps": 400,
+        "video_alignment": "recording_verified",
+        "video_sha256_verified": true,
+        "guidance_events": 0
+      },
+      {
+        "id": "ed5113d0bac4cfff5fcf",
+        "case_id": "8330c1943cb8043b28c4",
+        "seed": 1000,
+        "method": "mlp_lvm",
+        "success": false,
+        "steps": 400,
+        "video_alignment": "recording_verified",
+        "video_sha256_verified": true,
+        "guidance_events": 0
+      },
+      {
+        "id": "32c179f6fc5d326e5b16",
+        "case_id": "ec335b90b9aeb9ad298f",
+        "seed": 1000,
+        "method": "H20",
+        "success": true,
+        "steps": 189,
+        "video_alignment": "recording_verified",
+        "video_sha256_verified": true,
+        "guidance_events": 0
+      },
+      {
+        "id": "0f8b4a43ef26d59482c0",
+        "case_id": "3e05cfc3196dc2a58833",
+        "seed": 1000,
+        "method": "mlp_ogg",
+        "success": true,
+        "steps": 224,
+        "video_alignment": "recording_verified",
+        "video_sha256_verified": true,
+        "guidance_events": 12
+      }
+    ],
+    "complete_quartets": 2,
+    "forced_checks": false,
+    "GPU_started": false
+  },
+  "browser": {
+    "checks": [
+      "real two complete four-method LIBERO-90 groups; source and phase filters, video-only and completeness checks",
+      "seed1001 LVM failure vs OGG success: both real videos seek to step140; actual OGG loss/gradient and full scoring visible",
+      "400-step failed run stays active while 229-step successful run freezes at its actual last video frame",
+      "seed1000 H20/OGG paired successes with correct 189/224-step completion boundaries"
+    ],
+    "errors": [],
+    "status": "passed",
+    "local_catalog_runs": 1732
+  },
+  "gpu_started": false,
+  "old_results_modified": false,
+  "video_phase": "frame n before action n; terminal post-action observation is not an extra video frame",
+  "selection_scope": "two evaluation seeds under one task/init selected for OGG recovery; diagnostic only, not population-rate estimation",
+  "cpu_regression": {
+    "discovered": 112,
+    "passed": 104,
+    "skipped_missing_private_assets": 8,
+    "failed": 0
+  },
+  "recorded_initial_signatures_verified": true,
+  "initial_signature_source": "actual_protocol.first state_sha256/input_sha256/noise_sha256, exposed without fabricating missing old values"
+}

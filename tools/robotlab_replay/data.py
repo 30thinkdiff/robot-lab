@@ -216,6 +216,11 @@ class Catalog:
         base=r['_prefix']+f"attempts/{c['id']}/attempt_{record.get('attempt',1):03d}/"
         actual=source.json(base+'actual_protocol.json') or source.json(base+'actual_protocol.export.json') or {}
         result={**result,'episode_wall_s':record.get('wall_s')}
+        first=actual.get('first',{})
+        signature=[first.get(k) for k in ('state_sha256','input_sha256','noise_sha256')] if isinstance(first,dict) else []
+        if len(signature)==3 and all(isinstance(v,str) and re.fullmatch(r'[0-9a-f]{64}',v) for v in signature):
+            result['initial_signature']=signature
+            result['initial_signature_source']='actual_protocol.first (recorded hashes; no inferred values)'
         n=int(result.get('env_steps') or 0);fps=p.get('control_fps',actual.get('fps',p.get('fps')));fps=float(fps) if finite(fps) and fps>0 else None
         if not 0<=n<=100000:raise ValueError('回合步数异常，拒绝分配无界内存')
         warnings=[];rows=[];baseline=bool(re.fullmatch(r'H[0-9]+',c['method']))

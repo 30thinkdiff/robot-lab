@@ -1,0 +1,64 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
+const {chromium}=require(process.env.REPLAY_PLAYWRIGHT||'playwright');
+const base=process.env.REPLAY_URL||'http://127.0.0.1:8877';
+const out=path.resolve(__dirname,'../.local/review/crosssuite90');fs.mkdirSync(out,{recursive:true});
+const study='replay_casebank_crosssuite_20261117_v1_transfer';
+(async()=>{
+ const browser=await chromium.launch({headless:true,...(process.env.REPLAY_BROWSER?{executablePath:process.env.REPLAY_BROWSER}:{}),args:['--no-sandbox']});
+ const result={checks:[],errors:[]};
+ try{
+  const page=await browser.newPage({viewport:{width:1600,height:1000}});page.on('pageerror',e=>result.errors.push(e.message));
+  const catalog=await(await page.request.get(base+'/api/catalog')).json();
+  const bank=await(await page.request.get(base+'/api/casebank')).json();
+  const groups=bank.groups.filter(g=>g.study===study);assert.equal(groups.length,2);
+  for(const g of groups){assert.equal(g.condition,'libero_90/task_29/init_1');assert.equal(Object.keys(g.methods).length,4);assert(Object.values(g.methods).every(r=>r.replay_complete));}
+  await page.goto(base);await page.waitForSelector('#runList button');
+  await page.locator('#videoOnly').check();await page.locator('#casebankOpen').click();
+  await page.locator('#casebankPreset').selectOption('mlp_four');
+  await page.locator('#casebankStudy').selectOption(study);await page.locator('#casebankPhase').selectOption('ninety_subset');
+  assert.equal(await page.locator('#casebankRows tr').count(),2);
+  assert.equal(await page.locator('#casebankHead th').count(),6);
+  assert((await page.locator('#casebankCount').innerText()).includes('1个测试条件'));
+  assert((await page.locator('#casebankCount').innerText()).includes('2个评测seed值'));
+  assert((await page.locator('#casebankRows').innerText()).includes('视频✓'));
+  await page.screenshot({path:path.join(out,'four_methods_two_seeds.png')});
+  result.checks.push('real two complete four-method LIBERO-90 groups; source and phase filters, video-only and completeness checks');
+  await page.locator('#casebankPattern').selectOption('0001');
+  assert.equal(await page.locator('#casebankRows tr').count(),1);
+  assert((await page.locator('#casebankRows').innerText()).includes('seed 1001'));
+  await page.locator('#casebankFrom').selectOption('mlp_lvm');await page.locator('#casebankTo').selectOption('mlp_ogg');
+  await page.locator('#casebankRows button').first().click();
+  await page.waitForFunction(()=>document.querySelector('#videoA').readyState>=2&&document.querySelector('#videoB').readyState>=2&&document.querySelector('#labelA').textContent.includes('mlp_lvm')&&document.querySelector('#labelB').textContent.includes('mlp_ogg'));
+  assert((await page.locator('#eyebrow').innerText()).includes('LIBERO 90'));
+  assert((await page.locator('#pairNotice').innerText()).includes('初始状态 / 输入 / 首噪声SHA一致'));
+  const jump=async step=>{await page.locator('#stepInput').fill(String(step));await page.locator('#stepInput').press('Tab');};
+  await jump(140);await page.waitForFunction(()=>Math.abs(document.querySelector('#videoA').currentTime-7.001)<.02&&Math.abs(document.querySelector('#videoB').currentTime-7.001)<.02);
+  const g=groups.find(g=>g.seed===1001);
+  const ogg=await(await page.request.get(base+'/api/run?id='+g.methods.mlp_ogg.id)).json();
+  const firstGuide=ogg.events.find(e=>e.kind==='ogg');assert(firstGuide&&firstGuide.data.gradient_l2>0);
+  assert.equal(ogg.coverage.fraction,1);assert.equal(ogg.video.alignment,'recording_verified');
+  await page.locator('#inspectLane').selectOption('b');await jump(firstGuide.step);
+  await page.waitForFunction(()=>document.querySelector('#rawStep').textContent.includes('gradient_l2'));
+  await page.screenshot({path:path.join(out,'lvm_failure_ogg_success_guidance.png')});
+  result.checks.push('seed1001 LVM failure vs OGG success: both real videos seek to step140; actual OGG loss/gradient and full scoring visible');
+  await jump(300);await page.waitForFunction(()=>!document.querySelector('#endedB').classList.contains('hidden'));
+  assert(await page.locator('#endedB').isVisible());assert(!(await page.locator('#endedA').isVisible()));
+  await page.waitForFunction(()=>Math.abs(document.querySelector('#videoB').currentTime-11.401)<.03);
+  result.checks.push('400-step failed run stays active while 229-step successful run freezes at its actual last video frame');
+  await page.locator('#casebankOpen').click();await page.locator('#casebankPattern').selectOption('0101');
+  assert.equal(await page.locator('#casebankRows tr').count(),1);
+  assert((await page.locator('#casebankRows').innerText()).includes('seed 1000'));
+  await page.locator('#casebankFrom').selectOption('H20');await page.locator('#casebankTo').selectOption('mlp_ogg');
+  await page.locator('#casebankRows button').first().click();
+  await page.waitForFunction(()=>document.querySelector('#labelA').textContent.includes('H20')&&document.querySelector('#labelB').textContent.includes('mlp_ogg')&&document.querySelector('#contextB').textContent.includes('seed 1000')&&document.querySelector('#videoA').readyState>=2&&document.querySelector('#videoB').readyState>=2);
+  assert(Number(await page.locator('#stepInput').getAttribute('max'))>=200);
+  await jump(200);await page.waitForFunction(()=>!document.querySelector('#endedA').classList.contains('hidden'));
+  assert(!(await page.locator('#endedB').isVisible()));
+  result.checks.push('seed1000 H20/OGG paired successes with correct 189/224-step completion boundaries');
+  const range=await page.request.get(base+'/api/video/'+g.methods.mlp_ogg.id,{headers:{Range:'bytes=0-31'}});
+  assert.equal(range.status(),206);assert.equal((await range.body()).length,32);
+  await page.setViewportSize({width:1366,height:768});assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+  assert.deepEqual(result.errors,[]);result.status='passed';result.local_catalog_runs=catalog.runs.length;
+ }catch(e){result.status='failed';result.failure=e.stack;throw e;}
+ finally{fs.writeFileSync(path.join(out,'browser_validation.json'),JSON.stringify(result,null,2));console.log(JSON.stringify(result,null,2));await browser.close();}
+})().catch(e=>{console.error(e);process.exit(1)});

@@ -1,0 +1,9 @@
+category,quartets,task_init_conditions
+H20_only,26,21
+correctors_rescue_both_baselines,1,1
+OGG_only,1,1
+OGG_hurts_LVM,6,6
+OGG_rescues_LVM,5,4
+LVM_hurts_H50,9,9
+all_failure,66,37
+all_success,95,57

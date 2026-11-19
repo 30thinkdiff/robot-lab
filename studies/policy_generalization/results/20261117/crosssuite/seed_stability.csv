@@ -1,0 +1,17 @@
+suite,method,task_init_conditions,both_seeds_success,both_seeds_failure,seed_sensitive_conditions
+libero_10,H50,30,12,7,11
+libero_10,H20,30,19,7,4
+libero_10,mlp_lvm,30,11,6,13
+libero_10,mlp_ogg,30,10,9,11
+libero_90,H50,20,0,20,0
+libero_90,H20,20,0,19,1
+libero_90,mlp_lvm,20,0,20,0
+libero_90,mlp_ogg,20,1,19,0
+libero_goal,H50,30,18,8,4
+libero_goal,H20,30,23,4,3
+libero_goal,mlp_lvm,30,18,6,6
+libero_goal,mlp_ogg,30,19,6,5
+libero_spatial,H50,30,17,8,5
+libero_spatial,H20,30,21,4,5
+libero_spatial,mlp_lvm,30,17,9,4
+libero_spatial,mlp_ogg,30,17,9,4

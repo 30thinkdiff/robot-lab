@@ -82,7 +82,7 @@ function applyMode(){const paired=state.compare&&!!state.b;$('paneB').classList.
 async function mode(compare){if(!state.a)return;pause();state.compare=compare;if(!compare){state.b=null;state.alignment=null;state.pairRequest++;applyMode();drawAll();return;}
  renderPairOptions();if(!state.pairs.length){applyMode();drawAll();toast('当前筛选没有同条件配对；可切换任意回合对照。');return;}
  const best=state.pairs.find(r=>r.method==='A'&&r.experiment==='混合 Corrector')||state.pairs.find(r=>r.success!==state.a.run.success)||state.pairs[0];$('pairSelect').value=best.id;await selectPair(best.id);}
-function renderHeader(){const d=state.a,r=d.run,m=d.metrics;$('eyebrow').textContent=r.experiment.toUpperCase()+' / LIBERO OBJECT';
+function renderHeader(){const d=state.a,r=d.run,m=d.metrics,suite=String(r.condition||'').split('/')[0];$('eyebrow').textContent=r.experiment.toUpperCase()+' / '+({libero_object:'LIBERO OBJECT',libero_spatial:'LIBERO SPATIAL',libero_goal:'LIBERO GOAL',libero_10:'LIBERO LONG',libero_90:'LIBERO 90',plus:'LIBERO PLUS'}[suite]||suite.toUpperCase()||'套件未记录');
  const baseline=/^H[0-9]+$/.test(r.method);$('title').textContent=`Task ${r.task} · ${baseline?'SmolVLA':r.model}`;
  const role=baseline?`纯VLA，${r.model}为归档对照组标签`:{A:'单动作检测 + 单动作OGG',B:'单动作检测 + A10引导',C:'A10检测 + A10引导'}[r.method];
  $('subtitle').textContent=`${r.condition}  /  seed ${r.seed}  /  ${r.method}  /  ${r.forced?'强制接口检查':'真实完整任务回合'}${role?' · '+role:''}`;

@@ -1,0 +1,146 @@
+{
+  "scope": "2026-11-18 stage A-C engineering acceptance and live feature extraction snapshot",
+  "control_acceptance": {
+    "status": {
+      "status": "completed",
+      "phase": "parity_verified",
+      "planned": 12,
+      "completed": 12,
+      "formal_training_started": false,
+      "formal_success_benchmark": false,
+      "layer": "block_08",
+      "method": "ogg",
+      "variant": "motion_on"
+    },
+    "result": {
+      "status": "completed",
+      "scope": "real LIBERO short engineering parity, not a robot performance benchmark",
+      "task": "libero_object/task_1/init_0",
+      "seed": 1000,
+      "cap_steps": 80,
+      "results": [
+        {
+          "layer": "block_02",
+          "method": "lvm",
+          "variants": 3,
+          "steps": 80,
+          "events": 0,
+          "guidance_calls": 0,
+          "exact_controls_states_inputs_noise_chunks_scores_thresholds_targets_queues_and_video": true,
+          "durations_s": [
+            18.833162631839514,
+            19.589447155594826,
+            20.08571717888117
+          ]
+        },
+        {
+          "layer": "block_02",
+          "method": "ogg",
+          "variants": 3,
+          "steps": 80,
+          "events": 0,
+          "guidance_calls": 0,
+          "exact_controls_states_inputs_noise_chunks_scores_thresholds_targets_queues_and_video": true,
+          "durations_s": [
+            20.01246991381049,
+            19.74891920015216,
+            20.08781398460269
+          ]
+        },
+        {
+          "layer": "block_08",
+          "method": "lvm",
+          "variants": 3,
+          "steps": 80,
+          "events": 0,
+          "guidance_calls": 0,
+          "exact_controls_states_inputs_noise_chunks_scores_thresholds_targets_queues_and_video": true,
+          "durations_s": [
+            18.08910620585084,
+            17.858883544802666,
+            18.48569017276168
+          ]
+        },
+        {
+          "layer": "block_08",
+          "method": "ogg",
+          "variants": 3,
+          "steps": 80,
+          "events": 0,
+          "guidance_calls": 0,
+          "exact_controls_states_inputs_noise_chunks_scores_thresholds_targets_queues_and_video": true,
+          "durations_s": [
+            19.178507305681705,
+            19.427983339875937,
+            20.14471710473299
+          ]
+        }
+      ],
+      "weights": "discarded one-step engineering probe models; not formally trained S2/S8",
+      "lvm_state_parity": true,
+      "capture_on_off_parity": true,
+      "extra_physics_steps": false,
+      "adapter_sha256": "e87ddfd2f2931af289010fd52aeedcb375a50261657cd1cbf16cafcedcae538a",
+      "online_adapter_sha256": "b84180168d2912ff56c7ffeaaa5ae1040fc6b84a8dfb32d4deba9e9add0d090b",
+      "motion_capture_sha256": "5193623da7d7fc872d5cc00658bd0e09268b3564106cc707192c736375599305"
+    }
+  },
+  "progress": {
+    "status": {
+      "status": "running",
+      "completed": 14,
+      "planned": 454,
+      "pid": 16383,
+      "frames_completed": 2042,
+      "frames_total": 66984,
+      "current_frames_completed": 51,
+      "full_resolution": true,
+      "stage": "feature_extraction",
+      "remaining_frames": 64891,
+      "frames_per_second": 15.4756906792102,
+      "eta_seconds": 4193.092337208158,
+      "eta_basis": "最近5个已完成Episode端到端耗时（含读写/SHA/发布），仅估算提取，不含训练",
+      "data_free_gib": 518.0548057556152,
+      "system_free_gib": 28.41669464111328,
+      "updated_unix": 1795001241.0287073,
+      "phase": "extracting",
+      "episode": 821,
+      "frame": 50,
+      "episode_frames": 132,
+      "process_alive": true,
+      "status_age_seconds": 0.6519920825958252,
+      "eta_hours": 1.165,
+      "estimated_finish_beijing": "2026-11-18T20:37:14+08:00"
+    },
+    "golden_episode_813": {
+      "checked": true,
+      "frames": 13,
+      "layers": 2,
+      "full_extraction_prefix_equals_original_fp16_cache": true
+    },
+    "gpu": "1783 MiB, 14 %",
+    "resources": {
+      "memory.current": "29433536512",
+      "memory.max": "128849018880"
+    },
+    "latest_log": "/root/autodl-tmp/corrector/single_layer_20261118_001/raw454_v2/worker_1795001080457196692.log"
+  },
+  "local_cpu_tests": 29,
+  "deployed_cpu_tests": 28,
+  "active_code_zip_sha256": "2374758902ae12b2b21da2c208d8be6897d30d8c402de06bc94619a80e0c75a3",
+  "all_stage_C_engineering_gates_passed": true,
+  "formal_model_training_started": false,
+  "full_feature_extraction_started": true,
+  "first_complete_episode": {
+    "episode": 807,
+    "frames": 143,
+    "pause_resume_tested": true
+  },
+  "limitations": [
+    "Engineering checkpoints only, not trained model quality",
+    "No natural event in12 real short rollouts; no recovery success claim",
+    "GPU OGG gradient separately checked; triggered state/queue parity checked by CPU regression",
+    "ETA estimates extraction only from latest5 completed episodes",
+    "Operational wrapper environment correction recorded separately; immutable deployment code unchanged"
+  ]
+}

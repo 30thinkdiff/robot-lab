@@ -1,0 +1,115 @@
+{
+  "status": "passed",
+  "selected_workers": 8,
+  "pipeline_sha256": "fb6f2ae646f8a13f588dfa5c4b8cec832aeb6dad8cbfa95fddf64f9d4df130e1",
+  "manifest_sha256": "29070ead638afcbd306a9e4da54cb4a25a9d037831ce683596f647cc111ec802",
+  "checkpoint_sha256": "d9367748acf03b817b623b683629b5792652d51c1d4b9b548559d29a07bca5c8",
+  "inherited_epoch": 68,
+  "s2_input_parity": true,
+  "s8_input_parity": true,
+  "gradient_parity": true,
+  "optimizer_update_parity": true,
+  "rng_parity": true,
+  "sample_order_parity": true,
+  "validation_parity": true,
+  "future_target_only": true,
+  "half_extremes_gpu_exact": true,
+  "speedup_vs_best_baseline": 1.3077424371594315,
+  "baseline_samples_per_second": 139.75877665556573,
+  "selected_samples_per_second": 182.7684831979702,
+  "validation": [
+    {
+      "workers": 4,
+      "packed": false,
+      "first_batch_sha256": "24c7beadc7456ab4b1b288bb11cb192291caf7b60b9d473f1c01f65019675d2c",
+      "metrics": {
+        "loss": 0.26710707624442875,
+        "mse": 0.016790411740657873,
+        "cosine_loss": 0.25031666550785303,
+        "zero_prediction_mse": 0.03879173001041636,
+        "mean_batch_pred_rms": 0.15522567555308342,
+        "samples": 2048,
+        "zero_targets": 0
+      },
+      "seconds": 14.359543915838003,
+      "samples_per_second": 142.6229142097708
+    },
+    {
+      "workers": 8,
+      "packed": true,
+      "first_batch_sha256": "24c7beadc7456ab4b1b288bb11cb192291caf7b60b9d473f1c01f65019675d2c",
+      "metrics": {
+        "loss": 0.26710707624442875,
+        "mse": 0.016790411740657873,
+        "cosine_loss": 0.25031666550785303,
+        "zero_prediction_mse": 0.03879173001041636,
+        "mean_batch_pred_rms": 0.15522567555308342,
+        "samples": 2048,
+        "zero_targets": 0
+      },
+      "seconds": 7.237251505255699,
+      "samples_per_second": 282.9803549749156
+    }
+  ],
+  "estimated_epoch_seconds": 313.26473676538325,
+  "candidates": [
+    {
+      "layer": "block_02",
+      "workers": 4,
+      "packed": false,
+      "samples_per_second": 124.47929282495109,
+      "measured_samples": 3072,
+      "elapsed_seconds": 24.6788034401834,
+      "loader_wait_seconds": 12.102360088378191,
+      "gpu_transfer_and_restore_seconds": 1.5489104022979736,
+      "gpu_compute_interval_seconds": 16.024132766723632,
+      "timing_note": "CPU wait and CUDA intervals may overlap; do not sum them as disjoint wall-time shares",
+      "peak_cuda_gib": 8.018937587738037,
+      "name": "current_before"
+    },
+    {
+      "layer": "block_02",
+      "workers": 4,
+      "packed": true,
+      "samples_per_second": 179.02987024670105,
+      "measured_samples": 3072,
+      "elapsed_seconds": 17.159147776663303,
+      "loader_wait_seconds": 0.030912667512893677,
+      "gpu_transfer_and_restore_seconds": 0.894941954612732,
+      "gpu_compute_interval_seconds": 16.26382354736328,
+      "timing_note": "CPU wait and CUDA intervals may overlap; do not sum them as disjoint wall-time shares",
+      "peak_cuda_gib": 8.019792079925537,
+      "name": "packed4"
+    },
+    {
+      "layer": "block_02",
+      "workers": 8,
+      "packed": true,
+      "samples_per_second": 182.7684831979702,
+      "measured_samples": 3072,
+      "elapsed_seconds": 16.808149557560682,
+      "loader_wait_seconds": 0.03031427413225174,
+      "gpu_transfer_and_restore_seconds": 0.894853759765625,
+      "gpu_compute_interval_seconds": 15.912896591186524,
+      "timing_note": "CPU wait and CUDA intervals may overlap; do not sum them as disjoint wall-time shares",
+      "peak_cuda_gib": 8.019792079925537,
+      "name": "packed8"
+    },
+    {
+      "layer": "block_02",
+      "workers": 4,
+      "packed": false,
+      "samples_per_second": 139.75877665556573,
+      "measured_samples": 3072,
+      "elapsed_seconds": 21.980730466544628,
+      "loader_wait_seconds": 7.039799068123102,
+      "gpu_transfer_and_restore_seconds": 1.5467614707946777,
+      "gpu_compute_interval_seconds": 17.298196411132814,
+      "timing_note": "CPU wait and CUDA intervals may overlap; do not sum them as disjoint wall-time shares",
+      "peak_cuda_gib": 8.019792079925537,
+      "name": "current_after"
+    }
+  ],
+  "benchmark_sha256": "2e48027a8003585013f65dc2334de39b22975bcf2d0d922c71a6dbb745e8f97f",
+  "scope": "Disposable engineering probe; no official training update or new weights retained"
+}

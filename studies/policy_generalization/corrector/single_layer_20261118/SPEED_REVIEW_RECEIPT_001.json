@@ -1,0 +1,29 @@
+{
+  "scope": "read-only training speed audit; running training unchanged",
+  "epochs_completed": 6,
+  "live_epoch": 7,
+  "best_epoch": 6,
+  "stale_epochs": 0,
+  "recent_epoch_seconds": 1080.3665489989023,
+  "current_run_to_150_epochs_hours": 43.21466195995609,
+  "all_six_runs_to_caps_hours": 268.2910263347274,
+  "scenario_all_runs50_epochs_remaining_hours": 88.22993483491035,
+  "scenario_all_runs60_epochs_remaining_hours": 106.23604398489205,
+  "scenarios_are_not_early_stop_predictions": true,
+  "training_window_seconds": 24.615390062332153,
+  "training_window_mean_gpu_utilization_pct": 34.76923076923077,
+  "validation_window_seconds": 24.630348682403564,
+  "validation_window_mean_gpu_utilization_pct": 9.555555555555555,
+  "workers_measured": 2,
+  "worker_cpu_cores_each_approx": 1,
+  "cpu_quota_cores": 16,
+  "layer_fp16_gib_approx": 196.24,
+  "ram_limit_gib": 120,
+  "proposal_status": "not benchmarked or deployed",
+  "proposals": [
+    "First benchmark num_workers4/8, retaining exact batch32/accumulate16 and sample order",
+    "Remove unused z_hist in MLP-only collation, retain exact model inputs/targets",
+    "Require batch/loss/gradient/update/RNG equivalence before versioned accelerated continuation",
+    "Optionally finish seed42 pair before later seeds, if user elects to reduce initial exploration workload"
+  ]
+}

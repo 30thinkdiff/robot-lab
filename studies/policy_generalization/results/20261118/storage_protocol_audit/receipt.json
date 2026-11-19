@@ -1,0 +1,121 @@
+{
+  "audited_utc": "2026-11-18T04:53:49.443808+00:00",
+  "snapshot_sha256": "baf98d1c99ca954ef07e03987391dfc98dfac129d1c2b175f8a4b03475148814",
+  "collector_sha256": "775d9defaaf5babd5ad3837e4a7dcfb24d1665d453cf4bfca7dcc17b8d39137b",
+  "analysis_sha256": "3ee4e79e793b06ca54ce1cbcdd0d9b1aec061813a7669a33da56236d18661e06",
+  "cpu_numpy": "2.2.6",
+  "gpu_used": false,
+  "source_writes": false,
+  "threshold_source_sha256": "fe8a2879f582a65a6e4837282b1cde7ab0507bbcd5784e44f7c45fd4f13b3660",
+  "formal_source_sha256": "71fa166c5ecf4c6c5eaaa1268826654d21b324b0e053977af74bdd92b9f89fa3",
+  "formal_adapter_sha256": "a1453cd8967d0058abfb513848fe9407836d028bb2c305d7d66d3f0b00d89169",
+  "core_manifest_sha256": "a742e42b77fa2d05592c6b7b639881c80ed28515aa57524bf4eab7b6d499d0cc",
+  "joint_checkpoint_sha256": "12b324888342ba17bf1035f94ed4c61fd1cd62f8b4f40d6b6c0e48c901e52ef1",
+  "mlp_checkpoint_sha256": "05d55ba9452142be66840b3bef6fad10226480b6115be4bbbcf0842116732fad",
+  "trace_replay": {
+    "j_lvm": {
+      "trials": 60,
+      "scored_steps": 7611,
+      "eligible_steps": 7611,
+      "threshold_mismatches": 0,
+      "trigger_mismatches": 0,
+      "max_threshold_error": 0.0,
+      "max_extra_gap": 0,
+      "cancellations_logged": 0,
+      "predictions_scored_across_replans": 842,
+      "first_score_steps": [
+        24
+      ],
+      "successes": 55,
+      "coverage": 1.0
+    },
+    "j_ogg": {
+      "trials": 60,
+      "scored_steps": 7615,
+      "eligible_steps": 7615,
+      "threshold_mismatches": 0,
+      "trigger_mismatches": 0,
+      "max_threshold_error": 0.0,
+      "max_extra_gap": 0,
+      "cancellations_logged": 0,
+      "predictions_scored_across_replans": 877,
+      "first_score_steps": [
+        24
+      ],
+      "successes": 55,
+      "coverage": 1.0
+    },
+    "lvm": {
+      "trials": 60,
+      "scored_steps": 7585,
+      "eligible_steps": 7585,
+      "threshold_mismatches": 0,
+      "trigger_mismatches": 0,
+      "max_threshold_error": 0.0,
+      "max_extra_gap": 0,
+      "cancellations_logged": 0,
+      "predictions_scored_across_replans": 0,
+      "first_score_steps": [
+        24
+      ],
+      "successes": 55,
+      "coverage": 1.0
+    },
+    "ogg": {
+      "trials": 60,
+      "scored_steps": 7578,
+      "eligible_steps": 7578,
+      "threshold_mismatches": 0,
+      "trigger_mismatches": 0,
+      "max_threshold_error": 0.0,
+      "max_extra_gap": 0,
+      "cancellations_logged": 0,
+      "predictions_scored_across_replans": 0,
+      "first_score_steps": [
+        24
+      ],
+      "successes": 55,
+      "coverage": 1.0
+    }
+  },
+  "score_precision_note": "J log preserves Python-float fused score; controller consumes its FP32 tensor value. Replaying that actual conversion gives exact thresholds.",
+  "storage": {
+    "episodes70": 70,
+    "frames70": 10265,
+    "splits70": {
+      "train": 50,
+      "validation": 20
+    },
+    "raw70_file_bytes": 64581813760,
+    "raw70_allocated_bytes": 64582549504,
+    "connector70_file_bytes": 1264008960,
+    "full_episodes": 454,
+    "full_frames": 66984,
+    "two_raw_layers_bytes_per_frame": 6291456,
+    "full_raw_payload_bytes": 421426888704,
+    "full_connector_quantized_payload_bytes": 8248141824
+  },
+  "resources": {
+    "memory_limit_bytes": 2147483648,
+    "memory_current_bytes": 967245824,
+    "disks": {
+      "/": {
+        "total_bytes": 32212254720,
+        "used_bytes": 22068690944,
+        "free_bytes": 10143563776
+      },
+      "/root/autodl-tmp": {
+        "total_bytes": 139586437120,
+        "used_bytes": 127692513280,
+        "free_bytes": 11893923840
+      }
+    }
+  },
+  "historical_ram_peak_measured": false,
+  "limitations": [
+    "Header sizes verify shape/size, not the SHA of all 60 GiB tensor contents.",
+    "Threshold replay verifies saved scores/state-machine decisions, not model forward or simulator physics.",
+    "No per-process historical extraction RSS/peak RAM record exists in the audited reports.",
+    "No new model training, GPU inference, simulation, data deletion or experiment modification."
+  ]
+}

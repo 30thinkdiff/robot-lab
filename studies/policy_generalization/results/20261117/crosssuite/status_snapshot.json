@@ -1,0 +1,61 @@
+{
+  "schema": "crosssuite_status_snapshot_v1",
+  "as_of_utc": "2026-11-17T04:15:21Z",
+  "source_snapshot_sha256": "6ae32a653cad08a026f90e35d904440cc01b6ce50fadfa4267804980f771bed5",
+  "execution": {
+    "status": "running",
+    "started_utc": "2026-11-17T04:09:49.767592+00:00",
+    "max_seconds": 14240.52955365181,
+    "min_free_gib": 5,
+    "stop_file": "/root/corrector_crosssuite_20261117_001/STOP",
+    "wall_seconds": 330.86499735340476,
+    "planned": 880,
+    "completed": 34,
+    "errors": 0
+  },
+  "live_check": {
+    "checked_unix": 1794888921.76065,
+    "queue_process_alive": true
+  },
+  "environment_probe": {
+    "status": "passed",
+    "tasks_checked": 40
+  },
+  "object_bridge": {
+    "status": "passed",
+    "checks": [
+      {
+        "condition": "libero_object/task_1/init_0",
+        "seed": 1001,
+        "method": "H50",
+        "controls_and_queue_exact": true
+      },
+      {
+        "condition": "libero_object/task_1/init_0",
+        "seed": 1001,
+        "method": "H20",
+        "controls_and_queue_exact": true
+      },
+      {
+        "condition": "libero_object/task_1/init_0",
+        "seed": 1001,
+        "method": "mlp_lvm",
+        "controls_and_queue_exact": true
+      },
+      {
+        "condition": "libero_object/task_1/init_0",
+        "seed": 1001,
+        "method": "mlp_ogg",
+        "controls_and_queue_exact": true
+      }
+    ]
+  },
+  "resources": {
+    "system_free_gib": 10.247032165527344,
+    "data_free_gib": 11.077079772949219,
+    "available_cgroup_gib": 114.2900276184082,
+    "gpu": "3554, 0"
+  },
+  "status": "running",
+  "scope": "Progress snapshot only, not final task-transfer performance. The live summary may lag by 60 seconds."
+}

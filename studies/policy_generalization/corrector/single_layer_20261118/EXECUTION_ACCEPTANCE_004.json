@@ -1,0 +1,178 @@
+{
+  "engineering_acceptance": {
+    "status": "passed",
+    "full_s2_speedup": 1.0752892088367405,
+    "s8_short_speedup": 1.0945669871470243,
+    "selected": {
+      "deferred": true,
+      "prefetch": true,
+      "validation_prefetch": false
+    },
+    "full_epoch_counts_exact": true,
+    "all_97_updates_parameters_optimizer_rng_metrics_exact": true,
+    "s8_exact": true,
+    "full_iterator_rng_and_tail_exact": true,
+    "source_checkpoint_sha256": "8a59d62f72f49e4b3fd7f6ea39e945c6e3da55b7c0e928dfe9ed0503c278b627",
+    "inherited_epoch": 122,
+    "manifest_sha256": "29070ead638afcbd306a9e4da54cb4a25a9d037831ce683596f647cc111ec802",
+    "pipeline_sha256": "91fd50bb67241c3d332131d578db3dee331813cd6f1e8c8613104827126861db",
+    "estimated_epoch_seconds": 317.49868329233465,
+    "cases": [
+      {
+        "layer": "block_02",
+        "deferred": true,
+        "prefetch": true,
+        "validation_prefetch": false,
+        "validation": {
+          "loss": 0.2598828100317001,
+          "mse": 0.016561431426298224,
+          "cosine_loss": 0.2433213791210999,
+          "zero_prediction_mse": 0.03931354627257266,
+          "mean_batch_pred_rms": 0.1549492624769121,
+          "samples": 12089,
+          "zero_targets": 0
+        },
+        "train_seconds": 262.7064260393381,
+        "train_samples_per_second": 186.27256568391817,
+        "validation_seconds": 52.04359698668122,
+        "validation_samples_per_second": 232.28601979785844,
+        "estimated_epoch_seconds": 317.49868329233465,
+        "peak_cuda_gib": 8.582176208496094,
+        "name": "candidate"
+      },
+      {
+        "layer": "block_02",
+        "deferred": false,
+        "prefetch": false,
+        "validation_prefetch": false,
+        "validation": {
+          "loss": 0.2598828100317001,
+          "mse": 0.016561431426298224,
+          "cosine_loss": 0.2433213791210999,
+          "zero_prediction_mse": 0.03931354627257266,
+          "mean_batch_pred_rms": 0.1549492624769121,
+          "samples": 12089,
+          "zero_targets": 0
+        },
+        "train_seconds": 283.44356355816126,
+        "train_samples_per_second": 172.6445976959317,
+        "validation_seconds": 54.9937143959105,
+        "validation_samples_per_second": 219.82512243070045,
+        "estimated_epoch_seconds": 341.40290796412137,
+        "peak_cuda_gib": 8.20643949508667,
+        "name": "baseline"
+      }
+    ],
+    "s8_cases": [
+      {
+        "layer": "block_08",
+        "deferred": false,
+        "prefetch": false,
+        "validation_prefetch": false,
+        "validation": {
+          "loss": 0.8415213460102677,
+          "mse": 0.21601916127838194,
+          "cosine_loss": 0.6255021765828133,
+          "zero_prediction_mse": 0.2518960777670145,
+          "mean_batch_pred_rms": 0.20032929093576968,
+          "samples": 2048,
+          "zero_targets": 0
+        },
+        "train_seconds": 18.711688246577978,
+        "train_samples_per_second": 164.17545865012005,
+        "validation_seconds": 10.484640371054411,
+        "validation_samples_per_second": 195.33335694126802,
+        "estimated_epoch_seconds": 363.0729410472189,
+        "peak_cuda_gib": 8.20643949508667
+      },
+      {
+        "layer": "block_08",
+        "deferred": true,
+        "prefetch": true,
+        "validation_prefetch": false,
+        "validation": {
+          "loss": 0.8415213460102677,
+          "mse": 0.21601916127838194,
+          "cosine_loss": 0.6255021765828133,
+          "zero_prediction_mse": 0.2518960777670145,
+          "mean_batch_pred_rms": 0.20032929093576968,
+          "samples": 2048,
+          "zero_targets": 0
+        },
+        "train_seconds": 16.970007807016373,
+        "train_samples_per_second": 181.02525555290902,
+        "validation_seconds": 9.919798016548157,
+        "validation_samples_per_second": 206.45581659863808,
+        "estimated_epoch_seconds": 331.70463325736154,
+        "peak_cuda_gib": 8.582469940185547
+      }
+    ],
+    "scope": "All engineering updates discarded; full S2 population and short S8 execution check; not new trained model results"
+  },
+  "production_deployment": {
+    "launch": {
+      "code": "/root/autodl-tmp/corrector/dev/slc-execution-prod-f4c06c17185e",
+      "zip_sha256": "f4c06c17185e1ad74075467ec91818da320224f1a55a73c7afbaa56c3aeac5a4",
+      "cpu_tests": 46,
+      "cpu_test_log": "/root/autodl-tmp/corrector/dev/slc-execution-prod-f4c06c17185e/cpu_tests_1795067370929693703.log",
+      "manager": "/root/autodl-tmp/corrector/single_layer_20261118_001/train_execution_manage.py",
+      "config": "/root/autodl-tmp/corrector/single_layer_20261118_001/training_execution_queue_001.json",
+      "output": "/root/autodl-tmp/corrector/single_layer_20261118_001/training_execution_001",
+      "launch": {
+        "pid": 154547,
+        "log": "/root/autodl-tmp/corrector/single_layer_20261118_001/training_execution_001/queue_1795067396082563406.log",
+        "started_unix": 1795067396.0836046,
+        "config": "/root/autodl-tmp/corrector/single_layer_20261118_001/training_execution_001/queue_config.json"
+      },
+      "workers": 4,
+      "inherited_epoch": 122,
+      "checkpoint_payload_exact": true,
+      "benchmark": "/root/autodl-tmp/corrector/single_layer_20261118_001/execution_full_004/result.json",
+      "source_preserved": "/root/autodl-tmp/corrector/single_layer_20261118_001/training_transport_002/runs/S2_s42/attempt_001"
+    },
+    "continuation": {
+      "scope": "Engineering continuation; original checkpoint/source/history retained read-only",
+      "source": "/root/autodl-tmp/corrector/single_layer_20261118_001/training_transport_002/runs/S2_s42/attempt_001",
+      "original_latest_sha256": "8a59d62f72f49e4b3fd7f6ea39e945c6e3da55b7c0e928dfe9ed0503c278b627",
+      "new_latest_sha256": "a743a57bf57d327cf96a22b49fde3b0c77d80453f572e045127b53de0b269fe7",
+      "checkpoint_payload_except_protocol_sha256": "fc5c0266922c859fe8fbcc7d866aa62a2c09c6acad3f1a56a262cb7a9dcd27c7",
+      "checkpoint_payload_exact": true,
+      "inherited_epoch": 122,
+      "inherited_optimizer_steps": 11834,
+      "original_protocol_sha256": "c45da2ad0de4a5d11e0a42101d3415442b5c8991d45df61f59fe37ff3c7f1deb",
+      "new_protocol_sha256": "c45da2ad0de4a5d11e0a42101d3415442b5c8991d45df61f59fe37ff3c7f1deb",
+      "changes": {
+        "loader.num_workers": {
+          "before": 4,
+          "after": 4
+        },
+        "pipeline_kind": "packed_fp16_transport",
+        "collate": "Lossless stored FP16 transport; restore FP32 current/future before target subtraction on GPU"
+      },
+      "immutable_other_protocol_fields_equal": true,
+      "copied_files_sha256": {
+        "config.json": "b5acce27f87e04d26f0ac4ad32a1b6fecd983774071d2afbab34c5c62b6702be",
+        "split_indices.npz": "5e2893484c02d7adc82a8d3646ba35d6e9b95ed8337e14bfd457ddbc2ba308f4",
+        "history.json": "11cb19eced32cf68372d3acd6d74f35c416dd43a19bfc449320497bc8de27bf9",
+        "metrics.csv": "cc68c8e2082c7ee95e27f0dd3edf2880150f5b76e7d481f290c511bfb13184d5",
+        "initial_validation.json": "289830f45f2e880d1b11d6b6b23a770e2d050dd174e967958a4f368f633ae459"
+      },
+      "acceptance": "/root/autodl-tmp/corrector/single_layer_20261118_001/execution_full_004/result.json"
+    },
+    "execution": {
+      "execution": {
+        "receipt": "/root/autodl-tmp/corrector/single_layer_20261118_001/execution_full_004/result.json",
+        "receipt_sha256": "3c8589279bb4faa4a03be5a41d47d88e015e4cfafac5144a767e119331de0fcb",
+        "selected": {
+          "deferred": true,
+          "prefetch": true,
+          "validation_prefetch": false
+        }
+      },
+      "original_source": "/root/autodl-tmp/corrector/single_layer_20261118_001/training_transport_002/runs/S2_s42/attempt_001",
+      "pipeline_source_sha256": "91fd50bb67241c3d332131d578db3dee331813cd6f1e8c8613104827126861db",
+      "scientific_protocol_equal": true
+    }
+  },
+  "note": "Engineering updates discarded. Formal epoch runtime reported separately; unchanged original source is retained."
+}

@@ -1,0 +1,173 @@
+{
+  "scope": "2026-11-18 formal full454 S2/S8 training startup, not completed model quality",
+  "feature_data_complete": true,
+  "episodes": 454,
+  "frames": 66984,
+  "full_sha_and_alignment_validation_passed": true,
+  "validation_seconds": 599.3608247078955,
+  "local_cpu_tests": 33,
+  "remote_cpu_tests": 33,
+  "code_zip_sha256": "777f8060ba1951e8c9c775b837dc3a0700e37deec863799bc679838b32db928d",
+  "settings": {
+    "epochs": 150,
+    "patience": 5,
+    "batch_size": 32,
+    "accumulate": 16,
+    "lr": 0.0003,
+    "weight_decay": 0.0001,
+    "loss": "MSE+cosine",
+    "beta": 1.0,
+    "precision": "amp-bfloat16",
+    "loader_workers": 2,
+    "pin_memory": true
+  },
+  "jobs": [
+    {
+      "name": "S2_s42",
+      "layer": "block_02",
+      "seed": 42
+    },
+    {
+      "name": "S8_s42",
+      "layer": "block_08",
+      "seed": 42
+    },
+    {
+      "name": "S2_s43",
+      "layer": "block_02",
+      "seed": 43
+    },
+    {
+      "name": "S8_s43",
+      "layer": "block_08",
+      "seed": 43
+    },
+    {
+      "name": "S2_s44",
+      "layer": "block_02",
+      "seed": 44
+    },
+    {
+      "name": "S8_s44",
+      "layer": "block_08",
+      "seed": 44
+    }
+  ],
+  "startup": {
+    "status": {
+      "status": "running",
+      "phase": "training",
+      "pid": 27510,
+      "jobs": [
+        {
+          "name": "S2_s42",
+          "layer": "block_02",
+          "seed": 42
+        },
+        {
+          "name": "S8_s42",
+          "layer": "block_08",
+          "seed": 42
+        },
+        {
+          "name": "S2_s43",
+          "layer": "block_02",
+          "seed": 43
+        },
+        {
+          "name": "S8_s43",
+          "layer": "block_08",
+          "seed": 43
+        },
+        {
+          "name": "S2_s44",
+          "layer": "block_02",
+          "seed": 44
+        },
+        {
+          "name": "S8_s44",
+          "layer": "block_08",
+          "seed": 44
+        }
+      ],
+      "runs_planned": 6,
+      "runs_completed": 0,
+      "child_pid": 27659,
+      "updated_unix": 1795007317.8991697,
+      "data_free_gib": 137.68443298339844,
+      "system_free_gib": 28.416641235351562,
+      "current_job": {
+        "name": "S2_s42",
+        "layer": "block_02",
+        "seed": 42
+      },
+      "current_output": "/root/autodl-tmp/corrector/single_layer_20261118_001/training_001/runs/S2_s42/attempt_001",
+      "current_log": "/root/autodl-tmp/corrector/single_layer_20261118_001/training_001/logs/S2_s42_1795006762742685730.log",
+      "resume": false,
+      "process_alive": true,
+      "current_training": {
+        "epochs_completed": 0,
+        "epoch_cap": 150,
+        "patience": 5,
+        "seconds_per_epoch": 1193.6612548576668,
+        "eta_to_epoch_cap_hours": 49.73588561906945,
+        "eta_if_no_further_improvement_hours": null,
+        "eta_note": "首轮内的临时速度外推；尚无验证选优历史，无法估计早停触发",
+        "saved_training_status": {
+          "status": "running",
+          "epochs_completed": 0,
+          "optimizer_steps": 0,
+          "stop_file": "/root/autodl-tmp/corrector/single_layer_20261118_001/training_001/runs/S2_s42/attempt_001/STOP"
+        },
+        "live": {
+          "epoch_in_progress": 1,
+          "phase": "training",
+          "train_samples_after_backward": 512,
+          "validation_samples_forwarded": 12089,
+          "epoch_optimizer_updates": 1,
+          "phase_elapsed_seconds": 10.161989212036133,
+          "last_validation_seconds": 212.2545473575592,
+          "training_elapsed_seconds": 10.161996364593506,
+          "updated_unix": 1795007318.7350411,
+          "pid": 27659,
+          "train_samples_total": 49447,
+          "validation_samples_total": 12089,
+          "scope": "training counts only; exact frozen tensor operations unchanged"
+        },
+        "input_check": {
+          "status": "completed",
+          "episodes_checked": 454,
+          "planned": 454,
+          "frames_checked": 66984,
+          "frames_total": 66984,
+          "eta_seconds": 0.0,
+          "layer": "block_02"
+        },
+        "input_check_eta_hours": 0.0,
+        "epoch_timing_basis": "临时按当前轮样本速度＋初始验证估计；首个完整epoch后替换"
+      },
+      "queue_eta_to_epoch_caps_hours": 298.4153137144167,
+      "queue_eta_note": "按每组最多150轮测算；早停可大幅缩短，无法预先承诺终点。未实测层临时借用其他同形状层耗时",
+      "queue_eta_jobs_using_other_layer_timing": [
+        "S8_s42",
+        "S8_s43",
+        "S8_s44"
+      ],
+      "estimated_finish_at_epoch_caps_beijing": "2026-12-01T07:33:36+08:00"
+    },
+    "latest_bytes": 149505420,
+    "initial_validation": {
+      "loss": 2.5075958435209427,
+      "mse": 1.5083682829851113,
+      "cosine_loss": 0.9992275605358314,
+      "zero_prediction_mse": 0.03931354627257266,
+      "mean_batch_pred_rms": 1.2121888124791906,
+      "samples": 12089,
+      "zero_targets": 0
+    },
+    "gpu": "9809 MiB, 100 %\n"
+  },
+  "formal_training_started": true,
+  "formal_training_completed": false,
+  "robot_performance_evaluation_started": false
+}

@@ -1,0 +1,103 @@
+{
+  "status": "passed",
+  "selected_workers": 4,
+  "collate": "mlp_no_history",
+  "manifest_sha256": "29070ead638afcbd306a9e4da54cb4a25a9d037831ce683596f647cc111ec802",
+  "checkpoint_sha256": "93cae193fdd5f89277b5ee524f65dca4a6a6bce52140741522286b2a5e22ba62",
+  "inherited_epoch": 7,
+  "pipeline_sha256": "daa4f25f67414b6d9ecf3cce269ff5ea70da2b1d931a34bf27072014af9c6c54",
+  "benchmark_sha256": "d2c61ff6d7189d08a827bf59e19150086bcaf91bfe6d0621b2bebd200f7e1f35",
+  "s2_input_parity": true,
+  "s8_input_parity": true,
+  "gradient_parity": true,
+  "optimizer_update_parity": true,
+  "rng_parity": true,
+  "sample_order_parity": true,
+  "speedup_vs_best_baseline": 2.2490105656204387,
+  "baseline_samples_per_second": 64.01566762977541,
+  "selected_samples_per_second": 143.9719128646112,
+  "validation": [
+    {
+      "workers": 2,
+      "mode": "legacy",
+      "metrics": {
+        "loss": 0.36133088264614344,
+        "mse": 0.023069903312716633,
+        "cosine_loss": 0.3382609821856022,
+        "zero_prediction_mse": 0.03877747803926468,
+        "mean_batch_pred_rms": 0.16841395385563374,
+        "samples": 1024,
+        "zero_targets": 0
+      },
+      "first_batch_sha256": "24c7beadc7456ab4b1b288bb11cb192291caf7b60b9d473f1c01f65019675d2c",
+      "seconds": 17.11118194460869,
+      "samples_per_second": 59.84390811311764
+    },
+    {
+      "workers": 4,
+      "mode": "mlp_no_history",
+      "metrics": {
+        "loss": 0.36133088264614344,
+        "mse": 0.023069903312716633,
+        "cosine_loss": 0.3382609821856022,
+        "zero_prediction_mse": 0.03877747803926468,
+        "mean_batch_pred_rms": 0.16841395385563374,
+        "samples": 1024,
+        "zero_targets": 0
+      },
+      "first_batch_sha256": "24c7beadc7456ab4b1b288bb11cb192291caf7b60b9d473f1c01f65019675d2c",
+      "seconds": 7.178281992673874,
+      "samples_per_second": 142.65251783714967
+    }
+  ],
+  "estimated_epoch_seconds": 428.1933197563212,
+  "candidates": [
+    {
+      "layer": "block_02",
+      "workers": 2,
+      "collate": "legacy",
+      "samples_per_second": 56.944546067899694,
+      "measured_seconds": 35.964813865721226,
+      "measured_samples": 2048,
+      "overall_seconds": 48.49971169605851,
+      "peak_cuda_gib": 8.018937587738037,
+      "name": "baseline_cold"
+    },
+    {
+      "layer": "block_02",
+      "workers": 4,
+      "collate": "mlp_no_history",
+      "samples_per_second": 143.9719128646112,
+      "measured_seconds": 14.22499680146575,
+      "measured_samples": 2048,
+      "overall_seconds": 25.048968344926834,
+      "peak_cuda_gib": 8.019792079925537,
+      "name": "workers4"
+    },
+    {
+      "layer": "block_02",
+      "workers": 8,
+      "collate": "mlp_no_history",
+      "samples_per_second": 137.80462576352255,
+      "measured_seconds": 14.861620128154755,
+      "measured_samples": 2048,
+      "overall_seconds": 26.792758613824844,
+      "peak_cuda_gib": 8.019792079925537,
+      "name": "workers8"
+    },
+    {
+      "layer": "block_02",
+      "workers": 2,
+      "collate": "legacy",
+      "samples_per_second": 64.01566762977541,
+      "measured_seconds": 31.992168102413416,
+      "measured_samples": 2048,
+      "overall_seconds": 42.97191637381911,
+      "peak_cuda_gib": 8.019792079925537,
+      "name": "baseline_warm"
+    }
+  ],
+  "scope": "isolated engineering throughput pilot; copied model/optimizer states discarded, not formal training epochs",
+  "full_receipt_sha256": "65bf2b0a18cec8f96dee57ed74ed5155cabdeab9e14f2f45342aa119554714d1",
+  "s8_parity_records": 2
+}

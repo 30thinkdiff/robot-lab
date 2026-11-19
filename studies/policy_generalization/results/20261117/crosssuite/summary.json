@@ -1,0 +1,109 @@
+{
+  "status": "completed",
+  "formal_trials": 880,
+  "errors": 0,
+  "paired_quartets": 220,
+  "primary_trials": 480,
+  "secondary_ninety_trials": 160,
+  "extra_init_trials": 240,
+  "task_init_conditions": 110,
+  "eval_seeds": [
+    1000,
+    1001
+  ],
+  "tasks_per_suite": {
+    "libero_spatial": 10,
+    "libero_goal": 10,
+    "libero_10": 10,
+    "libero_90": 10
+  },
+  "initial_state_vector_sha_count": 125,
+  "bddl_and_state_fingerprint_count": 125,
+  "queue_started_unix": 1794888430.2764027,
+  "queue_finished_unix": 1794900725.6079612,
+  "queue_wall_seconds": 12295.331558465958,
+  "formal_wall_seconds": 12132.32525187172,
+  "native_rollout_wall_seconds_sum": 11559.322486493737,
+  "overall_main_descriptive": {
+    "H50": {
+      "all_inits_successes": 114,
+      "all_inits_n": 180,
+      "primary_successes": 81,
+      "primary_n": 120
+    },
+    "H20": {
+      "all_inits_successes": 138,
+      "all_inits_n": 180,
+      "primary_successes": 93,
+      "primary_n": 120
+    },
+    "mlp_lvm": {
+      "all_inits_successes": 115,
+      "all_inits_n": 180,
+      "primary_successes": 80,
+      "primary_n": 120
+    },
+    "mlp_ogg": {
+      "all_inits_successes": 112,
+      "all_inits_n": 180,
+      "primary_successes": 77,
+      "primary_n": 120
+    }
+  },
+  "coverage": {
+    "scores": 106501,
+    "eligible_steps": 106501,
+    "max_gap_steps": 0,
+    "warmup_excluded_steps": 24
+  },
+  "ogg": {
+    "events": 962,
+    "guidance_calls": 3848,
+    "nonzero_gradient_calls": 3848
+  },
+  "integrity": {
+    "transfer": {
+      "status": "passed",
+      "videos_sha256_checked": 880,
+      "sealed_artifacts_sha256_checked": 17396,
+      "video_bytes": 141443853,
+      "paired_signature_groups": 220,
+      "scope": "native PTS/frame maps and capture assertions plus file hashes, no new full video decode"
+    },
+    "bridge": {
+      "status": "passed",
+      "videos_sha256_checked": 4,
+      "sealed_artifacts_sha256_checked": 64,
+      "video_bytes": 421042,
+      "paired_signature_groups": 1,
+      "scope": "native PTS/frame maps and capture assertions plus file hashes, no new full video decode"
+    },
+    "source_files_unchanged": 12,
+    "current_process_check": {
+      "evaluators_alive": false,
+      "gpu_query": {
+        "query_available": false,
+        "error": "PermissionError: [Errno 13] Permission denied: 'nvidia-smi'"
+      }
+    }
+  },
+  "metadata_warning": {
+    "field": "environment_config.json:init",
+    "meaning": "post-reset next-init cursor; not selected init",
+    "offset": 1,
+    "selected_init": "case.config.init and suite_assets.init, verified against native reset selection/increment order",
+    "native_env_source_sha256": "97c984f12331527626812ec19967ef399e545535b3571becf044db2417ae9d71",
+    "source_results_modified": false
+  },
+  "checkpoint_sha256": "05d55ba9452142be66840b3bef6fad10226480b6115be4bbbcf0842116732fad",
+  "policy_revision": "a24f1f380461b665158d52acd140152c79e8b36d",
+  "frozen_adapter_sha256": "22cbee22575313018eb4d34ff166a33254017d091bb1710bcc3b2ae649a44175",
+  "cpu_audit_source_sha256": "5ac441b4b566cd254a9ac058678c309747a84c7f860ea3d74cb3b531b0788763",
+  "audited_utc": "2026-11-17T07:44:26.022953+00:00",
+  "current_disk_free_gib": {
+    "/root": 9.39739990234375,
+    "/root/autodl-tmp": 11.077079772949219
+  },
+  "scope": "Object-trained frozen MLP, original LVM/cosine OGG. Primary and supplementary cohorts separate. Base SmolVLA training task coverage unknown; no zero-shot claim. Same task/init evaluated with two seeds is correlated, not independent new scenes. No abnormality ground-truth labels; no AUROC/false-alarm claim. Videos remain remote; this analysis downloads no full videos or tensors.",
+  "source_audit_sha256": "3d6285f1c98d9c9cb9e823013693ef8913a50cce20fc339bc5fedf7432871b00"
+}

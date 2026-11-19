@@ -1,0 +1,122 @@
+{
+  "status": "passed",
+  "job": {
+    "name": "S2_s42",
+    "layer": "block_02",
+    "seed": 42
+  },
+  "new_first_epoch": {
+    "epoch": 123,
+    "step": 11931,
+    "train_loss": 0.24078917471774802,
+    "train_mse": 0.015414144012393771,
+    "train_cosine_loss": 0.2253750310890749,
+    "validation": {
+      "loss": 0.2598828100317001,
+      "mse": 0.016561431426298224,
+      "cosine_loss": 0.2433213791210999,
+      "zero_prediction_mse": 0.03931354627257266,
+      "mean_batch_pred_rms": 0.1549492624769121,
+      "samples": 12089,
+      "zero_targets": 0
+    },
+    "grad_norm_last": 0.1708022654056549,
+    "seconds": 331.28493643924594,
+    "next_lr": 2.6117303062950733e-05
+  },
+  "baseline_last_three_epochs": [
+    {
+      "epoch": 120,
+      "seconds": 340.93240283057094
+    },
+    {
+      "epoch": 121,
+      "seconds": 345.14437867701054
+    },
+    {
+      "epoch": 122,
+      "seconds": 343.35440407693386
+    }
+  ],
+  "baseline_mean_seconds": 343.1437285281718,
+  "formal_speedup": 1.0357963516735407,
+  "latest_committed_epoch": 123,
+  "latest_optimizer_steps": 11931,
+  "checkpoint_history_matches": true,
+  "queue_status": {
+    "status": "running",
+    "phase": "training",
+    "pid": 154547,
+    "jobs": [
+      {
+        "name": "S2_s42",
+        "layer": "block_02",
+        "seed": 42
+      },
+      {
+        "name": "S8_s42",
+        "layer": "block_08",
+        "seed": 42
+      },
+      {
+        "name": "S2_s43",
+        "layer": "block_02",
+        "seed": 43
+      },
+      {
+        "name": "S8_s43",
+        "layer": "block_08",
+        "seed": 43
+      },
+      {
+        "name": "S2_s44",
+        "layer": "block_02",
+        "seed": 44
+      },
+      {
+        "name": "S8_s44",
+        "layer": "block_08",
+        "seed": 44
+      }
+    ],
+    "runs_planned": 6,
+    "runs_completed": 0,
+    "child_pid": 154550,
+    "execution_policy": {
+      "deferred": true,
+      "prefetch": true,
+      "validation_prefetch": false
+    },
+    "updated_unix": 1795068066.4643588,
+    "data_free_gib": 134.32839584350586,
+    "system_free_gib": 27.757038116455078,
+    "current_job": {
+      "name": "S2_s42",
+      "layer": "block_02",
+      "seed": 42
+    },
+    "current_output": "/root/autodl-tmp/corrector/single_layer_20261118_001/training_execution_001/runs/S2_s42/attempt_001",
+    "current_log": "/root/autodl-tmp/corrector/single_layer_20261118_001/training_execution_001/logs/S2_s42_1795067396267343528.log",
+    "resume": true
+  },
+  "execution": {
+    "execution": {
+      "receipt": "/root/autodl-tmp/corrector/single_layer_20261118_001/execution_full_004/result.json",
+      "receipt_sha256": "3c8589279bb4faa4a03be5a41d47d88e015e4cfafac5144a767e119331de0fcb",
+      "selected": {
+        "deferred": true,
+        "prefetch": true,
+        "validation_prefetch": false
+      }
+    },
+    "original_source": "/root/autodl-tmp/corrector/single_layer_20261118_001/training_transport_002/runs/S2_s42/attempt_001",
+    "pipeline_source_sha256": "91fd50bb67241c3d332131d578db3dee331813cd6f1e8c8613104827126861db",
+    "scientific_protocol_equal": true
+  },
+  "formal_integration_parity": {
+    "epoch": 123,
+    "formal_model_weights_equal_full_engineering_candidate": true,
+    "formal_validation_exact": true,
+    "source_original_checkpoint_sha256": "8a59d62f72f49e4b3fd7f6ea39e945c6e3da55b7c0e928dfe9ed0503c278b627"
+  }
+}

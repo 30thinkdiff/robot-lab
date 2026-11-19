@@ -26,6 +26,14 @@ py -3 -X utf8 tools/robotlab_replay/server.py --open
 
 运行只需要Python标准库和现代浏览器，不需要安装Python/Node包。视频帧核验和PNG导出使用已有的`ffprobe` / `ffmpeg`；若没有，视频可用原生控件独立播放，但禁用未经核验的逐步联动与关键帧导出。Ubuntu为本轮实际验收平台；Windows启动脚本已提供，未做Windows实机验收。端口冲突可加`--port 8871`。
 
+## LIBERO-90恢复案例（11月17日）
+
+已导入`libero_90/task_29/init_1`的seed1000/1001，各有H50/H20/MLP-LVM/MLP-OGG，共8条完整视频、动作/队列和监测资料。目标是把黑碗放进柜子顶层抽屉。两组四位成败组合分别`0101`与`0001`，顺序为H50/H20/LVM/OGG；是同一task/init的两个seed。
+
+重启服务并刷新页面 → **成败组合样本库 → 原MLP：H50 / H20 / LVM / OGG → 来源：跨任务泛化 · 原MLP四方法 → 阶段：LIBERO-90固定子集**。保留完整资料与仅本地视频筛选。选`0001`、打开MLP-LVM与MLP-OGG，复盘失败/恢复和实际引导；选`0101`对照H20/OGG的两种成功路径。评分、OGG Loss/梯度、真实动作块/命令和视频联动；没有采集的实际关节状态不会补造。
+
+原trial/视频SHA、PTS/相位、步数及首状态/输入/首噪声签名已验证，真实Chromium通过双视频拖动、OGG读取及不同结束边界。新包约2.85MiB，只追加本地忽略目录，没有新跑GPU。[任务组成、原始配置与本地路径](../../studies/policy_generalization/results/20261117/crosssuite/LIBERO_SUITES.md)。
+
 ## 动作规划与实际运动数据（11月16日已可用）
 
 已导入**12条真实运动回放、2687个环境步**。实验筛选选择 **动作跟踪诊断 · 新采集**，可浏览H50/H20/MLP-LVM/MLP-OGG/J-LVM/J-OGG。两个既有条件是task1/init0/seed1001、task9/init2/seed1000；后者H20失败而J成功，前者H20/MLP成功而J失败，适合诊断，不能当总体成功率估计。
@@ -44,7 +52,7 @@ py -3 -X utf8 tools/robotlab_replay/server.py --open
 
 原Pilot另已导入24条完整回放，后续授权扩展再新增72条，实验筛选 **OGG Loss · ordinary/plus · cosine/mse/mse_cosine**，同condition/seed可比较相同预测器的三种引导损失。配置释义会明确显示在线OGG loss及其尺度限制，LVM规则没有改。视频、动作、队列、损失/梯度摘要可联动；这批没有新增逐步实际位姿，因此运动面板显示“未记录”。不把12条motion记录套到其他轨迹上。
 
-本机当前共1724条已索引记录；新增96条Plus H10/H5/H1的全量视频仍在远程，本地报告已同步全部指标，未大批下载视频。[loss结果与局限](../../studies/policy_generalization/results/20261116/ogg_loss/RESULTS.md)。
+11月16日导入后共1724条，11月17日新增8条LIBERO-90后本机共1732条已索引记录，以实际界面为准；96条Plus H10/H5/H1的全量视频仍在远程，本地报告已同步指标。[loss结果与局限](../../studies/policy_generalization/results/20261116/ogg_loss/RESULTS.md)。
 
 指标逐项解释见[MOTION_METRICS.md](MOTION_METRICS.md)，包含mm/°/rad/N·m及执行前后相位。
 

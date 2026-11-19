@@ -1,0 +1,45 @@
+{
+  "status": "cpu_foundation_verified",
+  "tested_utc": "2026-11-18T09:07:53.593108+00:00",
+  "tests": 19,
+  "failures": 0,
+  "gpu_experiments_started": false,
+  "full_extraction_started": false,
+  "training_started": false,
+  "real_robot_evaluation_completed": false,
+  "replay_real_import_completed": false,
+  "torch": "2.11.0+cpu",
+  "formal_model_parameters": 37266176,
+  "meta_input_shape": [
+    1,
+    2,
+    1024,
+    768
+  ],
+  "meta_output_shape": [
+    1,
+    2,
+    1024,
+    768
+  ],
+  "actual_cpu_numeric_test": "full hidden widths, four tokens; not real full-resolution GPU",
+  "train_pairs": 49447,
+  "validation_pairs": 12089,
+  "files_sha256": {
+    "tools/robotlab_single_layer/__init__.py": "3a881c6dba614cd0d314225ed5ef96c1f36d780c4a7acde9f6a008c4e192c1c5",
+    "tools/robotlab_single_layer/data.py": "3825db59e5656369f9f84489fbcdaba60757fb6e93d650d4938570f71608e60f",
+    "tools/robotlab_single_layer/extraction_plan.py": "421821023127d4486f6a754097c54a28029ebe0883c0d2647bf40496b3480d14",
+    "tools/robotlab_single_layer/replay_contract.py": "c1b3a54b51b0b926627f593fcc7217309cc26b3c52d594db96e7a0d329ca2347",
+    "tools/robotlab_single_layer/baseline.py": "389ee4d5ab9e1ff00bd15a855dda8557043ee4b29bbccc9c2c6e72aae527cd65",
+    "tools/robotlab_single_layer/README.md": "5ed4b372f5f504e191108f2f8b5af909fa473932893f9e7236ca40658e7219df",
+    "tools/robotlab_single_layer/test_core.py": "495d8cb7976fc93a4dba54ce3bc8f86002d36558ba7dd712ddeaf4481ab27861",
+    "tools/robotlab_single_layer/__main__.py": "4684fd52e2e00c3e804302d45cd599fc3ae34d93b66b2c6bf6c7a961762cc6c3",
+    "tools/robotlab_single_layer/training.py": "8d5f7ddf5344086f575c4977cb9420d18b4d7f4550086d7a7b71085d405fbc32",
+    "tools/robotlab_single_layer/run.py": "7e1120bc688c6206e3d30588bfc8a29deebf8f27a8465d9bb166a71cbb8be45b",
+    "tools/robotlab_single_layer/manifest.py": "ca1776fe14e57f336068b0d9f7f692f8e4e02fd13c4d3822821b62866de1a407",
+    "tools/robotlab_single_layer/historical_mlp.json": "a0e0122c0631731f17bd0baa6a0a5041e60a25b851b0709f160f77a701f6e5c5",
+    "tools/robotlab_single_layer/online.py": "3127fde5590d074a470d51bad1bd8b04b54eef9e866d304758b3ecec541352f6",
+    "tools/robotlab_single_layer/model.py": "66e9fd100df91f7abd264decd58b98e39e13413bdf5dad79bdbf8552a751772c"
+  },
+  "scope": "Stages A and foundational B only; C/D/E pending"
+}

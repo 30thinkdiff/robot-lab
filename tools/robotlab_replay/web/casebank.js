@@ -1,11 +1,11 @@
 import {selectCaseGroups} from './comparison_model.mjs';
 const $=id=>document.getElementById(id),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const classicPatterns=['001','000','011','111','010','101','100','110'];
-const studyLabel=s=>({reviewed_ogg_losses_pilot_ordinary_20261116:'OGG损失Pilot · 普通LIBERO · 六配置严格配对',reviewed_ogg_losses_pilot_plus_20261116:'OGG损失Pilot · Plus · 六配置严格配对',reviewed_ogg_losses_extension_ordinary_20261116:'OGG损失扩展 · 普通LIBERO · 六配置严格配对',reviewed_ogg_losses_extension_plus_20261116:'OGG损失扩展 · Plus · 六配置严格配对',reviewed_ordinary_j_mlp_20261114:'普通LIBERO · J与MLP四方法（桥接审查）',replay_casebank_representative_plus_20261114:'Plus首轮 · 成败与扰动精选',replay_casebank_representative_plus_replicates_20261114:'Plus选例复测 · 既有独立seed',legacy_five_models:'旧正式五模型筛选库',hybrid_pilot:'混合引导自然Pilot',consistency_closed_loop:'规划 / 已执行闭环Pilot',horizon_pilot:'SmolVLA Horizon Pilot'})[s]||(s.startsWith('replay_casebank_')?'完整补测 · '+s:s);
+const studyLabel=s=>({replay_casebank_crosssuite_20261117_v1_transfer:'跨任务泛化 · 原MLP四方法',reviewed_ogg_losses_pilot_ordinary_20261116:'OGG损失Pilot · 普通LIBERO · 六配置严格配对',reviewed_ogg_losses_pilot_plus_20261116:'OGG损失Pilot · Plus · 六配置严格配对',reviewed_ogg_losses_extension_ordinary_20261116:'OGG损失扩展 · 普通LIBERO · 六配置严格配对',reviewed_ogg_losses_extension_plus_20261116:'OGG损失扩展 · Plus · 六配置严格配对',reviewed_ordinary_j_mlp_20261114:'普通LIBERO · J与MLP四方法（桥接审查）',replay_casebank_representative_plus_20261114:'Plus首轮 · 成败与扰动精选',replay_casebank_representative_plus_replicates_20261114:'Plus选例复测 · 既有独立seed',legacy_five_models:'旧正式五模型筛选库',hybrid_pilot:'混合引导自然Pilot',consistency_closed_loop:'规划 / 已执行闭环Pilot',horizon_pilot:'SmolVLA Horizon Pilot'})[s]||(s.startsWith('replay_casebank_')?'完整补测 · '+s:s);
 
 export function setupCasebank({api,openPair,notify,getFilters=()=>({})}){
  let bank=null,current=[],selected=['H50','H20','mlp_ogg'],outcomes={};
- const presets={joint_mlp:['j_lvm','j_ogg','mlp_lvm','mlp_ogg'],architectures:['mlp_ogg','transformer-h1_ogg','transformer-h3_ogg','transformer-a10-h1_ogg','transformer-a10-h3_ogg'],
+ const presets={mlp_four:['H50','H20','mlp_lvm','mlp_ogg'],joint_mlp:['j_lvm','j_ogg','mlp_lvm','mlp_ogg'],architectures:['mlp_ogg','transformer-h1_ogg','transformer-h3_ogg','transformer-a10-h1_ogg','transformer-a10-h3_ogg'],
   loss_mlp:['mlp_ogg@cosine','mlp_ogg@mse','mlp_ogg@mse_cosine'],loss_joint:['j_ogg@cosine','j_ogg@mse','j_ogg@mse_cosine'],
   loss_all:['mlp_ogg@cosine','mlp_ogg@mse','mlp_ogg@mse_cosine','j_ogg@cosine','j_ogg@mse','j_ogg@mse_cosine'],
   lvm_ogg:['transformer-h3_lvm','transformer-h3_ogg'],hybrid:['transformer-h1_ogg','hybrid_t1_a10_ogg'],consistency:['planned_lvm','executed_lvm'],horizon:['H50','H20','H10','H5','H2','H1']};
