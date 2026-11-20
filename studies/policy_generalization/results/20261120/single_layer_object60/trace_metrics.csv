@@ -1,0 +1,5 @@
+method,eligible_steps,scored_steps,score_coverage,triggered_episodes,median_first_interrupt_step,mean_motion_capture_s,guidance_calls,nonzero_action_gradients,median_action_gradient_l2,median_clean_action_update_l2,mean_guidance_with_diagnostics_ms
+s2_lvm,7697,7697,1.0,40,70.0,0.0804030858601133,0,0,,,
+s2_ogg,7693,7693,1.0,40,70.0,0.07926845091084639,192,192,0.029538621194660664,0.009536547120660543,7.344733322194467
+s8_lvm,7655,7655,1.0,39,64,0.08036440995832285,0,0,,,
+s8_ogg,7524,7524,1.0,39,64,0.07834855591257413,292,292,0.12954068183898926,0.035054199397563934,6.1934318597594356

@@ -1,6 +1,6 @@
 # 实验结果总入口
 
-**11月20日 Object10 单层实验完成。** 2/2训练通过重载验证，240/240新回合、错误0，复用原四方法240条。S2-LVM/OGG及S8-LVM各53/60，S8-OGG为54/60，原MLP-LVM/OGG各55/60。[正式结果和逐回合索引](20261120/single_layer_object60/RESULTS.md)。
+**11月20日 Object10 单层实验完成。** 2/2训练通过重载验证，240/240新回合、错误0，复用原四方法240条。S2-LVM/OGG及S8-LVM各53/60，S8-OGG为54/60，原MLP-LVM/OGG各55/60。[正式结果和逐回合索引](20261120/single_layer_object60/RESULTS.md)。 新方法LVM路径27.53–27.81毫秒/步，四组评分覆盖率均为100%，484次OGG调用均有非零动作梯度。
 
 **11月19日第三轮执行优化已验收并部署，从完整epoch122恢复`training_execution_001`。** [新入口与完整证据](../corrector/single_layer_20261118/EXECUTION_OPTIMIZATION.md)。延迟标量回传、训练阶段CUDA预取；全部科学设置不变。46项CPU测试、全量S2 49,447／12,089样本和97次更新状态严格一致；工程外推时间341.40→317.50秒，约1.0753倍；S8短测约1.0946倍，尚非其正式完整轮成绩。原断点和三代训练历史保留，旧manager保持paused；以`train_execution_manage.py status`查看实时状态和ETA。**正式epoch123已完成：343.14→331.28秒（5.52分钟），实测约1.036倍，低于工程对照1.075倍；best123/stale0，已进入124。** [正式首轮与权重等价收据](../corrector/single_layer_20261118/FIRST_EXECUTION_EPOCH_001.json)。
 
