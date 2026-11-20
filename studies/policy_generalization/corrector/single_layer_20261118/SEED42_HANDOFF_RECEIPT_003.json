@@ -1,0 +1,124 @@
+{
+  "receipt": {
+    "code": "/root/autodl-tmp/corrector/dev/slc-seed42-v3-ac44cd24fb21",
+    "sha256": "ac44cd24fb217cb1894bd8caf2b4fc393e405d69f4dc96ebc25b7e115d41c40d",
+    "manager": "/root/autodl-tmp/corrector/single_layer_20261118_001/seed42_v3_manage.py",
+    "smoke": {
+      "status": "paused",
+      "started_utc": "2026-11-19T14:32:29.206725+00:00",
+      "max_seconds": 0.0,
+      "min_free_gib": 5.0,
+      "stop_file": "/root/autodl-tmp/corrector/single_layer_20261118_001/seed42_object60_002/S2/STOP",
+      "wall_seconds": 94.03228014335036,
+      "planned": 120,
+      "completed": 2,
+      "errors": 0,
+      "reason": "operator_stop_file"
+    },
+    "launch": {
+      "pid": 206267,
+      "log": "/root/autodl-tmp/corrector/single_layer_20261118_001/seed42_object60_002/pipeline_1795098845388006361.log"
+    },
+    "training": "/root/autodl-tmp/corrector/single_layer_20261118_001/training_seed42_001",
+    "output": "/root/autodl-tmp/corrector/single_layer_20261118_001/seed42_object60_002"
+  },
+  "pipeline": {
+    "status": "running",
+    "phase": "training_seed42_pair",
+    "pid": 206267,
+    "restarts": 1,
+    "updated_unix": 1795098875.6412807
+  },
+  "training": {
+    "status": "running",
+    "phase": "validation",
+    "pid": 206272,
+    "jobs": [
+      {
+        "name": "S2_s42",
+        "layer": "block_02",
+        "seed": 42
+      },
+      {
+        "name": "S8_s42",
+        "layer": "block_08",
+        "seed": 42
+      }
+    ],
+    "runs_planned": 2,
+    "runs_completed": 1,
+    "child_pid": 206275,
+    "execution_policy": {
+      "deferred": true,
+      "prefetch": true,
+      "validation_prefetch": false
+    },
+    "updated_unix": 1795098901.969889,
+    "data_free_gib": 132.71599578857422,
+    "system_free_gib": 27.756553649902344,
+    "current_job": {
+      "name": "S8_s42",
+      "layer": "block_08",
+      "seed": 42
+    },
+    "current_output": "/root/autodl-tmp/corrector/single_layer_20261118_001/training_seed42_001/runs/S8_s42/attempt_001",
+    "current_log": "/root/autodl-tmp/corrector/single_layer_20261118_001/training_seed42_001/logs/S8_s42_1795098846948901777.log",
+    "resume": true
+  },
+  "smoke_rows": [
+    {
+      "method": "lvm",
+      "success": true,
+      "steps": 137,
+      "events": 1,
+      "guidance": 0,
+      "motion": {
+        "schema": "robotlab_motion_v1",
+        "status": "completed",
+        "steps": 137,
+        "chunks": 4,
+        "bytes": 775480,
+        "python_capture_copy_overhead_s": 0.07166788727045059,
+        "overhead_limit": "partial instrumentation cost only; no claim of zero latency or benchmark overhead",
+        "error": null,
+        "source_changed": false,
+        "extra_policy_forwards": 0,
+        "extra_physics_steps": 0
+      },
+      "commands": 137,
+      "video_artifacts": [
+        {
+          "path": "attempts/7c9c0059e80a01c8b746/attempt_001/videos/eval_episode_0.mp4",
+          "sha256": "4a2129440219910ef2b24c181af2fb53381e07ace3fc5a271f90335cf8db6993"
+        }
+      ]
+    },
+    {
+      "method": "ogg",
+      "success": true,
+      "steps": 129,
+      "events": 1,
+      "guidance": 4,
+      "motion": {
+        "schema": "robotlab_motion_v1",
+        "status": "completed",
+        "steps": 129,
+        "chunks": 4,
+        "bytes": 738143,
+        "python_capture_copy_overhead_s": 0.06883544102311134,
+        "overhead_limit": "partial instrumentation cost only; no claim of zero latency or benchmark overhead",
+        "error": null,
+        "source_changed": false,
+        "extra_policy_forwards": 0,
+        "extra_physics_steps": 0
+      },
+      "commands": 129,
+      "video_artifacts": [
+        {
+          "path": "attempts/2eb26badadbd5f9bdccc/attempt_001/videos/eval_episode_0.mp4",
+          "sha256": "0bf510499a679a616e7b848ed35880d628d718049b8032996ba66d0c68ae2e47"
+        }
+      ]
+    }
+  ]
+}

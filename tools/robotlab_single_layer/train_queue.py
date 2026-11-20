@@ -34,7 +34,9 @@ def child_environment():
 
 
 def validate_config(cfg,allow_pending=False):
-    if cfg['jobs']!=jobs():raise ValueError('Only the fixed two-layer/three-seed plan is authorized')
+    expected=jobs()[:2] if cfg.get('training_scope')=='seed42_only' else jobs()
+    if cfg.get('training_scope') not in (None,'seed42_only') or cfg['jobs']!=expected:
+        raise ValueError('Only the original six runs or the explicit seed42 pair are authorized')
     for path,sha in cfg['pinned_files'].items():
         if digest(path)!=sha:raise ValueError('Training queue source/data receipt changed: '+path)
     validation=read(cfg['validation_receipt'])
@@ -124,7 +126,7 @@ def supervise(cfg,root):
     with (root/'worker.lock').open('a') as lock:
         fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
         state=dict(status='running',phase='checking',pid=os.getpid(),jobs=cfg['jobs'],
-                   runs_planned=6,runs_completed=0,child_pid=None)
+                   runs_planned=len(cfg['jobs']),runs_completed=0,child_pid=None)
         if cfg.get('execution'):state['execution_policy']=cfg['execution']['selected']
         def save():
             state.update(updated_unix=time.time(),data_free_gib=shutil.disk_usage('/root/autodl-tmp').free/2**30,
@@ -187,7 +189,7 @@ def supervise(cfg,root):
                 write(output/'QUEUE_COMPLETION.json',dict(status='completed',job=job,
                     files_sha256={name:digest(output/name) for name in files},checkpoint_reload_verified=True))
                 state['runs_completed']+=1;save()
-            state.update(status='completed',phase='all_six_trainings_verified',current_output=None);save()
+            state.update(status='completed',phase='all_planned_trainings_verified',current_output=None);save()
         except BaseException as e:
             state.update(status='error',error=type(e).__name__+': '+str(e));save();raise
 

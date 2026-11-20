@@ -1,3 +1,5 @@
+**最终状态：seed42两组训练与240条Object10评测已完成。** 下文保留原六组计划及科学设置历史。[正式结果](../../results/20261120/single_layer_object60/RESULTS.md) · [交接记录](SEED42_OBJECT60.md)。
+
 # 完整Object10 S2/S8正式训练 · 2026-11-18
 
 **当前使用第三轮执行优化队列`training_execution_001`，从完整epoch122继承。** 第一版`training_001`保留epoch7，第一次加速`training_fast_001`保留epoch68，第二轮`training_transport_002`保留epoch122，均安全暂停。当前完整继承模型、优化器、调度器、RNG和历史；继续原FP16无损搬运与FP32目标计算，新增严格等价的延迟标量统计和训练阶段CUDA预取，科学参数不变。[第三轮实测与等价证据](EXECUTION_OPTIMIZATION.md)，[第二轮记录](TRANSPORT_OPTIMIZATION.md)。当前入口是`train_execution_manage.py`，旧入口显示paused是预期，请仅使用当前入口控制队列。

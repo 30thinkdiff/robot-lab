@@ -1,6 +1,6 @@
 # Object10单层MLP：受控适配基础代码
 
-截至2026-11-19：完整形状GPU反向、重载和OGG首动作梯度通过，真实LIBERO的12个短回合日志/运动采集一致性通过。**454条完整特征全部通过SHA及时间/划分检查，六组正式训练已启动；当前采用独立加速续训版本，当前从完整epoch122继承。** 训练/ETA/暂停续接见[TRAINING.md](../../studies/policy_generalization/corrector/single_layer_20261118/TRAINING.md)，最新执行优化等价验收见[EXECUTION_OPTIMIZATION.md](../../studies/policy_generalization/corrector/single_layer_20261118/EXECUTION_OPTIMIZATION.md)。进度、滚动ETA与安全暂停/续接见[OPERATIONS.md](../../studies/policy_generalization/corrector/single_layer_20261118/OPERATIONS.md)。工程探针与短回合不是正式训练或机器人成功率成绩。
+截至2026-11-20，454条完整特征通过SHA、时间和划分检查，S2/S8的seed42均完成训练及最优权重重载，Object10共240条新评测完成、错误0。评测覆盖原60组条件，每层分别运行LVM和OGG。原六组训练计划保留为历史记录。见[八方法正式结果](../../studies/policy_generalization/results/20261120/single_layer_object60/RESULTS.md)、[自动交接与回放数据路径](../../studies/policy_generalization/corrector/single_layer_20261118/SEED42_OBJECT60.md)和[执行优化验收](../../studies/policy_generalization/corrector/single_layer_20261118/EXECUTION_OPTIMIZATION.md)。
 
 任务依据及逐项差异见[BASELINE_AUDIT.md](../../studies/policy_generalization/corrector/single_layer_20261118/BASELINE_AUDIT.md)。
 

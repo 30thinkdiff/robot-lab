@@ -1,0 +1,1873 @@
+{
+  "protocol": {
+    "scope": "frozen SmolVLA / original LIBERO; Corrector adaptation when selected, not a paper table reproduction",
+    "policy_id": "lerobot/smolvla_libero",
+    "policy_revision": "a24f1f380461b665158d52acd140152c79e8b36d",
+    "lerobot_revision": "7e241bd630a3719a56157a497ce5d08f244784f1",
+    "libero_revision": "8f1084e3132a39270c3a13ebe37270a43ece2a01",
+    "conditions": {
+      "libero_object/task_0/init_0": {
+        "task_id": 0,
+        "initial_state_id": 0,
+        "language": "pick up the alphabet soup and place it in the basket"
+      },
+      "libero_object/task_0/init_1": {
+        "task_id": 0,
+        "initial_state_id": 1,
+        "language": "pick up the alphabet soup and place it in the basket"
+      },
+      "libero_object/task_0/init_2": {
+        "task_id": 0,
+        "initial_state_id": 2,
+        "language": "pick up the alphabet soup and place it in the basket"
+      },
+      "libero_object/task_1/init_0": {
+        "task_id": 1,
+        "initial_state_id": 0,
+        "language": "pick up the cream cheese and place it in the basket"
+      },
+      "libero_object/task_1/init_1": {
+        "task_id": 1,
+        "initial_state_id": 1,
+        "language": "pick up the cream cheese and place it in the basket"
+      },
+      "libero_object/task_1/init_2": {
+        "task_id": 1,
+        "initial_state_id": 2,
+        "language": "pick up the cream cheese and place it in the basket"
+      },
+      "libero_object/task_2/init_0": {
+        "task_id": 2,
+        "initial_state_id": 0,
+        "language": "pick up the salad dressing and place it in the basket"
+      },
+      "libero_object/task_2/init_1": {
+        "task_id": 2,
+        "initial_state_id": 1,
+        "language": "pick up the salad dressing and place it in the basket"
+      },
+      "libero_object/task_2/init_2": {
+        "task_id": 2,
+        "initial_state_id": 2,
+        "language": "pick up the salad dressing and place it in the basket"
+      },
+      "libero_object/task_3/init_0": {
+        "task_id": 3,
+        "initial_state_id": 0,
+        "language": "pick up the bbq sauce and place it in the basket"
+      },
+      "libero_object/task_3/init_1": {
+        "task_id": 3,
+        "initial_state_id": 1,
+        "language": "pick up the bbq sauce and place it in the basket"
+      },
+      "libero_object/task_3/init_2": {
+        "task_id": 3,
+        "initial_state_id": 2,
+        "language": "pick up the bbq sauce and place it in the basket"
+      },
+      "libero_object/task_4/init_0": {
+        "task_id": 4,
+        "initial_state_id": 0,
+        "language": "pick up the ketchup and place it in the basket"
+      },
+      "libero_object/task_4/init_1": {
+        "task_id": 4,
+        "initial_state_id": 1,
+        "language": "pick up the ketchup and place it in the basket"
+      },
+      "libero_object/task_4/init_2": {
+        "task_id": 4,
+        "initial_state_id": 2,
+        "language": "pick up the ketchup and place it in the basket"
+      },
+      "libero_object/task_5/init_0": {
+        "task_id": 5,
+        "initial_state_id": 0,
+        "language": "pick up the tomato sauce and place it in the basket"
+      },
+      "libero_object/task_5/init_1": {
+        "task_id": 5,
+        "initial_state_id": 1,
+        "language": "pick up the tomato sauce and place it in the basket"
+      },
+      "libero_object/task_5/init_2": {
+        "task_id": 5,
+        "initial_state_id": 2,
+        "language": "pick up the tomato sauce and place it in the basket"
+      },
+      "libero_object/task_6/init_0": {
+        "task_id": 6,
+        "initial_state_id": 0,
+        "language": "pick up the butter and place it in the basket"
+      },
+      "libero_object/task_6/init_1": {
+        "task_id": 6,
+        "initial_state_id": 1,
+        "language": "pick up the butter and place it in the basket"
+      },
+      "libero_object/task_6/init_2": {
+        "task_id": 6,
+        "initial_state_id": 2,
+        "language": "pick up the butter and place it in the basket"
+      },
+      "libero_object/task_7/init_0": {
+        "task_id": 7,
+        "initial_state_id": 0,
+        "language": "pick up the milk and place it in the basket"
+      },
+      "libero_object/task_7/init_1": {
+        "task_id": 7,
+        "initial_state_id": 1,
+        "language": "pick up the milk and place it in the basket"
+      },
+      "libero_object/task_7/init_2": {
+        "task_id": 7,
+        "initial_state_id": 2,
+        "language": "pick up the milk and place it in the basket"
+      },
+      "libero_object/task_8/init_0": {
+        "task_id": 8,
+        "initial_state_id": 0,
+        "language": "pick up the chocolate pudding and place it in the basket"
+      },
+      "libero_object/task_8/init_1": {
+        "task_id": 8,
+        "initial_state_id": 1,
+        "language": "pick up the chocolate pudding and place it in the basket"
+      },
+      "libero_object/task_8/init_2": {
+        "task_id": 8,
+        "initial_state_id": 2,
+        "language": "pick up the chocolate pudding and place it in the basket"
+      },
+      "libero_object/task_9/init_0": {
+        "task_id": 9,
+        "initial_state_id": 0,
+        "language": "pick up the orange juice and place it in the basket"
+      },
+      "libero_object/task_9/init_1": {
+        "task_id": 9,
+        "initial_state_id": 1,
+        "language": "pick up the orange juice and place it in the basket"
+      },
+      "libero_object/task_9/init_2": {
+        "task_id": 9,
+        "initial_state_id": 2,
+        "language": "pick up the orange juice and place it in the basket"
+      }
+    },
+    "runtime": {
+      "torch": "2.11.0+cu128",
+      "cuda_build": "12.8",
+      "gpu": "NVIDIA GeForce RTX 4090",
+      "lerobot": "0.6.1",
+      "transformers": "5.5.4",
+      "mujoco": "3.7.0",
+      "robosuite": "1.4.1"
+    },
+    "fps": 20,
+    "horizon": 280,
+    "control_mode": "relative",
+    "corrector_settings": {
+      "stride": 1,
+      "eta": 1.0,
+      "guidance_every": 3,
+      "cooldown": 0,
+      "force_step": -1,
+      "control_implementation": "reference"
+    },
+    "retention": {
+      "video": "failures",
+      "audit": "failures",
+      "trace": "all"
+    },
+    "debug_forced_event": false,
+    "evaluation_entry_sha256": "18a4844cbdceb28e674d3ef5b18cb9f8df24136b2e3b92d39d8d7450cb0a984c",
+    "runtime_source_sha256": "32a6daa67254f6e587e43df0f5c42a0cc83e29fa17854dbab874715f8ae70a5a",
+    "model_api_source_sha256": "811386798aa491d8c0b43c08cd400bf00f397ad380484693689a1912976c4201",
+    "learner_core_sha256": "5c076c017b086254ec63c3aa8089063d8fbae5840c01c3240f7a57afce99198f"
+  },
+  "trials": [
+    {
+      "condition": "libero_object/task_6/init_1",
+      "seed": 1000,
+      "method": "H50",
+      "success": true,
+      "env_steps": 142
+    },
+    {
+      "condition": "libero_object/task_7/init_0",
+      "seed": 1000,
+      "method": "mlp_lvm",
+      "success": true,
+      "env_steps": 128
+    },
+    {
+      "condition": "libero_object/task_9/init_2",
+      "seed": 1000,
+      "method": "H20",
+      "success": false,
+      "env_steps": 280
+    },
+    {
+      "condition": "libero_object/task_0/init_1",
+      "seed": 1000,
+      "method": "mlp_ogg",
+      "success": true,
+      "env_steps": 140
+    },
+    {
+      "condition": "libero_object/task_7/init_0",
+      "seed": 1001,
+      "method": "mlp_ogg",
+      "success": true,
+      "env_steps": 128
+    },
+    {
+      "condition": "libero_object/task_4/init_0",
+      "seed": 1000,
+      "method": "H20",
+      "success": true,
+      "env_steps": 135
+    },
+    {
+      "condition": "libero_object/task_2/init_1",
+      "seed": 1001,
+      "method": "mlp_ogg",
+      "success": true,
+      "env_steps": 157
+    },
+    {
+      "condition": "libero_object/task_1/init_0",
+      "seed": 1001,
+      "method": "mlp_ogg",
+      "success": true,
+      "env_steps": 137
+    },
+    {
+      "condition": "libero_object/task_0/init_2",
+      "seed": 1000,
+      "method": "mlp_ogg",
+      "success": true,
+      "env_steps": 127
+    },
+    {
+      "condition": "libero_object/task_2/init_0",
+      "seed": 1001,
+      "method": "H20",
+      "success": true,
+      "env_steps": 117
+    },
+    {
+      "condition": "libero_object/task_7/init_2",
+      "seed": 1000,
+      "method": "H20",
+      "success": false,
+      "env_steps": 280
+    },
+    {
+      "condition": "libero_object/task_9/init_1",
+      "seed": 1001,
+      "method": "mlp_lvm",
+      "success": true,
+      "env_steps": 164
+    },
+    {
+      "condition": "libero_object/task_5/init_2",
+      "seed": 1000,
+      "method": "H50",
+      "success": true,
+      "env_steps": 124
+    },
+    {
+      "condition": "libero_object/task_9/init_2",
+      "seed": 1001,
+      "method": "H50",
+      "success": false,
+      "env_steps": 280
+    },
+    {
+      "condition": "libero_object/task_8/init_2",
+      "seed": 1001,
+      "method": "mlp_lvm",
+      "success": true,
+      "env_steps": 148
+    },
+    {
+      "condition": "libero_object/task_0/init_0",
+      "seed": 1001,
+      "method": "H50",
+      "success": true,
+      "env_steps": 127
+    },
+    {
+      "condition": "libero_object/task_7/init_1",
+      "seed": 1001,
+      "method": "mlp_lvm",
+      "success": true,
+      "env_steps": 126
+    },
+    {
+      "condition": "libero_object/task_1/init_0",
+      "seed": 1001,
+      "method": "mlp_lvm",
+      "success": true,
+      "env_steps": 144
+    },
+    {
+      "condition": "libero_object/task_1/init_2",
+      "seed": 1001,
+      "method": "H50",
+      "success": false,
+      "env_steps": 280
+    },
+    {
+      "condition": "libero_object/task_7/init_0",
+      "seed": 1000,
+      "method": "H50",
+      "success": true,
+      "env_steps": 131
+    },
+    {
+      "condition": "libero_object/task_6/init_0",
+      "seed": 1001,
+      "method": "mlp_ogg",
+      "success": true,
+      "env_steps": 149
+    },
+    {
+      "condition": "libero_object/task_8/init_2",
+      "seed": 1001,
+      "method": "mlp_ogg",
+      "success": true,
+      "env_steps": 148
+    },
+    {
+      "condition": "libero_object/task_1/init_1",
+      "seed": 1000,
+      "method": "H50",
+      "success": true,
+      "env_steps": 123
+    },
+    {
+      "condition": "libero_object/task_9/init_2",
+      "seed": 1000,
+      "method": "mlp_ogg",
+      "success": false,
+      "env_steps": 280
+    },
+    {
+      "condition": "libero_object/task_5/init_2",
+      "seed": 1001,
+      "method": "H20",
+      "success": true,
+      "env_steps": 127
+    },
+    {
+      "condition": "libero_object/task_0/init_2",
+      "seed": 1001,
+      "method": "mlp_lvm",
+      "success": false,
+      "env_steps": 280
+    },
+    {
+      "condition": "libero_object/task_5/init_1",
+      "seed": 1000,
+      "method": "mlp_lvm",
+      "success": true,
+      "env_steps": 124
+    },
+    {
+      "condition": "libero_object/task_2/init_1",
+      "seed": 1000,
+      "method": "mlp_ogg",
+      "success": true,
+      "env_steps": 160
+    },
+    {
+      "condition": "libero_object/task_4/init_1",
+      "seed": 1001,
+      "method": "mlp_ogg",
+      "success": true,
+      "env_steps": 138
+    },
+    {
+      "condition": "libero_object/task_8/init_1",
+      "seed": 1000,
+      "method": "mlp_lvm",
+      "success": true,
+      "env_steps": 152
+    },
+    {
+      "condition": "libero_object/task_0/init_1",
+      "seed": 1000,
+      "method": "mlp_lvm",
+      "success": true,
+      "env_steps": 140
+    },
+    {
+      "condition": "libero_object/task_6/init_1",
+      "seed": 1001,
+      "method": "H50",
+      "success": true,
+      "env_steps": 144
+    },
+    {
+      "condition": "libero_object/task_6/init_1",
+      "seed": 1000,
+      "method": "mlp_lvm",
+      "success": true,
+      "env_steps": 142
+    },
+    {
+      "condition": "libero_object/task_5/init_1",
+      "seed": 1001,
+      "method": "mlp_lvm",
+      "success": true,
+      "env_steps": 125
+    },
+    {
+      "condition": "libero_object/task_0/init_2",
+      "seed": 1000,
+      "method": "H50",
+      "success": true,
+      "env_steps": 127
+    },
+    {
+      "condition": "libero_object/task_5/init_0",
+      "seed": 1000,
+      "method": "H50",
+      "success": false,
+      "env_steps": 280
+    },
+    {
+      "condition": "libero_object/task_0/init_0",
+      "seed": 1001,
+      "method": "mlp_lvm",
+      "success": true,
+      "env_steps": 123
+    },
+    {
+      "condition": "libero_object/task_3/init_1",
+      "seed": 1000,
+      "method": "mlp_lvm",
+      "success": true,
+      "env_steps": 125
+    },
+    {
+      "condition": "libero_object/task_1/init_2",
+      "seed": 1000,
+      "method": "H20",
+      "success": true,
+      "env_steps": 145
+    },
+    {
+      "condition": "libero_object/task_6/init_2",
+      "seed": 1001,
+      "method": "H50",
+      "success": true,
+      "env_steps": 135
+    },
+    {
+      "condition": "libero_object/task_5/init_0",
+      "seed": 1000,
+      "method": "mlp_lvm",
+      "success": true,
+      "env_steps": 163
+    },
+    {
+      "condition": "libero_object/task_3/init_1",
+      "seed": 1000,
+      "method": "mlp_ogg",
+      "success": true,
+      "env_steps": 125
+    },
+    {
+      "condition": "libero_object/task_7/init_1",
+      "seed": 1000,
+      "method": "H50",
+      "success": true,
+      "env_steps": 127
+    },
+    {
+      "condition": "libero_object/task_5/init_0",
+      "seed": 1001,
+      "method": "mlp_ogg",
+      "success": true,
+      "env_steps": 162
+    },
+    {
+      "condition": "libero_object/task_8/init_0",
+      "seed": 1001,
+      "method": "H50",
+      "success": true,
+      "env_steps": 143
+    },
+    {
+      "condition": "libero_object/task_4/init_0",
+      "seed": 1000,
+      "method": "H50",
+      "success": true,
+      "env_steps": 138
+    },
+    {
+      "condition": "libero_object/task_8/init_2",
+      "seed": 1000,
+      "method": "mlp_lvm",
+      "success": true,
+      "env_steps": 149
+    },
+    {
+      "condition": "libero_object/task_7/init_1",
+      "seed": 1000,
+      "method": "mlp_ogg",
+      "success": true,
+      "env_steps": 138
+    },
+    {
+      "condition": "libero_object/task_3/init_0",
+      "seed": 1001,
+      "method": "mlp_ogg",
+      "success": true,
+      "env_steps": 130
+    },
+    {
+      "condition": "libero_object/task_5/init_1",
+      "seed": 1001,
+      "method": "mlp_ogg",
+      "success": true,
+      "env_steps": 125
+    },
+    {
+      "condition": "libero_object/task_4/init_0",
+      "seed": 1001,
+      "method": "H20",
+      "success": true,
+      "env_steps": 138
+    },
+    {
+      "condition": "libero_object/task_3/init_1",
+      "seed": 1000,
+      "method": "H50",
+      "success": true,
+      "env_steps": 125
+    },
+    {
+      "condition": "libero_object/task_0/init_0",
+      "seed": 1000,
+      "method": "H20",
+      "success": true,
+      "env_steps": 138
+    },
+    {
+      "condition": "libero_object/task_3/init_2",
+      "seed": 1000,
+      "method": "H50",
+      "success": true,
+      "env_steps": 123
+    },
+    {
+      "condition": "libero_object/task_9/init_2",
+      "seed": 1001,
+      "method": "H20",
+      "success": true,
+      "env_steps": 157
+    },
+    {
+      "condition": "libero_object/task_4/init_1",
+      "seed": 1000,
+      "method": "mlp_ogg",
+      "success": true,
+      "env_steps": 138
+    },
+    {
+      "condition": "libero_object/task_3/init_1",
+      "seed": 1000,
+      "method": "H20",
+      "success": true,
+      "env_steps": 127
+    },
+    {
+      "condition": "libero_object/task_1/init_0",
+      "seed": 1001,
+      "method": "H20",
+      "success": true,
+      "env_steps": 119
+    },
+    {
+      "condition": "libero_object/task_1/init_1",
+      "seed": 1000,
+      "method": "H20",
+      "success": true,
+      "env_steps": 125
+    },
+    {
+      "condition": "libero_object/task_6/init_0",
+      "seed": 1001,
+      "method": "H50",
+      "success": true,
+      "env_steps": 149
+    },
+    {
+      "condition": "libero_object/task_2/init_2",
+      "seed": 1000,
+      "method": "mlp_lvm",
+      "success": false,
+      "env_steps": 280
+    },
+    {
+      "condition": "libero_object/task_5/init_2",
+      "seed": 1000,
+      "method": "H20",
+      "success": true,
+      "env_steps": 127
+    },
+    {
+      "condition": "libero_object/task_9/init_0",
+      "seed": 1000,
+      "method": "H20",
+      "success": false,
+      "env_steps": 280
+    },
+    {
+      "condition": "libero_object/task_7/init_2",
+      "seed": 1000,
+      "method": "mlp_ogg",
+      "success": false,
+      "env_steps": 280
+    },
+    {
+      "condition": "libero_object/task_5/init_1",
+      "seed": 1000,
+      "method": "H50",
+      "success": true,
+      "env_steps": 124
+    },
+    {
+      "condition": "libero_object/task_2/init_1",
+      "seed": 1000,
+      "method": "H50",
+      "success": false,
+      "env_steps": 280
+    },
+    {
+      "condition": "libero_object/task_8/init_2",
+      "seed": 1000,
+      "method": "H20",
+      "success": true,
+      "env_steps": 150
+    },
+    {
+      "condition": "libero_object/task_7/init_2",
+      "seed": 1001,
+      "method": "H20",
+      "success": false,
+      "env_steps": 280
+    },
+    {
+      "condition": "libero_object/task_8/init_0",
+      "seed": 1000,
+      "method": "mlp_lvm",
+      "success": true,
+      "env_steps": 141
+    },
+    {
+      "condition": "libero_object/task_3/init_2",
+      "seed": 1001,
+      "method": "H20",
+      "success": true,
+      "env_steps": 128
+    },
+    {
+      "condition": "libero_object/task_3/init_2",
+      "seed": 1001,
+      "method": "H50",
+      "success": true,
+      "env_steps": 123
+    },
+    {
+      "condition": "libero_object/task_2/init_2",
+      "seed": 1001,
+      "method": "mlp_ogg",
+      "success": false,
+      "env_steps": 280
+    },
+    {
+      "condition": "libero_object/task_9/init_0",
+      "seed": 1001,
+      "method": "H20",
+      "success": true,
+      "env_steps": 161
+    },
+    {
+      "condition": "libero_object/task_9/init_2",
+      "seed": 1001,
+      "method": "mlp_lvm",
+      "success": true,
+      "env_steps": 153
+    },
+    {
+      "condition": "libero_object/task_0/init_1",
+      "seed": 1000,
+      "method": "H20",
+      "success": true,
+      "env_steps": 151
+    },
+    {
+      "condition": "libero_object/task_1/init_2",
+      "seed": 1000,
+      "method": "mlp_lvm",
+      "success": true,
+      "env_steps": 152
+    },
+    {
+      "condition": "libero_object/task_4/init_0",
+      "seed": 1001,
+      "method": "H50",
+      "success": true,
+      "env_steps": 138
+    },
+    {
+      "condition": "libero_object/task_3/init_1",
+      "seed": 1001,
+      "method": "H50",
+      "success": true,
+      "env_steps": 127
+    },
+    {
+      "condition": "libero_object/task_3/init_0",
+      "seed": 1001,
+      "method": "mlp_lvm",
+      "success": true,
+      "env_steps": 130
+    },
+    {
+      "condition": "libero_object/task_2/init_2",
+      "seed": 1001,
+      "method": "mlp_lvm",
+      "success": false,
+      "env_steps": 280
+    },
+    {
+      "condition": "libero_object/task_5/init_2",
+      "seed": 1001,
+      "method": "mlp_ogg",
+      "success": true,
+      "env_steps": 127
+    },
+    {
+      "condition": "libero_object/task_1/init_2",
+      "seed": 1001,
+      "method": "mlp_lvm",
+      "success": true,
+      "env_steps": 149
+    },
+    {
+      "condition": "libero_object/task_3/init_0",
+      "seed": 1001,
+      "method": "H20",
+      "success": true,
+      "env_steps": 129
+    },
+    {
+      "condition": "libero_object/task_7/init_0",
+      "seed": 1001,
+      "method": "H50",
+      "success": true,
+      "env_steps": 128
+    },
+    {
+      "condition": "libero_object/task_0/init_2",
+      "seed": 1001,
+      "method": "H50",
+      "success": false,
+      "env_steps": 280
+    },
+    {
+      "condition": "libero_object/task_1/init_0",
+      "seed": 1001,
+      "method": "H50",
+      "success": false,
+      "env_steps": 280
+    },
+    {
+      "condition": "libero_object/task_8/init_2",
+      "seed": 1000,
+      "method": "H50",
+      "success": true,
+      "env_steps": 149
+    },
+    {
+      "condition": "libero_object/task_8/init_2",
+      "seed": 1001,
+      "method": "H20",
+      "success": true,
+      "env_steps": 150
+    },
+    {
+      "condition": "libero_object/task_0/init_1",
+      "seed": 1001,
+      "method": "H20",
+      "success": true,
+      "env_steps": 142
+    },
+    {
+      "condition": "libero_object/task_4/init_2",
+      "seed": 1000,
+      "method": "mlp_ogg",
+      "success": true,
+      "env_steps": 135
+    },
+    {
+      "condition": "libero_object/task_9/init_1",
+      "seed": 1000,
+      "method": "H50",
+      "success": true,
+      "env_steps": 118
+    },
+    {
+      "condition": "libero_object/task_5/init_0",
+      "seed": 1001,
+      "method": "H20",
+      "success": true,
+      "env_steps": 165
+    },
+    {
+      "condition": "libero_object/task_9/init_1",
+      "seed": 1001,
+      "method": "H20",
+      "success": false,
+      "env_steps": 280
+    },
+    {
+      "condition": "libero_object/task_8/init_2",
+      "seed": 1001,
+      "method": "H50",
+      "success": true,
+      "env_steps": 148
+    },
+    {
+      "condition": "libero_object/task_8/init_1",
+      "seed": 1001,
+      "method": "mlp_ogg",
+      "success": true,
+      "env_steps": 153
+    },
+    {
+      "condition": "libero_object/task_1/init_1",
+      "seed": 1001,
+      "method": "H20",
+      "success": true,
+      "env_steps": 126
+    },
+    {
+      "condition": "libero_object/task_0/init_1",
+      "seed": 1001,
+      "method": "H50",
+      "success": true,
+      "env_steps": 140
+    },
+    {
+      "condition": "libero_object/task_7/init_1",
+      "seed": 1000,
+      "method": "mlp_lvm",
+      "success": true,
+      "env_steps": 139
+    },
+    {
+      "condition": "libero_object/task_9/init_2",
+      "seed": 1000,
+      "method": "mlp_lvm",
+      "success": false,
+      "env_steps": 280
+    },
+    {
+      "condition": "libero_object/task_7/init_2",
+      "seed": 1000,
+      "method": "mlp_lvm",
+      "success": false,
+      "env_steps": 280
+    },
+    {
+      "condition": "libero_object/task_9/init_0",
+      "seed": 1000,
+      "method": "mlp_lvm",
+      "success": true,
+      "env_steps": 145
+    },
+    {
+      "condition": "libero_object/task_1/init_0",
+      "seed": 1000,
+      "method": "H50",
+      "success": false,
+      "env_steps": 280
+    },
+    {
+      "condition": "libero_object/task_0/init_0",
+      "seed": 1000,
+      "method": "mlp_lvm",
+      "success": true,
+      "env_steps": 123
+    },
+    {
+      "condition": "libero_object/task_9/init_0",
+      "seed": 1000,
+      "method": "mlp_ogg",
+      "success": true,
+      "env_steps": 145
+    },
+    {
+      "condition": "libero_object/task_6/init_0",
+      "seed": 1000,
+      "method": "H20",
+      "success": true,
+      "env_steps": 149
+    },
+    {
+      "condition": "libero_object/task_4/init_1",
+      "seed": 1001,
+      "method": "mlp_lvm",
+      "success": true,
+      "env_steps": 138
+    },
+    {
+      "condition": "libero_object/task_8/init_1",
+      "seed": 1000,
+      "method": "H50",
+      "success": true,
+      "env_steps": 152
+    },
+    {
+      "condition": "libero_object/task_6/init_2",
+      "seed": 1000,
+      "method": "mlp_ogg",
+      "success": true,
+      "env_steps": 139
+    },
+    {
+      "condition": "libero_object/task_1/init_0",
+      "seed": 1000,
+      "method": "H20",
+      "success": true,
+      "env_steps": 118
+    },
+    {
+      "condition": "libero_object/task_2/init_2",
+      "seed": 1000,
+      "method": "H20",
+      "success": false,
+      "env_steps": 280
+    },
+    {
+      "condition": "libero_object/task_6/init_2",
+      "seed": 1001,
+      "method": "H20",
+      "success": true,
+      "env_steps": 143
+    },
+    {
+      "condition": "libero_object/task_6/init_1",
+      "seed": 1000,
+      "method": "H20",
+      "success": true,
+      "env_steps": 146
+    },
+    {
+      "condition": "libero_object/task_6/init_0",
+      "seed": 1000,
+      "method": "H50",
+      "success": true,
+      "env_steps": 149
+    },
+    {
+      "condition": "libero_object/task_0/init_2",
+      "seed": 1000,
+      "method": "H20",
+      "success": true,
+      "env_steps": 133
+    },
+    {
+      "condition": "libero_object/task_9/init_0",
+      "seed": 1001,
+      "method": "mlp_lvm",
+      "success": true,
+      "env_steps": 142
+    },
+    {
+      "condition": "libero_object/task_5/init_0",
+      "seed": 1001,
+      "method": "H50",
+      "success": false,
+      "env_steps": 280
+    },
+    {
+      "condition": "libero_object/task_6/init_2",
+      "seed": 1000,
+      "method": "mlp_lvm",
+      "success": true,
+      "env_steps": 139
+    },
+    {
+      "condition": "libero_object/task_7/init_1",
+      "seed": 1000,
+      "method": "H20",
+      "success": true,
+      "env_steps": 126
+    },
+    {
+      "condition": "libero_object/task_5/init_0",
+      "seed": 1000,
+      "method": "H20",
+      "success": true,
+      "env_steps": 118
+    },
+    {
+      "condition": "libero_object/task_7/init_1",
+      "seed": 1001,
+      "method": "H20",
+      "success": true,
+      "env_steps": 125
+    },
+    {
+      "condition": "libero_object/task_7/init_1",
+      "seed": 1001,
+      "method": "H50",
+      "success": true,
+      "env_steps": 131
+    },
+    {
+      "condition": "libero_object/task_4/init_2",
+      "seed": 1001,
+      "method": "mlp_lvm",
+      "success": true,
+      "env_steps": 132
+    },
+    {
+      "condition": "libero_object/task_2/init_1",
+      "seed": 1001,
+      "method": "H50",
+      "success": false,
+      "env_steps": 280
+    },
+    {
+      "condition": "libero_object/task_3/init_1",
+      "seed": 1001,
+      "method": "mlp_lvm",
+      "success": true,
+      "env_steps": 127
+    },
+    {
+      "condition": "libero_object/task_3/init_0",
+      "seed": 1000,
+      "method": "H20",
+      "success": true,
+      "env_steps": 128
+    },
+    {
+      "condition": "libero_object/task_8/init_0",
+      "seed": 1001,
+      "method": "mlp_ogg",
+      "success": true,
+      "env_steps": 143
+    },
+    {
+      "condition": "libero_object/task_1/init_1",
+      "seed": 1001,
+      "method": "mlp_lvm",
+      "success": true,
+      "env_steps": 125
+    },
+    {
+      "condition": "libero_object/task_2/init_0",
+      "seed": 1001,
+      "method": "mlp_ogg",
+      "success": true,
+      "env_steps": 112
+    },
+    {
+      "condition": "libero_object/task_7/init_2",
+      "seed": 1000,
+      "method": "H50",
+      "success": false,
+      "env_steps": 280
+    },
+    {
+      "condition": "libero_object/task_8/init_1",
+      "seed": 1000,
+      "method": "H20",
+      "success": true,
+      "env_steps": 156
+    },
+    {
+      "condition": "libero_object/task_7/init_0",
+      "seed": 1000,
+      "method": "mlp_ogg",
+      "success": true,
+      "env_steps": 132
+    },
+    {
+      "condition": "libero_object/task_8/init_0",
+      "seed": 1000,
+      "method": "mlp_ogg",
+      "success": true,
+      "env_steps": 141
+    },
+    {
+      "condition": "libero_object/task_0/init_2",
+      "seed": 1001,
+      "method": "mlp_ogg",
+      "success": false,
+      "env_steps": 280
+    },
+    {
+      "condition": "libero_object/task_8/init_1",
+      "seed": 1000,
+      "method": "mlp_ogg",
+      "success": true,
+      "env_steps": 152
+    },
+    {
+      "condition": "libero_object/task_1/init_1",
+      "seed": 1000,
+      "method": "mlp_lvm",
+      "success": true,
+      "env_steps": 123
+    },
+    {
+      "condition": "libero_object/task_2/init_2",
+      "seed": 1001,
+      "method": "H50",
+      "success": false,
+      "env_steps": 280
+    },
+    {
+      "condition": "libero_object/task_9/init_1",
+      "seed": 1000,
+      "method": "mlp_lvm",
+      "success": true,
+      "env_steps": 118
+    },
+    {
+      "condition": "libero_object/task_2/init_0",
+      "seed": 1001,
+      "method": "mlp_lvm",
+      "success": true,
+      "env_steps": 112
+    },
+    {
+      "condition": "libero_object/task_8/init_1",
+      "seed": 1001,
+      "method": "H50",
+      "success": true,
+      "env_steps": 152
+    },
+    {
+      "condition": "libero_object/task_2/init_1",
+      "seed": 1000,
+      "method": "mlp_lvm",
+      "success": true,
+      "env_steps": 159
+    },
+    {
+      "condition": "libero_object/task_3/init_0",
+      "seed": 1000,
+      "method": "mlp_lvm",
+      "success": true,
+      "env_steps": 131
+    },
+    {
+      "condition": "libero_object/task_2/init_2",
+      "seed": 1000,
+      "method": "mlp_ogg",
+      "success": false,
+      "env_steps": 280
+    },
+    {
+      "condition": "libero_object/task_0/init_1",
+      "seed": 1000,
+      "method": "H50",
+      "success": true,
+      "env_steps": 139
+    },
+    {
+      "condition": "libero_object/task_5/init_2",
+      "seed": 1000,
+      "method": "mlp_lvm",
+      "success": true,
+      "env_steps": 127
+    },
+    {
+      "condition": "libero_object/task_6/init_2",
+      "seed": 1000,
+      "method": "H50",
+      "success": true,
+      "env_steps": 139
+    },
+    {
+      "condition": "libero_object/task_8/init_1",
+      "seed": 1001,
+      "method": "H20",
+      "success": true,
+      "env_steps": 156
+    },
+    {
+      "condition": "libero_object/task_4/init_0",
+      "seed": 1000,
+      "method": "mlp_lvm",
+      "success": true,
+      "env_steps": 139
+    },
+    {
+      "condition": "libero_object/task_1/init_1",
+      "seed": 1000,
+      "method": "mlp_ogg",
+      "success": true,
+      "env_steps": 123
+    },
+    {
+      "condition": "libero_object/task_0/init_1",
+      "seed": 1001,
+      "method": "mlp_lvm",
+      "success": true,
+      "env_steps": 141
+    },
+    {
+      "condition": "libero_object/task_1/init_0",
+      "seed": 1000,
+      "method": "mlp_ogg",
+      "success": true,
+      "env_steps": 178
+    },
+    {
+      "condition": "libero_object/task_3/init_2",
+      "seed": 1000,
+      "method": "H20",
+      "success": true,
+      "env_steps": 128
+    },
+    {
+      "condition": "libero_object/task_2/init_2",
+      "seed": 1001,
+      "method": "H20",
+      "success": false,
+      "env_steps": 280
+    },
+    {
+      "condition": "libero_object/task_0/init_0",
+      "seed": 1001,
+      "method": "mlp_ogg",
+      "success": true,
+      "env_steps": 123
+    },
+    {
+      "condition": "libero_object/task_0/init_0",
+      "seed": 1000,
+      "method": "H50",
+      "success": true,
+      "env_steps": 125
+    },
+    {
+      "condition": "libero_object/task_8/init_0",
+      "seed": 1000,
+      "method": "H20",
+      "success": true,
+      "env_steps": 148
+    },
+    {
+      "condition": "libero_object/task_5/init_0",
+      "seed": 1001,
+      "method": "mlp_lvm",
+      "success": true,
+      "env_steps": 162
+    },
+    {
+      "condition": "libero_object/task_4/init_0",
+      "seed": 1001,
+      "method": "mlp_ogg",
+      "success": true,
+      "env_steps": 138
+    },
+    {
+      "condition": "libero_object/task_8/init_0",
+      "seed": 1001,
+      "method": "H20",
+      "success": true,
+      "env_steps": 141
+    },
+    {
+      "condition": "libero_object/task_1/init_2",
+      "seed": 1000,
+      "method": "mlp_ogg",
+      "success": true,
+      "env_steps": 148
+    },
+    {
+      "condition": "libero_object/task_6/init_2",
+      "seed": 1001,
+      "method": "mlp_lvm",
+      "success": true,
+      "env_steps": 139
+    },
+    {
+      "condition": "libero_object/task_3/init_0",
+      "seed": 1000,
+      "method": "mlp_ogg",
+      "success": true,
+      "env_steps": 131
+    },
+    {
+      "condition": "libero_object/task_7/init_0",
+      "seed": 1000,
+      "method": "H20",
+      "success": true,
+      "env_steps": 130
+    },
+    {
+      "condition": "libero_object/task_4/init_1",
+      "seed": 1001,
+      "method": "H20",
+      "success": true,
+      "env_steps": 139
+    },
+    {
+      "condition": "libero_object/task_6/init_2",
+      "seed": 1000,
+      "method": "H20",
+      "success": true,
+      "env_steps": 142
+    },
+    {
+      "condition": "libero_object/task_6/init_0",
+      "seed": 1001,
+      "method": "mlp_lvm",
+      "success": true,
+      "env_steps": 148
+    },
+    {
+      "condition": "libero_object/task_7/init_1",
+      "seed": 1001,
+      "method": "mlp_ogg",
+      "success": true,
+      "env_steps": 125
+    },
+    {
+      "condition": "libero_object/task_2/init_0",
+      "seed": 1000,
+      "method": "mlp_ogg",
+      "success": true,
+      "env_steps": 113
+    },
+    {
+      "condition": "libero_object/task_2/init_0",
+      "seed": 1000,
+      "method": "H50",
+      "success": true,
+      "env_steps": 113
+    },
+    {
+      "condition": "libero_object/task_4/init_0",
+      "seed": 1000,
+      "method": "mlp_ogg",
+      "success": true,
+      "env_steps": 139
+    },
+    {
+      "condition": "libero_object/task_3/init_2",
+      "seed": 1000,
+      "method": "mlp_lvm",
+      "success": true,
+      "env_steps": 123
+    },
+    {
+      "condition": "libero_object/task_0/init_1",
+      "seed": 1001,
+      "method": "mlp_ogg",
+      "success": true,
+      "env_steps": 140
+    },
+    {
+      "condition": "libero_object/task_5/init_2",
+      "seed": 1000,
+      "method": "mlp_ogg",
+      "success": true,
+      "env_steps": 127
+    },
+    {
+      "condition": "libero_object/task_4/init_2",
+      "seed": 1000,
+      "method": "H20",
+      "success": true,
+      "env_steps": 133
+    },
+    {
+      "condition": "libero_object/task_9/init_2",
+      "seed": 1001,
+      "method": "mlp_ogg",
+      "success": true,
+      "env_steps": 153
+    },
+    {
+      "condition": "libero_object/task_7/init_0",
+      "seed": 1001,
+      "method": "H20",
+      "success": true,
+      "env_steps": 132
+    },
+    {
+      "condition": "libero_object/task_5/init_2",
+      "seed": 1001,
+      "method": "H50",
+      "success": true,
+      "env_steps": 126
+    },
+    {
+      "condition": "libero_object/task_5/init_1",
+      "seed": 1001,
+      "method": "H50",
+      "success": true,
+      "env_steps": 125
+    },
+    {
+      "condition": "libero_object/task_3/init_0",
+      "seed": 1001,
+      "method": "H50",
+      "success": true,
+      "env_steps": 130
+    },
+    {
+      "condition": "libero_object/task_5/init_1",
+      "seed": 1001,
+      "method": "H20",
+      "success": true,
+      "env_steps": 127
+    },
+    {
+      "condition": "libero_object/task_8/init_0",
+      "seed": 1001,
+      "method": "mlp_lvm",
+      "success": true,
+      "env_steps": 143
+    },
+    {
+      "condition": "libero_object/task_3/init_1",
+      "seed": 1001,
+      "method": "H20",
+      "success": true,
+      "env_steps": 128
+    },
+    {
+      "condition": "libero_object/task_1/init_2",
+      "seed": 1001,
+      "method": "mlp_ogg",
+      "success": true,
+      "env_steps": 149
+    },
+    {
+      "condition": "libero_object/task_6/init_0",
+      "seed": 1000,
+      "method": "mlp_lvm",
+      "success": true,
+      "env_steps": 149
+    },
+    {
+      "condition": "libero_object/task_6/init_1",
+      "seed": 1001,
+      "method": "H20",
+      "success": true,
+      "env_steps": 146
+    },
+    {
+      "condition": "libero_object/task_5/init_1",
+      "seed": 1000,
+      "method": "H20",
+      "success": true,
+      "env_steps": 127
+    },
+    {
+      "condition": "libero_object/task_7/init_2",
+      "seed": 1001,
+      "method": "mlp_lvm",
+      "success": true,
+      "env_steps": 167
+    },
+    {
+      "condition": "libero_object/task_4/init_0",
+      "seed": 1001,
+      "method": "mlp_lvm",
+      "success": true,
+      "env_steps": 138
+    },
+    {
+      "condition": "libero_object/task_4/init_1",
+      "seed": 1000,
+      "method": "H50",
+      "success": true,
+      "env_steps": 140
+    },
+    {
+      "condition": "libero_object/task_8/init_1",
+      "seed": 1001,
+      "method": "mlp_lvm",
+      "success": true,
+      "env_steps": 153
+    },
+    {
+      "condition": "libero_object/task_2/init_2",
+      "seed": 1000,
+      "method": "H50",
+      "success": false,
+      "env_steps": 280
+    },
+    {
+      "condition": "libero_object/task_6/init_2",
+      "seed": 1001,
+      "method": "mlp_ogg",
+      "success": true,
+      "env_steps": 139
+    },
+    {
+      "condition": "libero_object/task_7/init_2",
+      "seed": 1001,
+      "method": "mlp_ogg",
+      "success": true,
+      "env_steps": 167
+    },
+    {
+      "condition": "libero_object/task_9/init_1",
+      "seed": 1000,
+      "method": "H20",
+      "success": false,
+      "env_steps": 280
+    },
+    {
+      "condition": "libero_object/task_5/init_1",
+      "seed": 1000,
+      "method": "mlp_ogg",
+      "success": true,
+      "env_steps": 124
+    },
+    {
+      "condition": "libero_object/task_4/init_2",
+      "seed": 1001,
+      "method": "H50",
+      "success": true,
+      "env_steps": 134
+    },
+    {
+      "condition": "libero_object/task_2/init_1",
+      "seed": 1001,
+      "method": "mlp_lvm",
+      "success": true,
+      "env_steps": 156
+    },
+    {
+      "condition": "libero_object/task_6/init_1",
+      "seed": 1001,
+      "method": "mlp_lvm",
+      "success": true,
+      "env_steps": 144
+    },
+    {
+      "condition": "libero_object/task_1/init_1",
+      "seed": 1001,
+      "method": "mlp_ogg",
+      "success": true,
+      "env_steps": 125
+    },
+    {
+      "condition": "libero_object/task_4/init_1",
+      "seed": 1000,
+      "method": "mlp_lvm",
+      "success": true,
+      "env_steps": 138
+    },
+    {
+      "condition": "libero_object/task_0/init_0",
+      "seed": 1001,
+      "method": "H20",
+      "success": true,
+      "env_steps": 139
+    },
+    {
+      "condition": "libero_object/task_4/init_2",
+      "seed": 1001,
+      "method": "H20",
+      "success": true,
+      "env_steps": 136
+    },
+    {
+      "condition": "libero_object/task_2/init_1",
+      "seed": 1001,
+      "method": "H20",
+      "success": true,
+      "env_steps": 118
+    },
+    {
+      "condition": "libero_object/task_9/init_0",
+      "seed": 1001,
+      "method": "mlp_ogg",
+      "success": true,
+      "env_steps": 142
+    },
+    {
+      "condition": "libero_object/task_5/init_2",
+      "seed": 1001,
+      "method": "mlp_lvm",
+      "success": true,
+      "env_steps": 127
+    },
+    {
+      "condition": "libero_object/task_8/init_2",
+      "seed": 1000,
+      "method": "mlp_ogg",
+      "success": true,
+      "env_steps": 149
+    },
+    {
+      "condition": "libero_object/task_9/init_2",
+      "seed": 1000,
+      "method": "H50",
+      "success": false,
+      "env_steps": 280
+    },
+    {
+      "condition": "libero_object/task_5/init_0",
+      "seed": 1000,
+      "method": "mlp_ogg",
+      "success": true,
+      "env_steps": 163
+    },
+    {
+      "condition": "libero_object/task_3/init_1",
+      "seed": 1001,
+      "method": "mlp_ogg",
+      "success": true,
+      "env_steps": 127
+    },
+    {
+      "condition": "libero_object/task_7/init_0",
+      "seed": 1001,
+      "method": "mlp_lvm",
+      "success": true,
+      "env_steps": 128
+    },
+    {
+      "condition": "libero_object/task_3/init_2",
+      "seed": 1000,
+      "method": "mlp_ogg",
+      "success": true,
+      "env_steps": 123
+    },
+    {
+      "condition": "libero_object/task_6/init_1",
+      "seed": 1000,
+      "method": "mlp_ogg",
+      "success": true,
+      "env_steps": 142
+    },
+    {
+      "condition": "libero_object/task_1/init_1",
+      "seed": 1001,
+      "method": "H50",
+      "success": true,
+      "env_steps": 125
+    },
+    {
+      "condition": "libero_object/task_7/init_2",
+      "seed": 1001,
+      "method": "H50",
+      "success": false,
+      "env_steps": 280
+    },
+    {
+      "condition": "libero_object/task_2/init_0",
+      "seed": 1000,
+      "method": "H20",
+      "success": true,
+      "env_steps": 118
+    },
+    {
+      "condition": "libero_object/task_9/init_0",
+      "seed": 1000,
+      "method": "H50",
+      "success": true,
+      "env_steps": 126
+    },
+    {
+      "condition": "libero_object/task_1/init_2",
+      "seed": 1001,
+      "method": "H20",
+      "success": false,
+      "env_steps": 280
+    },
+    {
+      "condition": "libero_object/task_8/init_0",
+      "seed": 1000,
+      "method": "H50",
+      "success": true,
+      "env_steps": 141
+    },
+    {
+      "condition": "libero_object/task_4/init_2",
+      "seed": 1000,
+      "method": "H50",
+      "success": true,
+      "env_steps": 133
+    },
+    {
+      "condition": "libero_object/task_1/init_0",
+      "seed": 1000,
+      "method": "mlp_lvm",
+      "success": true,
+      "env_steps": 172
+    },
+    {
+      "condition": "libero_object/task_0/init_2",
+      "seed": 1000,
+      "method": "mlp_lvm",
+      "success": true,
+      "env_steps": 127
+    },
+    {
+      "condition": "libero_object/task_0/init_0",
+      "seed": 1000,
+      "method": "mlp_ogg",
+      "success": true,
+      "env_steps": 123
+    },
+    {
+      "condition": "libero_object/task_4/init_1",
+      "seed": 1000,
+      "method": "H20",
+      "success": true,
+      "env_steps": 138
+    },
+    {
+      "condition": "libero_object/task_6/init_0",
+      "seed": 1001,
+      "method": "H20",
+      "success": true,
+      "env_steps": 152
+    },
+    {
+      "condition": "libero_object/task_9/init_1",
+      "seed": 1001,
+      "method": "mlp_ogg",
+      "success": true,
+      "env_steps": 158
+    },
+    {
+      "condition": "libero_object/task_0/init_2",
+      "seed": 1001,
+      "method": "H20",
+      "success": true,
+      "env_steps": 132
+    },
+    {
+      "condition": "libero_object/task_3/init_0",
+      "seed": 1000,
+      "method": "H50",
+      "success": true,
+      "env_steps": 132
+    },
+    {
+      "condition": "libero_object/task_9/init_1",
+      "seed": 1001,
+      "method": "H50",
+      "success": false,
+      "env_steps": 280
+    },
+    {
+      "condition": "libero_object/task_6/init_1",
+      "seed": 1001,
+      "method": "mlp_ogg",
+      "success": true,
+      "env_steps": 144
+    },
+    {
+      "condition": "libero_object/task_2/init_1",
+      "seed": 1000,
+      "method": "H20",
+      "success": true,
+      "env_steps": 117
+    },
+    {
+      "condition": "libero_object/task_3/init_2",
+      "seed": 1001,
+      "method": "mlp_ogg",
+      "success": true,
+      "env_steps": 125
+    },
+    {
+      "condition": "libero_object/task_3/init_2",
+      "seed": 1001,
+      "method": "mlp_lvm",
+      "success": true,
+      "env_steps": 125
+    },
+    {
+      "condition": "libero_object/task_6/init_0",
+      "seed": 1000,
+      "method": "mlp_ogg",
+      "success": true,
+      "env_steps": 149
+    },
+    {
+      "condition": "libero_object/task_9/init_0",
+      "seed": 1001,
+      "method": "H50",
+      "success": true,
+      "env_steps": 145
+    },
+    {
+      "condition": "libero_object/task_1/init_2",
+      "seed": 1000,
+      "method": "H50",
+      "success": false,
+      "env_steps": 280
+    },
+    {
+      "condition": "libero_object/task_4/init_2",
+      "seed": 1001,
+      "method": "mlp_ogg",
+      "success": true,
+      "env_steps": 132
+    },
+    {
+      "condition": "libero_object/task_4/init_2",
+      "seed": 1000,
+      "method": "mlp_lvm",
+      "success": true,
+      "env_steps": 135
+    },
+    {
+      "condition": "libero_object/task_4/init_1",
+      "seed": 1001,
+      "method": "H50",
+      "success": true,
+      "env_steps": 139
+    },
+    {
+      "condition": "libero_object/task_2/init_0",
+      "seed": 1001,
+      "method": "H50",
+      "success": true,
+      "env_steps": 114
+    },
+    {
+      "condition": "libero_object/task_9/init_1",
+      "seed": 1000,
+      "method": "mlp_ogg",
+      "success": true,
+      "env_steps": 118
+    },
+    {
+      "condition": "libero_object/task_2/init_0",
+      "seed": 1000,
+      "method": "mlp_lvm",
+      "success": true,
+      "env_steps": 113
+    }
+  ]
+}

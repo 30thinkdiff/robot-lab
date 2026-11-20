@@ -33,8 +33,9 @@ def load_predictor(reference, checkpoint, source_root, device):
 def corrector_class(reference, tap_path):
     legacy = reference['runtime']
     Tap = vision_tap_class(tap_path)
+    BaseCorrector = legacy.OnlineCorrector
 
-    class SingleLayerCorrector(legacy.OnlineCorrector):
+    class SingleLayerCorrector(BaseCorrector):
         def __init__(self, policy, predictor, protocol, method, source_root, directory, *, layer,
                      diagnostics=True, **kwargs):
             if layer not in SHAPES or predictor.cfg.token_dim != 768 or protocol.get('visual_layer') != layer:
@@ -87,7 +88,7 @@ def corrector_class(reference, tap_path):
 
         def log(self, row):
             if not self.diagnostics:
-                return legacy.OnlineCorrector.log(self, row)
+                return BaseCorrector.log(self, row)
             row = dict(row, feature_layer=self.layer)
             if 'score' in row:
                 s = self.state
@@ -109,7 +110,7 @@ def corrector_class(reference, tap_path):
                     self.observed_prediction_origins[due] = self.step
                     row['prediction_created'] = dict(origin_step=self.step, due_step=due,
                         prediction_id=self.layer + ':' + str(self.step))
-            legacy.OnlineCorrector.log(self, row)
+            BaseCorrector.log(self, row)
 
         def denoise_step(self, *args, **kwargs):
             if not self.diagnostics:

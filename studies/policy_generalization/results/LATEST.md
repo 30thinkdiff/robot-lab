@@ -1,12 +1,14 @@
 # 实验结果总入口
 
+**11月20日 Object10 单层实验完成。** 2/2训练通过重载验证，240/240新回合、错误0，复用原四方法240条。S2-LVM/OGG及S8-LVM各53/60，S8-OGG为54/60，原MLP-LVM/OGG各55/60。[正式结果和逐回合索引](20261120/single_layer_object60/RESULTS.md)。
+
 **11月19日第三轮执行优化已验收并部署，从完整epoch122恢复`training_execution_001`。** [新入口与完整证据](../corrector/single_layer_20261118/EXECUTION_OPTIMIZATION.md)。延迟标量回传、训练阶段CUDA预取；全部科学设置不变。46项CPU测试、全量S2 49,447／12,089样本和97次更新状态严格一致；工程外推时间341.40→317.50秒，约1.0753倍；S8短测约1.0946倍，尚非其正式完整轮成绩。原断点和三代训练历史保留，旧manager保持paused；以`train_execution_manage.py status`查看实时状态和ETA。**正式epoch123已完成：343.14→331.28秒（5.52分钟），实测约1.036倍，低于工程对照1.075倍；best123/stale0，已进入124。** [正式首轮与权重等价收据](../corrector/single_layer_20261118/FIRST_EXECUTION_EPOCH_001.json)。
 
 **11月19日：第二轮训练优化验收通过，当前从epoch68切换到`training_transport_002`。** [当前入口/原理/瓶颈与多GPU建议](../corrector/single_layer_20261118/TRANSPORT_OPTIMIZATION.md)。CPU保持原FP16特征值传输，GPU先恢复FP32再作同样的视觉差分；模型/精度/batch/loss/早停不变。40项CPU及真实GPU梯度/更新/RNG一致性通过，小规模训练132.98→181.28样本/秒；**完整epoch69已完成：8.38→5.96分钟，实测1.407倍；累计较最初17.77分钟约2.983倍。已进入epoch70。** [整轮收据](../corrector/single_layer_20261118/FIRST_TRANSPORT_EPOCH_002.json)。原队列和断点保留，尚未租卡、迁移或启动跨机训练。
 
 **11月18日晚：S2/S8训练管线优化验收通过，原第7轮完整断点已迁入独立续训队列。** [真实等价验收与当前入口](../corrector/single_layer_20261118/PIPELINE_OPTIMIZATION.md)：4-worker及去除未消费历史拷贝，小规模训练143.97对64.02样本/秒；输入/梯度/参数更新/RNG、验证指标一致，两端37项CPU测试通过。原断点保留，六组科学设置不变。**首个完整加速轮已完成：17.77→9.18分钟，实测1.935倍；已进入epoch9。** [整轮收据](../corrector/single_layer_20261118/FIRST_FAST_EPOCH_001.json)。六组150轮情景剩余约136.5小时；50/60轮情景约44.7/53.9小时，不是早停预测。
 
-**11月18日：S2/S8完整454条特征完成，正式六组训练队列已启动。** [训练参数/实时进度/ETA/暂停续接](../corrector/single_layer_20261118/TRAINING.md)、[特征制作记录](../corrector/single_layer_20261118/OPERATIONS.md)、[基线审计](../corrector/single_layer_20261118/BASELINE_AUDIT.md)。两层约392.5GiB完整SHA、原动作/时间及样本划分复核454/454通过；S2/S8分别seed42/43/44，首组S2_s42。保持四个2048隐藏宽度、原MSE＋cosine、batch32×16、AMP BF16、最多150轮/patience5，原训练器/优化器/调度器不改。ETA区分跑到轮数上限与后续无改善早停情景，不预先承诺实际早停时刻。**尚无新正式模型最终成绩或性能评测结果**；旧工程GPU/12短回合收据不混为本轮成绩。
+**11月18日：S2/S8完整454条特征完成，正式六组训练队列已启动。** [训练参数/实时进度/ETA/暂停续接](../corrector/single_layer_20261118/TRAINING.md)、[特征制作记录](../corrector/single_layer_20261118/OPERATIONS.md)、[基线审计](../corrector/single_layer_20261118/BASELINE_AUDIT.md)。两层约392.5GiB完整SHA、原动作/时间及样本划分复核454/454通过；S2/S8分别seed42/43/44，首组S2_s42。保持四个2048隐藏宽度、原MSE＋cosine、batch32×16、AMP BF16、最多150轮/patience5，原训练器/优化器/调度器不改。ETA区分跑到轮数上限与后续无改善早停情景，不预先承诺实际早停时刻。当日快照尚无新正式模型成绩；旧工程GPU/12短回合收据不混为本轮成绩。
 
 **11月18日只读复核**：[多层缓存容量与Object10正式协议](20261118/storage_protocol_audit/RESULTS.md)、[CPU重放收据](20261118/storage_protocol_audit/receipt.json)。70条三层缓存约61.32GiB；扩至原454条/66,984帧约400.17GiB特征载荷。正式六方法采用动态LVM历史、cooldown0、保留待到期单动作预测，240监测回合30,389次阈值/触发重放全部一致。早期V3并非相同部署；J仍有分层权重/有效性校准及训练数据、精度差异。当前无卡2GiB RAM实例，未启动新训练或评测、未清理数据。
 
