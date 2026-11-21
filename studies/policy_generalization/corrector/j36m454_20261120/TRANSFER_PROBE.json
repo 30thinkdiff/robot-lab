@@ -1,0 +1,12 @@
+{
+  "episodes": [
+    "episode_1001",
+    "episode_1002"
+  ],
+  "bytes": 38686720,
+  "source_to_local_seconds": 11.189805872971192,
+  "local_to_target_seconds": 3.9229114949994255,
+  "sequential_mib_per_s": 2.441290361731572,
+  "best_case_pipelined_mib_per_s": 3.29715561367496,
+  "sha_verified": true
+}

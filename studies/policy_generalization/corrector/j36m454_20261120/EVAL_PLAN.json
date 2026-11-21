@@ -1,0 +1,1032 @@
+{
+  "ordinary": [
+    {
+      "condition": "libero_object/task_0/init_0",
+      "seed": 1000,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "libero_object/task_0/init_0",
+      "seed": 1000,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "libero_object/task_0/init_0",
+      "seed": 1001,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "libero_object/task_0/init_0",
+      "seed": 1001,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "libero_object/task_0/init_1",
+      "seed": 1000,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "libero_object/task_0/init_1",
+      "seed": 1000,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "libero_object/task_0/init_1",
+      "seed": 1001,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "libero_object/task_0/init_1",
+      "seed": 1001,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "libero_object/task_0/init_2",
+      "seed": 1000,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "libero_object/task_0/init_2",
+      "seed": 1000,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "libero_object/task_0/init_2",
+      "seed": 1001,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "libero_object/task_0/init_2",
+      "seed": 1001,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "libero_object/task_1/init_0",
+      "seed": 1000,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "libero_object/task_1/init_0",
+      "seed": 1000,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "libero_object/task_1/init_0",
+      "seed": 1001,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "libero_object/task_1/init_0",
+      "seed": 1001,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "libero_object/task_1/init_1",
+      "seed": 1000,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "libero_object/task_1/init_1",
+      "seed": 1000,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "libero_object/task_1/init_1",
+      "seed": 1001,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "libero_object/task_1/init_1",
+      "seed": 1001,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "libero_object/task_1/init_2",
+      "seed": 1000,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "libero_object/task_1/init_2",
+      "seed": 1000,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "libero_object/task_1/init_2",
+      "seed": 1001,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "libero_object/task_1/init_2",
+      "seed": 1001,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "libero_object/task_2/init_0",
+      "seed": 1000,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "libero_object/task_2/init_0",
+      "seed": 1000,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "libero_object/task_2/init_0",
+      "seed": 1001,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "libero_object/task_2/init_0",
+      "seed": 1001,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "libero_object/task_2/init_1",
+      "seed": 1000,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "libero_object/task_2/init_1",
+      "seed": 1000,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "libero_object/task_2/init_1",
+      "seed": 1001,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "libero_object/task_2/init_1",
+      "seed": 1001,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "libero_object/task_2/init_2",
+      "seed": 1000,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "libero_object/task_2/init_2",
+      "seed": 1000,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "libero_object/task_2/init_2",
+      "seed": 1001,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "libero_object/task_2/init_2",
+      "seed": 1001,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "libero_object/task_3/init_0",
+      "seed": 1000,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "libero_object/task_3/init_0",
+      "seed": 1000,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "libero_object/task_3/init_0",
+      "seed": 1001,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "libero_object/task_3/init_0",
+      "seed": 1001,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "libero_object/task_3/init_1",
+      "seed": 1000,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "libero_object/task_3/init_1",
+      "seed": 1000,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "libero_object/task_3/init_1",
+      "seed": 1001,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "libero_object/task_3/init_1",
+      "seed": 1001,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "libero_object/task_3/init_2",
+      "seed": 1000,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "libero_object/task_3/init_2",
+      "seed": 1000,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "libero_object/task_3/init_2",
+      "seed": 1001,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "libero_object/task_3/init_2",
+      "seed": 1001,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "libero_object/task_4/init_0",
+      "seed": 1000,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "libero_object/task_4/init_0",
+      "seed": 1000,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "libero_object/task_4/init_0",
+      "seed": 1001,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "libero_object/task_4/init_0",
+      "seed": 1001,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "libero_object/task_4/init_1",
+      "seed": 1000,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "libero_object/task_4/init_1",
+      "seed": 1000,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "libero_object/task_4/init_1",
+      "seed": 1001,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "libero_object/task_4/init_1",
+      "seed": 1001,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "libero_object/task_4/init_2",
+      "seed": 1000,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "libero_object/task_4/init_2",
+      "seed": 1000,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "libero_object/task_4/init_2",
+      "seed": 1001,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "libero_object/task_4/init_2",
+      "seed": 1001,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "libero_object/task_5/init_0",
+      "seed": 1000,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "libero_object/task_5/init_0",
+      "seed": 1000,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "libero_object/task_5/init_0",
+      "seed": 1001,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "libero_object/task_5/init_0",
+      "seed": 1001,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "libero_object/task_5/init_1",
+      "seed": 1000,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "libero_object/task_5/init_1",
+      "seed": 1000,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "libero_object/task_5/init_1",
+      "seed": 1001,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "libero_object/task_5/init_1",
+      "seed": 1001,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "libero_object/task_5/init_2",
+      "seed": 1000,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "libero_object/task_5/init_2",
+      "seed": 1000,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "libero_object/task_5/init_2",
+      "seed": 1001,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "libero_object/task_5/init_2",
+      "seed": 1001,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "libero_object/task_6/init_0",
+      "seed": 1000,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "libero_object/task_6/init_0",
+      "seed": 1000,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "libero_object/task_6/init_0",
+      "seed": 1001,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "libero_object/task_6/init_0",
+      "seed": 1001,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "libero_object/task_6/init_1",
+      "seed": 1000,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "libero_object/task_6/init_1",
+      "seed": 1000,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "libero_object/task_6/init_1",
+      "seed": 1001,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "libero_object/task_6/init_1",
+      "seed": 1001,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "libero_object/task_6/init_2",
+      "seed": 1000,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "libero_object/task_6/init_2",
+      "seed": 1000,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "libero_object/task_6/init_2",
+      "seed": 1001,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "libero_object/task_6/init_2",
+      "seed": 1001,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "libero_object/task_7/init_0",
+      "seed": 1000,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "libero_object/task_7/init_0",
+      "seed": 1000,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "libero_object/task_7/init_0",
+      "seed": 1001,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "libero_object/task_7/init_0",
+      "seed": 1001,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "libero_object/task_7/init_1",
+      "seed": 1000,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "libero_object/task_7/init_1",
+      "seed": 1000,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "libero_object/task_7/init_1",
+      "seed": 1001,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "libero_object/task_7/init_1",
+      "seed": 1001,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "libero_object/task_7/init_2",
+      "seed": 1000,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "libero_object/task_7/init_2",
+      "seed": 1000,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "libero_object/task_7/init_2",
+      "seed": 1001,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "libero_object/task_7/init_2",
+      "seed": 1001,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "libero_object/task_8/init_0",
+      "seed": 1000,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "libero_object/task_8/init_0",
+      "seed": 1000,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "libero_object/task_8/init_0",
+      "seed": 1001,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "libero_object/task_8/init_0",
+      "seed": 1001,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "libero_object/task_8/init_1",
+      "seed": 1000,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "libero_object/task_8/init_1",
+      "seed": 1000,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "libero_object/task_8/init_1",
+      "seed": 1001,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "libero_object/task_8/init_1",
+      "seed": 1001,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "libero_object/task_8/init_2",
+      "seed": 1000,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "libero_object/task_8/init_2",
+      "seed": 1000,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "libero_object/task_8/init_2",
+      "seed": 1001,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "libero_object/task_8/init_2",
+      "seed": 1001,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "libero_object/task_9/init_0",
+      "seed": 1000,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "libero_object/task_9/init_0",
+      "seed": 1000,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "libero_object/task_9/init_0",
+      "seed": 1001,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "libero_object/task_9/init_0",
+      "seed": 1001,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "libero_object/task_9/init_1",
+      "seed": 1000,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "libero_object/task_9/init_1",
+      "seed": 1000,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "libero_object/task_9/init_1",
+      "seed": 1001,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "libero_object/task_9/init_1",
+      "seed": 1001,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "libero_object/task_9/init_2",
+      "seed": 1000,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "libero_object/task_9/init_2",
+      "seed": 1000,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "libero_object/task_9/init_2",
+      "seed": 1001,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "libero_object/task_9/init_2",
+      "seed": 1001,
+      "method": "J454-OGG"
+    }
+  ],
+  "plus_historical_diagnostic": [
+    {
+      "condition": "plus/cheese/background_textures/1",
+      "seed": 1000,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "plus/cheese/background_textures/1",
+      "seed": 1000,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "plus/cheese/background_textures/2",
+      "seed": 1000,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "plus/cheese/background_textures/2",
+      "seed": 1000,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "plus/cheese/camera_viewpoints/1",
+      "seed": 1000,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "plus/cheese/camera_viewpoints/1",
+      "seed": 1000,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "plus/cheese/camera_viewpoints/2",
+      "seed": 1000,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "plus/cheese/camera_viewpoints/2",
+      "seed": 1000,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "plus/cheese/language_instructions/1",
+      "seed": 1000,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "plus/cheese/language_instructions/1",
+      "seed": 1000,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "plus/cheese/language_instructions/2",
+      "seed": 1000,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "plus/cheese/language_instructions/2",
+      "seed": 1000,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "plus/cheese/light_conditions/1",
+      "seed": 1000,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "plus/cheese/light_conditions/1",
+      "seed": 1000,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "plus/cheese/light_conditions/2",
+      "seed": 1000,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "plus/cheese/light_conditions/2",
+      "seed": 1000,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "plus/cheese/objects_layout/1",
+      "seed": 1000,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "plus/cheese/objects_layout/1",
+      "seed": 1000,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "plus/cheese/objects_layout/2",
+      "seed": 1000,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "plus/cheese/objects_layout/2",
+      "seed": 1000,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "plus/cheese/robot_initial_states/1",
+      "seed": 1000,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "plus/cheese/robot_initial_states/1",
+      "seed": 1000,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "plus/cheese/robot_initial_states/2",
+      "seed": 1000,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "plus/cheese/robot_initial_states/2",
+      "seed": 1000,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "plus/cheese/sensor_noise/1",
+      "seed": 1000,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "plus/cheese/sensor_noise/1",
+      "seed": 1000,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "plus/cheese/sensor_noise/2",
+      "seed": 1000,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "plus/cheese/sensor_noise/2",
+      "seed": 1000,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "plus/default",
+      "seed": 1000,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "plus/default",
+      "seed": 1000,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "plus/soup/background_textures/1",
+      "seed": 1000,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "plus/soup/background_textures/1",
+      "seed": 1000,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "plus/soup/background_textures/2",
+      "seed": 1000,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "plus/soup/background_textures/2",
+      "seed": 1000,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "plus/soup/camera_viewpoints/1",
+      "seed": 1000,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "plus/soup/camera_viewpoints/1",
+      "seed": 1000,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "plus/soup/camera_viewpoints/2",
+      "seed": 1000,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "plus/soup/camera_viewpoints/2",
+      "seed": 1000,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "plus/soup/language_instructions/1",
+      "seed": 1000,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "plus/soup/language_instructions/1",
+      "seed": 1000,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "plus/soup/language_instructions/2",
+      "seed": 1000,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "plus/soup/language_instructions/2",
+      "seed": 1000,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "plus/soup/light_conditions/1",
+      "seed": 1000,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "plus/soup/light_conditions/1",
+      "seed": 1000,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "plus/soup/light_conditions/2",
+      "seed": 1000,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "plus/soup/light_conditions/2",
+      "seed": 1000,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "plus/soup/objects_layout/1",
+      "seed": 1000,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "plus/soup/objects_layout/1",
+      "seed": 1000,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "plus/soup/objects_layout/2",
+      "seed": 1000,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "plus/soup/objects_layout/2",
+      "seed": 1000,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "plus/soup/robot_initial_states/1",
+      "seed": 1000,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "plus/soup/robot_initial_states/1",
+      "seed": 1000,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "plus/soup/robot_initial_states/2",
+      "seed": 1000,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "plus/soup/robot_initial_states/2",
+      "seed": 1000,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "plus/soup/sensor_noise/1",
+      "seed": 1000,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "plus/soup/sensor_noise/1",
+      "seed": 1000,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "plus/soup/sensor_noise/2",
+      "seed": 1000,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "plus/soup/sensor_noise/2",
+      "seed": 1000,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "plus/view10",
+      "seed": 1000,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "plus/view10",
+      "seed": 1000,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "plus/view15",
+      "seed": 1000,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "plus/view15",
+      "seed": 1000,
+      "method": "J454-OGG"
+    },
+    {
+      "condition": "plus/view5",
+      "seed": 1000,
+      "method": "J454-LVM"
+    },
+    {
+      "condition": "plus/view5",
+      "seed": 1000,
+      "method": "J454-OGG"
+    }
+  ],
+  "independent_calibration": [
+    {
+      "task": 0,
+      "init": 7,
+      "seed": 9000
+    },
+    {
+      "task": 0,
+      "init": 8,
+      "seed": 9001
+    },
+    {
+      "task": 1,
+      "init": 7,
+      "seed": 9000
+    },
+    {
+      "task": 1,
+      "init": 8,
+      "seed": 9001
+    },
+    {
+      "task": 2,
+      "init": 7,
+      "seed": 9000
+    },
+    {
+      "task": 2,
+      "init": 8,
+      "seed": 9001
+    },
+    {
+      "task": 3,
+      "init": 7,
+      "seed": 9000
+    },
+    {
+      "task": 3,
+      "init": 8,
+      "seed": 9001
+    },
+    {
+      "task": 4,
+      "init": 7,
+      "seed": 9000
+    },
+    {
+      "task": 4,
+      "init": 8,
+      "seed": 9001
+    },
+    {
+      "task": 5,
+      "init": 7,
+      "seed": 9000
+    },
+    {
+      "task": 5,
+      "init": 8,
+      "seed": 9001
+    },
+    {
+      "task": 6,
+      "init": 7,
+      "seed": 9000
+    },
+    {
+      "task": 6,
+      "init": 8,
+      "seed": 9001
+    },
+    {
+      "task": 7,
+      "init": 7,
+      "seed": 9000
+    },
+    {
+      "task": 7,
+      "init": 8,
+      "seed": 9001
+    },
+    {
+      "task": 8,
+      "init": 7,
+      "seed": 9000
+    },
+    {
+      "task": 8,
+      "init": 8,
+      "seed": 9001
+    },
+    {
+      "task": 9,
+      "init": 7,
+      "seed": 9000
+    },
+    {
+      "task": 9,
+      "init": 8,
+      "seed": 9001
+    }
+  ],
+  "calibration_uses": "successful default-camera H50 trajectories with passive scoring; frozen historical weight and floor estimator",
+  "online": "expanded DynamicJoint, dynamic 15/bootstrap15/cooldown0, due20/warmup4, pending predictions retained; eta1/every3",
+  "plus_source": "4976dc30028e805ff8094b55501d532c48fec182",
+  "policy_revision": "a24f1f380461b665158d52acd140152c79e8b36d"
+}
