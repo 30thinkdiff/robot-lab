@@ -1,0 +1,534 @@
+{
+  "ordinary": {
+    "conditions": {
+      "libero_object/task_1/init_0": {
+        "task_id": 1,
+        "init": 0,
+        "language": "pick up the cream cheese and place it in the basket"
+      },
+      "libero_object/task_9/init_2": {
+        "task_id": 9,
+        "init": 2,
+        "language": "pick up the orange juice and place it in the basket"
+      },
+      "libero_object/task_2/init_2": {
+        "task_id": 2,
+        "init": 2,
+        "language": "pick up the salad dressing and place it in the basket"
+      },
+      "libero_object/task_7/init_1": {
+        "task_id": 7,
+        "init": 1,
+        "language": "pick up the milk and place it in the basket"
+      }
+    },
+    "trials": {
+      "libero_object/task_1/init_0": {
+        "1001": {
+          "signatures": {
+            "state_sha256": "aaeb94947cc520d451b9b22436fdb01f91b7e29fe158efadb6ed33c1a7c6ca66",
+            "input_sha256": "f5749f743527c93bc54a2d4c4f2cd27708a6c8c47f0ed2a14ffde0993fec0d4b",
+            "noise_sha256": "f34cafe5337b49a33676bedf969be342a93fa6e224b7e4478998e15d023d3f1c"
+          },
+          "first_step": 61,
+          "prefix_sha256": "919dbe779f03c2e332eee80607799fd77d43eddf6e862b2ce579bbeef7103921",
+          "commands_sha256": "bb8befb4332cea55e1747f16965d09c12b195314c5b5bb29907821b7ac87da64",
+          "queue_sha256": "96d04e41506463bbf90572a65179522312c2c361eff8490be5ca8f22c2d7a98b",
+          "candidate_sha256": "684ec9a15942931b0d39fddcf5c4698609e0029b3757229e0509631d2c744486",
+          "first_submitted_action": [
+            0.03171556442975998,
+            0.10237003117799759,
+            -0.03014126792550087,
+            -0.031589165329933167,
+            0.03036385029554367,
+            -0.004811999853700399,
+            0.9888399243354797
+          ],
+          "outcome": {
+            "success": true,
+            "env_steps": 137,
+            "chunk_calls": 4,
+            "event_replans": 1,
+            "guidance_calls": 4
+          }
+        },
+        "1000": {
+          "signatures": {
+            "state_sha256": "aaeb94947cc520d451b9b22436fdb01f91b7e29fe158efadb6ed33c1a7c6ca66",
+            "input_sha256": "f5749f743527c93bc54a2d4c4f2cd27708a6c8c47f0ed2a14ffde0993fec0d4b",
+            "noise_sha256": "419f31eabcb8d52aae7561ba1e5a67902839b8d45ebe6849cd6f5585e5993457"
+          },
+          "first_step": 60,
+          "prefix_sha256": "8652b9add956ac4074c0b6e635e8f8fac8a812c605bd452b5994d4237301665d",
+          "commands_sha256": "23f10fdbe4e5f5b24f17cfc59712045125d105f89a0f283077e876f6614d7ebd",
+          "queue_sha256": "676d78334737db7d6ea3725112c37db3617580209efb5b6c7d2ce0aed20e5bb2",
+          "candidate_sha256": "881aba4532e248e7e8e813d3db09963ff6db03e6ea5dfe0eea3afd1bd1970dbb",
+          "first_submitted_action": [
+            0.047928713262081146,
+            0.06112939864397049,
+            -0.025690264999866486,
+            -0.007365213241428137,
+            0.004099697805941105,
+            -0.009222419932484627,
+            0.9791811108589172
+          ],
+          "outcome": {
+            "success": true,
+            "env_steps": 178,
+            "chunk_calls": 10,
+            "event_replans": 7,
+            "guidance_calls": 28
+          }
+        }
+      },
+      "libero_object/task_9/init_2": {
+        "1000": {
+          "signatures": {
+            "state_sha256": "da703038a44bcfa7f31fe96bbee4fd52988fe809bb331fbb80af980163f909fd",
+            "input_sha256": "529d14fbd702e845dfc3c576936b77dd7c29ad3f741d46bb8fa26c0ad9c2624f",
+            "noise_sha256": "419f31eabcb8d52aae7561ba1e5a67902839b8d45ebe6849cd6f5585e5993457"
+          },
+          "first_step": 64,
+          "prefix_sha256": "aeaa9e2eaad9623afdd019c0065681099367a0a042903be253f9014c91618e70",
+          "commands_sha256": "f426779a35b4dc27cfcca9006935630d9b6932b25095d0f1b47aa462ef69d720",
+          "queue_sha256": "36f7cbf9a34059de730755d4b17f7e2d401a890caa99d9f6ff8ee9527056aae9",
+          "candidate_sha256": "83d38adb7ed2bce58c8598ad1396dadc8220b0884dedc5ddba3a9640ac070fe8",
+          "first_submitted_action": [
+            0.07764062285423279,
+            -0.012888424098491669,
+            0.8366565704345703,
+            -0.006623718421906233,
+            0.07090930640697479,
+            -0.023420758545398712,
+            0.9961826205253601
+          ],
+          "outcome": {
+            "success": false,
+            "env_steps": 280,
+            "chunk_calls": 8,
+            "event_replans": 4,
+            "guidance_calls": 16
+          }
+        },
+        "1001": {
+          "signatures": {
+            "state_sha256": "da703038a44bcfa7f31fe96bbee4fd52988fe809bb331fbb80af980163f909fd",
+            "input_sha256": "529d14fbd702e845dfc3c576936b77dd7c29ad3f741d46bb8fa26c0ad9c2624f",
+            "noise_sha256": "f34cafe5337b49a33676bedf969be342a93fa6e224b7e4478998e15d023d3f1c"
+          },
+          "first_step": 66,
+          "prefix_sha256": "5c3eb9655e64f6724c2994fddf5d52c2d03d8a9a0f5a9993b954e6a8abc35698",
+          "commands_sha256": "8f9e23bce84ec671976c28e61f041332670861712b85325463c4f13530f5c40d",
+          "queue_sha256": "0cbc78d42c9ea0e31b09e84bbfa9fb2e5de9fb15c01ce0f9430c3d0e62564358",
+          "candidate_sha256": "15d24cabef891d72e4612f8c348bc5978d2231fe654c9b5f1fa2092409868391",
+          "first_submitted_action": [
+            -0.004595376551151276,
+            -0.01153891533613205,
+            0.7695553302764893,
+            -0.0031403633765876293,
+            0.09099731594324112,
+            -0.027634788304567337,
+            0.9791956543922424
+          ],
+          "outcome": {
+            "success": true,
+            "env_steps": 153,
+            "chunk_calls": 4,
+            "event_replans": 1,
+            "guidance_calls": 4
+          }
+        }
+      },
+      "libero_object/task_2/init_2": {
+        "1000": {
+          "signatures": {
+            "state_sha256": "f6f576539218198ed4533b944634c9c337180ac744051f34158c55f299098661",
+            "input_sha256": "9e75481e0ec1242fbc1269d0f153de022c2825504a7850486f5cc78add1f2b71",
+            "noise_sha256": "419f31eabcb8d52aae7561ba1e5a67902839b8d45ebe6849cd6f5585e5993457"
+          },
+          "first_step": 52,
+          "prefix_sha256": "39127bd926487f249ae1e78e17a141a618a6c191ef45049c0bab1eb0cf0ecd44",
+          "commands_sha256": "ebba238ce5994f10d570d84877b4fc418aba1050f4082b2a482666508303d2bc",
+          "queue_sha256": "161982f0efe243bb13d66aa6d4dfc85e29a74b018ebaf622047661e7c37b68ab",
+          "candidate_sha256": "35c76dfb60da100bd5e6f8be34c25ed55f7a40de6f35a99a5dffb614192b4ce0",
+          "first_submitted_action": [
+            0.06417416781187057,
+            -0.05271713435649872,
+            0.8020735383033752,
+            0.0036519672721624374,
+            -0.004630350507795811,
+            -0.06505731493234634,
+            1.002320647239685
+          ],
+          "outcome": {
+            "success": false,
+            "env_steps": 280,
+            "chunk_calls": 12,
+            "event_replans": 7,
+            "guidance_calls": 28
+          }
+        },
+        "1001": {
+          "signatures": {
+            "state_sha256": "f6f576539218198ed4533b944634c9c337180ac744051f34158c55f299098661",
+            "input_sha256": "9e75481e0ec1242fbc1269d0f153de022c2825504a7850486f5cc78add1f2b71",
+            "noise_sha256": "f34cafe5337b49a33676bedf969be342a93fa6e224b7e4478998e15d023d3f1c"
+          },
+          "first_step": 52,
+          "prefix_sha256": "47d7affbf5ce051098814e4ea106cad5dbd28de822ffc6a604b7934829fa073a",
+          "commands_sha256": "5a0ab342ea0b3ad92c86a7016818f4bb2f86fe3cd8437a3fac2fe406ca135c91",
+          "queue_sha256": "667946216a5d76bdfeea1dd9a6c611d2cb33b85e4ab37b976fede41792702774",
+          "candidate_sha256": "bf952eb1591b5dfe6a5ee8d9a6176bfa0a85f87d9e054509f69f3c8ed1492009",
+          "first_submitted_action": [
+            0.0290389247238636,
+            -0.039699986577034,
+            0.7427427768707275,
+            0.0038906994741410017,
+            0.008117694407701492,
+            -0.06200967729091644,
+            1.009440302848816
+          ],
+          "outcome": {
+            "success": false,
+            "env_steps": 280,
+            "chunk_calls": 12,
+            "event_replans": 8,
+            "guidance_calls": 32
+          }
+        }
+      },
+      "libero_object/task_7/init_1": {
+        "1001": {
+          "signatures": {
+            "state_sha256": "20a8961a2235d52bb584f532b5dbb5cf12196876125a19d3a6f9153bd06cc730",
+            "input_sha256": "5f8fe083144e4a4981a11e5bf240e0789507e01a8e60918214fd9b313f5ea471",
+            "noise_sha256": "f34cafe5337b49a33676bedf969be342a93fa6e224b7e4478998e15d023d3f1c"
+          },
+          "first_step": 44,
+          "prefix_sha256": "2ffa8d558f4ae09fb304f0d2785bdf411865305f18280e3e33341bd41c1cd3ce",
+          "commands_sha256": "6c5b95c601639a3b5af0e82528b150db2bdca7f5fef295e91f9afa027e3b4a1a",
+          "queue_sha256": "0496c761c38bb94dd298860e48c81609ae32de2c5653d992e667102c9e0f0a71",
+          "candidate_sha256": "ccf8074684d05d8dbb0926ae1d9c99505c6bf17a0c177103cc2c451b00afa64f",
+          "first_submitted_action": [
+            -0.24511393904685974,
+            -0.008756816387176514,
+            -0.3525037169456482,
+            -0.016298647969961166,
+            0.05809010937809944,
+            0.020528482273221016,
+            0.9497307538986206
+          ],
+          "outcome": {
+            "success": true,
+            "env_steps": 125,
+            "chunk_calls": 4,
+            "event_replans": 2,
+            "guidance_calls": 8
+          }
+        },
+        "1000": {
+          "signatures": {
+            "state_sha256": "20a8961a2235d52bb584f532b5dbb5cf12196876125a19d3a6f9153bd06cc730",
+            "input_sha256": "5f8fe083144e4a4981a11e5bf240e0789507e01a8e60918214fd9b313f5ea471",
+            "noise_sha256": "419f31eabcb8d52aae7561ba1e5a67902839b8d45ebe6849cd6f5585e5993457"
+          },
+          "first_step": 44,
+          "prefix_sha256": "54cd80fc29f98606503a9125fe92696e437411580f5b98d4b34a4c9df80c412d",
+          "commands_sha256": "b8df4891f560b6a990b8eeeb89b5182bdbc5374a68ef9f53d9f12f80d8ec0e05",
+          "queue_sha256": "721375d446f24d78fe76b65ce836ab51a44070b424037df4d4e61aec605abd84",
+          "candidate_sha256": "89c8edbcc5356ee9171099e60d191e16a01904fa5529c4f491953e23838aa80a",
+          "first_submitted_action": [
+            -0.22798198461532593,
+            0.002645231783390045,
+            -0.28572407364845276,
+            -0.015807870775461197,
+            0.05058583244681358,
+            0.014526201412081718,
+            0.9646889567375183
+          ],
+          "outcome": {
+            "success": true,
+            "env_steps": 138,
+            "chunk_calls": 3,
+            "event_replans": 2,
+            "guidance_calls": 8
+          }
+        }
+      }
+    }
+  },
+  "plus": {
+    "conditions": {
+      "plus/cheese/sensor_noise/1": {
+        "task_id": 1448,
+        "task_name": "pick_up_the_cream_cheese_and_place_it_in_the_basket_view_0_0_100_0_0_initstate_0_noise_11",
+        "init": 0,
+        "language": "pick the cream cheese and place it in the basket",
+        "category": "Sensor Noise",
+        "official_difficulty": 1,
+        "historical_compat": false
+      },
+      "plus/soup/language_instructions/1": {
+        "task_id": 1046,
+        "task_name": "pick_up_the_alphabet_soup_and_place_it_in_the_basket_language_12_view_0_0_100_0_0_initstate_0",
+        "init": 0,
+        "language": "lift the alphabet soup and insert it into the basket",
+        "category": "Language Instructions",
+        "official_difficulty": 1,
+        "historical_compat": false
+      },
+      "plus/soup/objects_layout/2": {
+        "task_id": 1843,
+        "task_name": "pick_up_the_alphabet_soup_and_place_it_in_the_basket_level2_sample1",
+        "init": 0,
+        "language": "pick the alphabet soup and place it in the basket",
+        "category": "Objects Layout",
+        "official_difficulty": 5,
+        "historical_compat": false
+      },
+      "plus/view15": {
+        "task_id": 666,
+        "task_name": "pick_up_the_alphabet_soup_and_place_it_in_the_basket_view_15_15_100_0_0_initstate_0",
+        "init": 0,
+        "language": "pick the alphabet soup and place it in the basket",
+        "category": "Historical camera",
+        "official_difficulty": null,
+        "historical_compat": true
+      }
+    },
+    "trials": {
+      "plus/cheese/sensor_noise/1": {
+        "1000": {
+          "signatures": {
+            "state_sha256": "aaeb94947cc520d451b9b22436fdb01f91b7e29fe158efadb6ed33c1a7c6ca66",
+            "input_sha256": "b9fcfcb25cdd4699242ddc29b01eff9a33f1fd3f5800a17f05ee1d42c6eb5173",
+            "noise_sha256": "419f31eabcb8d52aae7561ba1e5a67902839b8d45ebe6849cd6f5585e5993457"
+          },
+          "first_step": 66,
+          "prefix_sha256": "bb9a6c98cbec4f53c91af93534cecf3bdefc06beb59580adc75e17126c8bd364",
+          "commands_sha256": "e4d1a1fbdb41ac7149739e0c6ec9d747878c767f5106973755a963b0c9e266c8",
+          "queue_sha256": "486fe7051ca59d21dd2f1afca417067c60516818aa86cdf4c648922df9a903e5",
+          "candidate_sha256": "846a24d8d237af3ce932d5c330a69f3cf3eed904033d10a9b43c0b6427c59c8f",
+          "first_submitted_action": [
+            0.10907158255577087,
+            0.05195549875497818,
+            0.18862757086753845,
+            -0.002708095358684659,
+            0.030101478099822998,
+            0.00720695685595274,
+            0.9901760220527649
+          ],
+          "outcome": {
+            "success": true,
+            "env_steps": 152,
+            "chunk_calls": 5,
+            "event_replans": 2,
+            "guidance_calls": 8
+          }
+        },
+        "1001": {
+          "signatures": {
+            "state_sha256": "aaeb94947cc520d451b9b22436fdb01f91b7e29fe158efadb6ed33c1a7c6ca66",
+            "input_sha256": "b9fcfcb25cdd4699242ddc29b01eff9a33f1fd3f5800a17f05ee1d42c6eb5173",
+            "noise_sha256": "f34cafe5337b49a33676bedf969be342a93fa6e224b7e4478998e15d023d3f1c"
+          },
+          "first_step": 63,
+          "prefix_sha256": "1a25699cb1ef88802bb53dd4e9d8c25adf09ee11fc7c348140c11a5f2b650a2d",
+          "commands_sha256": "3fe5764d701b3eb55d27da2da8777b431c4bb0a07a105ec28549638add363bdf",
+          "queue_sha256": "ea321f40b45f41553713f5b51d6fafcd159f8668482b5e400fe259ca727e3b05",
+          "candidate_sha256": "25650d9f30edb58fb77bda73c6afb6380a836804d6e3ec7a36f8f99bbd377779",
+          "first_submitted_action": [
+            0.10192973911762238,
+            0.0692225769162178,
+            0.10977204889059067,
+            -0.00858478993177414,
+            0.05940398946404457,
+            0.011433184146881104,
+            0.9909879565238953
+          ],
+          "outcome": {
+            "success": true,
+            "env_steps": 152,
+            "chunk_calls": 6,
+            "event_replans": 3,
+            "guidance_calls": 12
+          }
+        }
+      },
+      "plus/soup/language_instructions/1": {
+        "1000": {
+          "signatures": {
+            "state_sha256": "3842b074691f165ad4be4a087493ff2e62d88ea2ef89b839988a40ad5d25862b",
+            "input_sha256": "e7e6d21da19feffa25eb6bd3bcfda286a98dceab7ec77926846d5a3caa40a567",
+            "noise_sha256": "419f31eabcb8d52aae7561ba1e5a67902839b8d45ebe6849cd6f5585e5993457"
+          },
+          "first_step": 59,
+          "prefix_sha256": "151323119b34f8cc405b4e48665b287532b33d31b28aa6ed2d219d0bcc172dba",
+          "commands_sha256": "f170174f1a2de9dcdbf8fa75c3386966fc7adbffcc5a8e4eea3c4436b49b85c1",
+          "queue_sha256": "19a891a3ed2a03e3740ae2674f73efa1d7b2eefc44a3636cbf26efe6df208bb8",
+          "candidate_sha256": "b9cb3912e194ab732062f9eb1112b033b05bffe67e1a2cd4020bce6e3ef9e2fc",
+          "first_submitted_action": [
+            0.08675189316272736,
+            0.06463445723056793,
+            0.8347427845001221,
+            -0.040841687470674515,
+            -0.0014441492967307568,
+            0.01261107251048088,
+            0.9507175087928772
+          ],
+          "outcome": {
+            "success": true,
+            "env_steps": 155,
+            "chunk_calls": 10,
+            "event_replans": 7,
+            "guidance_calls": 28
+          }
+        },
+        "1001": {
+          "signatures": {
+            "state_sha256": "3842b074691f165ad4be4a087493ff2e62d88ea2ef89b839988a40ad5d25862b",
+            "input_sha256": "e7e6d21da19feffa25eb6bd3bcfda286a98dceab7ec77926846d5a3caa40a567",
+            "noise_sha256": "f34cafe5337b49a33676bedf969be342a93fa6e224b7e4478998e15d023d3f1c"
+          },
+          "first_step": 59,
+          "prefix_sha256": "822643c3e1a01c4dea23a7248f352c47b3170f0601542d1757bdfd56382e0bb3",
+          "commands_sha256": "48034014475d01deee79a2bdb8e95cb0b273f22947634773408430aeb49ddeb8",
+          "queue_sha256": "c4bbde3844739c3cbe74fee3ab6ad75c5cabbada56d315fe4bfbac6cd5a337df",
+          "candidate_sha256": "8eacd68ef140f6e8968aa41e222d5284add329c1b9fd9f8d338090b88b84ab40",
+          "first_submitted_action": [
+            0.012562956660985947,
+            0.059959255158901215,
+            0.7253779172897339,
+            -0.05037232115864754,
+            0.03418397158384323,
+            0.018308227881789207,
+            0.9550531506538391
+          ],
+          "outcome": {
+            "success": true,
+            "env_steps": 171,
+            "chunk_calls": 12,
+            "event_replans": 10,
+            "guidance_calls": 40
+          }
+        }
+      },
+      "plus/soup/objects_layout/2": {
+        "1000": {
+          "signatures": {
+            "state_sha256": "516800f56e0ef631e49ce7d243319d9cf30db7fd09e8800db3baa7b9370cdce8",
+            "input_sha256": "b49341483bd476ff1fe3951b393a7402aa57db7b539ab91b50040bdbe854ec9b",
+            "noise_sha256": "419f31eabcb8d52aae7561ba1e5a67902839b8d45ebe6849cd6f5585e5993457"
+          },
+          "first_step": 65,
+          "prefix_sha256": "cde4b73754131f07599c6d9bf9d0fdafb60452e3c6d2e7fc7db372a2d257ee97",
+          "commands_sha256": "0ea4e72d35e509770e6ceece641c8499e5b70d91afa6842212d79a39822c4041",
+          "queue_sha256": "8c8dbb5840a36a25100ff9cd301b49ebb254228231b172707518199d80d15247",
+          "candidate_sha256": "b4f780252d73a8f7a3d54005a746c9b106e176ae109fbb1423fe27fba8505d38",
+          "first_submitted_action": [
+            -0.06752730160951614,
+            -0.03622252494096756,
+            0.2817124128341675,
+            -0.01780041493475437,
+            0.05265400558710098,
+            0.0018138247542083263,
+            1.0131186246871948
+          ],
+          "outcome": {
+            "success": false,
+            "env_steps": 280,
+            "chunk_calls": 10,
+            "event_replans": 6,
+            "guidance_calls": 24
+          }
+        },
+        "1001": {
+          "signatures": {
+            "state_sha256": "516800f56e0ef631e49ce7d243319d9cf30db7fd09e8800db3baa7b9370cdce8",
+            "input_sha256": "b49341483bd476ff1fe3951b393a7402aa57db7b539ab91b50040bdbe854ec9b",
+            "noise_sha256": "f34cafe5337b49a33676bedf969be342a93fa6e224b7e4478998e15d023d3f1c"
+          },
+          "first_step": 64,
+          "prefix_sha256": "53926edfec9755c773aa0589ea74c46d79f9fd1594a5f00a6337526c14689101",
+          "commands_sha256": "d69936f7968dce7feb679b302f4f0a68bc9c6395e3ae73bfc64f637a47739d33",
+          "queue_sha256": "1b79602cb813ae8e5014a7ad29e767b5290f0aee11540594ab634dc7d7dba1d8",
+          "candidate_sha256": "150f29e4d3a1cddf2ec5ea27a85f1cf7621df5c0a5d1c4cdfd75a79d7349f219",
+          "first_submitted_action": [
+            -0.20723432302474976,
+            -0.008964985609054565,
+            -0.04216323420405388,
+            -0.02250661700963974,
+            0.05153566971421242,
+            0.011616135016083717,
+            1.0292644500732422
+          ],
+          "outcome": {
+            "success": true,
+            "env_steps": 218,
+            "chunk_calls": 6,
+            "event_replans": 3,
+            "guidance_calls": 12
+          }
+        }
+      },
+      "plus/view15": {
+        "1000": {
+          "signatures": {
+            "state_sha256": "3842b074691f165ad4be4a087493ff2e62d88ea2ef89b839988a40ad5d25862b",
+            "input_sha256": "ff5195b5bad8b63af93a274085ef96b0035277f7aaf35547043caa19e5a84aab",
+            "noise_sha256": "419f31eabcb8d52aae7561ba1e5a67902839b8d45ebe6849cd6f5585e5993457"
+          },
+          "first_step": 59,
+          "prefix_sha256": "a746c76447a31055b1b3e218d3b8a51aecbf53a7ccac661c2859a3f32abbbc35",
+          "commands_sha256": "a07aa0f6d6eff18311006955cc8f2bea27eff76a311a589becb64cf2016b5858",
+          "queue_sha256": "66cf7119b6a16b43dd685d2a4645f7efb0336cbd16a9b7fcab7e64e013342b09",
+          "candidate_sha256": "163111344240baaf6487707c14610e82cdf7767c7fa3fb366b10cad182ad9476",
+          "first_submitted_action": [
+            -0.5508034229278564,
+            -0.22964835166931152,
+            -0.5051824450492859,
+            0.0009180033812299371,
+            -0.002771877683699131,
+            -0.0005652550607919693,
+            -1.0089880228042603
+          ],
+          "outcome": {
+            "success": false,
+            "env_steps": 280,
+            "chunk_calls": 8,
+            "event_replans": 2,
+            "guidance_calls": 8
+          }
+        },
+        "1001": {
+          "signatures": {
+            "state_sha256": "3842b074691f165ad4be4a087493ff2e62d88ea2ef89b839988a40ad5d25862b",
+            "input_sha256": "ff5195b5bad8b63af93a274085ef96b0035277f7aaf35547043caa19e5a84aab",
+            "noise_sha256": "f34cafe5337b49a33676bedf969be342a93fa6e224b7e4478998e15d023d3f1c"
+          },
+          "first_step": 61,
+          "prefix_sha256": "48eb90105af2429b63aef3ffa1bda694684233496e6e285709c6d4272cb5c96e",
+          "commands_sha256": "f66d14ca1729e6af12068456420563af0db577dd691f5bedf0f22e3de9cfc6d0",
+          "queue_sha256": "a8797d424a0fc701447b0f1f23ff25901e344bc02a24101a442d3c7b14e59a50",
+          "candidate_sha256": "a805d01a76bb5a8c3b892bcae2b376845ca15b281efcb21450830b36752c159b",
+          "first_submitted_action": [
+            -0.43552082777023315,
+            -0.1908000409603119,
+            -0.41095873713493347,
+            -0.00022572360467165709,
+            0.008107992820441723,
+            -0.0024968148209154606,
+            -1.0082958936691284
+          ],
+          "outcome": {
+            "success": true,
+            "env_steps": 151,
+            "chunk_calls": 6,
+            "event_replans": 3,
+            "guidance_calls": 12
+          }
+        }
+      }
+    }
+  }
+}
